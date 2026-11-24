@@ -6,11 +6,11 @@
   <packageId>juliusberger.workbenchbilldefaults</packageId>
   <description>Set something up once, save it as a default, and it is applied from then on: bills on new workbenches, filters on new shelves and stockpiles, plants on new growing zones and hydroponics, schedule, work and policies on new colonists, and your policies and colony settings (medical care, auto home area, auto rebuild, manual priorities) in new games.
 
-Every preset lives in one library outside your saves, so it follows you into every colony. Presets from older versions are imported once; the old files stay untouched. Presets that need a mod you no longer run are kept and say which mod.
+Every preset lives in one library outside your saves, so it follows you into every colony. The Defaults button opens it in game: see, rename and delete presets, save named profiles ("Tribal start"), and copy a profile as a text string to share it or paste one from a friend. A new colony starts with a welcome card where you pick your defaults or a profile. Presets from older versions are imported once; the old files stay untouched. Presets that need a mod you no longer run are kept and say which mod. Two games open at once, a damaged library file or one from a newer version never cost you a preset.
 
-Nothing happens to colonists, buildings or zones you already have. Each area (workbenches and shelves, zones, colonists, policies, colony settings, library) can be switched off as a whole in the settings.
+Colonists, zones and shelves you already have are never changed. A workbench gets your default bills only while it has no bills at all (a new or reinstalled one). Each area (workbenches and shelves, zones, colonists, policies, colony settings, library) can be switched off as a whole in the settings.
 
-Needs Harmony and JB Framework. Works with Nice Bill Tab, Nice Inventory Tab, No Max Bills Redux, Project RimFactory, Blueprints Forked, Free Will and Better Workbench Management. Multiplayer: not supported, untested.
+Needs Harmony and JB Framework. Works with Nice Bill Tab and Better Workbench Management (tested on 1.7); the integrations for Project RimFactory, Blueprints Forked and Free Will are carried over from the previous version; with No Max Bills Redux it leaves the bill limit to that mod. Multiplayer: not supported, untested.
 
 Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested (1.6 keeps the previous version and needs no framework).
 
