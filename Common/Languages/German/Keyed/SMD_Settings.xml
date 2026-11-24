@@ -89,7 +89,7 @@
   <SMD.Preset.buildings>Nur Gebäude und Zonen</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Aufträge, Regale und Zonen; Kolonisten, Richtlinien und Kolonie-Einstellungen bleiben unberührt.</SMD.Preset.buildings.Desc>
   <SMD.Page.policies>Gespeicherte Richtlinien</SMD.Page.policies>
-  <SMD.Page.colony>Gespeicherte Kolonie-Einstellungen</SMD.Page.colony>
+  <SMD.Page.colony>Gespeicherte Kolonie</SMD.Page.colony>
   <SMD.Page.library>Meine Vorgaben</SMD.Page.library>
   <SMD.Page.profiles>Profile</SMD.Page.profiles>
   <SMD.Page.share>Import und Export</SMD.Page.share>
