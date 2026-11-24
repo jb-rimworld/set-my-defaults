@@ -9,7 +9,6 @@
   <WBD_ApplyNamed>Anwenden: {0}</WBD_ApplyNamed>
   <WBD_ApplyNamedDefault>Anwenden: {0} (Standard)</WBD_ApplyNamedDefault>
   <WBD_SetDefaultPreset>Standardvorlage festlegen…</WBD_SetDefaultPreset>
-  <WBD_ManagePresets>Gespeicherte Vorlagen verwalten…</WBD_ManagePresets>
 
   <!-- Benennungsdialog -->
   <WBD_SaveAsPromptTitle>Name dieser Vorlage für {0}:</WBD_SaveAsPromptTitle>
@@ -27,10 +26,8 @@
 
   <!-- Übersicht in den Mod-Einstellungen -->
   <WBD_OverviewHeader>Gespeicherte Vorlagen</WBD_OverviewHeader>
-  <WBD_OverviewEmpty>Noch keine Vorlagen gespeichert. Wähle im Spiel eine Werkbank (oder ein Regal) und nutze „Vorgaben → Aktuelle Einrichtung als Vorlage speichern…“.</WBD_OverviewEmpty>
   <WBD_MissingDef>{0} (Mod fehlt)</WBD_MissingDef>
   <WBD_PresetIsDefault>{0} (Standard)</WBD_PresetIsDefault>
-  <WBD_DeleteAll>Alle löschen</WBD_DeleteAll>
   <WBD_Rename>Umbenennen</WBD_Rename>
   <WBD_Delete>Löschen</WBD_Delete>
 
@@ -79,7 +76,6 @@
 
   <!-- Kolonisten-Übersicht -->
   <WBD_PawnOverviewHeader>Gespeicherte Kolonisten-Vorlagen</WBD_PawnOverviewHeader>
-  <WBD_PawnOverviewEmpty>Noch keine Kolonisten-Vorlagen gespeichert. Wähle im Spiel einen Kolonisten und nutze „Vorgaben → Einrichtung dieses Kolonisten als Vorlage speichern…“.</WBD_PawnOverviewEmpty>
 
   <!-- ===================== Richtlinien- &amp; Aufträge-Tab ===================== -->
 
@@ -176,25 +172,11 @@
   <WBD_ColonyNoneSaved>Noch nichts gespeichert. Lade eine Kolonie und drücke „Einstellungen dieser Kolonie speichern“.</WBD_ColonyNoneSaved>
   <!-- 2.0 settings pages -->
   <WBD_SetDefault>Als Standard festlegen</WBD_SetDefault>
-  <WBD_PageBuildingPresets>Gespeicherte Gebäude-Vorlagen</WBD_PageBuildingPresets>
-  <WBD_PageBuildingPresetsHelp>Vorlagen, die du mit dem Knopf „Vorgaben“ gespeichert hast, nach Gebäudetyp. Die markierte ist der Standard, den neue Gebäude dieses Typs bekommen.</WBD_PageBuildingPresetsHelp>
-  <WBD_DeleteAllConfirm>Alle für {0} gespeicherten Vorlagen löschen? Das lässt sich nicht rückgängig machen.</WBD_DeleteAllConfirm>
-  <WBD_PageColonistPresets>Gespeicherte Kolonisten-Vorlagen</WBD_PageColonistPresets>
-  <WBD_PageColonistPresetsHelp>Vorlagen, die du mit dem Knopf „Vorgaben“ an einer Kolonistin oder einem Kolonisten gespeichert hast. Die markierte wird einmal auf jede neue Person angewendet.</WBD_PageColonistPresetsHelp>
   <WBD_PagePoliciesHelp>Speichere Kleidungs-, Drogen-, Essens- und Leserichtlinien dieser Kolonie als ein Paket und wende es in jeder anderen Kolonie an. Richtlinien werden über den Namen gefunden oder neu angelegt, nie doppelt.</WBD_PagePoliciesHelp>
   <WBD_PolicyNoneSaved>Noch kein Richtlinien-Paket gespeichert.</WBD_PolicyNoneSaved>
   <WBD_PolicyClearConfirm>Das gespeicherte Richtlinien-Paket löschen? Die Richtlinien in deinen Kolonien bleiben, wie sie sind.</WBD_PolicyClearConfirm>
   <WBD_PageColonyHelp>Medizinische Versorgung je Gruppe, automatisches Heimgebiet, automatischer Wiederaufbau und manuelle Arbeitsprioritäten. In einer Kolonie speichern, in einer anderen oder in jedem neuen Spiel anwenden.</WBD_PageColonyHelp>
   <WBD_ColonyClearConfirm>Die gespeicherten Kolonie-Einstellungen löschen? Deine Kolonien bleiben, wie sie sind.</WBD_ColonyClearConfirm>
-  <WBD_PageLibrary>Vorgaben-Bibliothek</WBD_PageLibrary>
-  <WBD_PageLibraryHelp>Alles, was du speicherst, liegt in einer Bibliothek außerhalb deiner Spielstände und gilt damit in jeder Kolonie. Profile und Teilen-Texte kommen in einem späteren Update.</WBD_PageLibraryHelp>
-  <WBD_LibCounts>{0} Gebäude-Vorlagen für {1} Gebäudetypen, {2} Zonen-Vorlagen, {3} Kolonisten-Vorlagen.</WBD_LibCounts>
-  <WBD_LibPoliciesYes>Ein Richtlinien-Paket ist gespeichert.</WBD_LibPoliciesYes>
-  <WBD_LibPoliciesNo>Kein Richtlinien-Paket gespeichert.</WBD_LibPoliciesNo>
-  <WBD_LibColonyYes>Kolonie-Einstellungen sind gespeichert.</WBD_LibColonyYes>
-  <WBD_LibColonyNo>Keine Kolonie-Einstellungen gespeichert.</WBD_LibColonyNo>
-  <WBD_LibProfiles>Profile: {0}</WBD_LibProfiles>
-  <WBD_LibMissing>Einige Vorlagen brauchen Mods, die gerade nicht laufen: {0}. Sie bleiben erhalten und überspringen nur das Fehlende.</WBD_LibMissing>
   <WBD_LibMigrated>Deine Vorlagen aus der vorigen Version wurden in dieser Sitzung übernommen. Die alten Dateien blieben unverändert.</WBD_LibMigrated>
   <WBD_LibOpenFolder>Bibliotheksordner öffnen</WBD_LibOpenFolder>
   <WBD_LibReimport>Alte Vorlagen erneut übernehmen</WBD_LibReimport>

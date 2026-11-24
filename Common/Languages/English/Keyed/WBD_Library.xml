@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Library, profiles, import/export and the welcome card (2.0, M6/M7) -->
+  <WBD_OpenLibrary>Library and profiles...</WBD_OpenLibrary>
+  <WBD_LibWindowTitle>Defaults library</WBD_LibWindowTitle>
+  <WBD_TabLibrary>My defaults</WBD_TabLibrary>
+  <WBD_TabProfiles>Profiles</WBD_TabProfiles>
+  <WBD_TabShare>Import and export</WBD_TabShare>
+  <WBD_LibAllSettings>All settings...</WBD_LibAllSettings>
+  <WBD_LibAllSettingsTip>Opens Set my Defaults in Mod settings: areas on or off, what happens by itself, compatibility.</WBD_LibAllSettingsTip>
+  <WBD_LibHelp>Everything you save lives in one library outside your saves, so every colony can use it. Open an entry to see what it holds. The round button marks the default that new buildings, zones and colonists get.</WBD_LibHelp>
+  <WBD_LibEmpty>Nothing saved yet. Select a workbench, shelf, zone or colonist, press Defaults and choose "Save as preset": it shows up here and in every colony.</WBD_LibEmpty>
+  <WBD_LibArea_Bills>Bills per workbench</WBD_LibArea_Bills>
+  <WBD_LibArea_Storage>Shelves and storage</WBD_LibArea_Storage>
+  <WBD_LibArea_Plants>Plant growers</WBD_LibArea_Plants>
+  <WBD_LibArea_Zones>Zones</WBD_LibArea_Zones>
+  <WBD_LibArea_Other>Other buildings</WBD_LibArea_Other>
+  <WBD_LibArea_Pawns>Colonist presets</WBD_LibArea_Pawns>
+  <WBD_LibArea_Policies>Policies</WBD_LibArea_Policies>
+  <WBD_LibArea_Colony>Colony settings</WBD_LibArea_Colony>
+  <WBD_LibAlsoUsedBy>Also used by {0} (related buildings without their own preset).</WBD_LibAlsoUsedBy>
+  <WBD_LibPolicySet>Policy set</WBD_LibPolicySet>
+  <WBD_LibColonySet>Colony settings</WBD_LibColonySet>
+  <WBD_LibFileSection>Library file</WBD_LibFileSection>
+  <WBD_LibFileLine>One file for all colonies: Library.xml in the RimWorld settings folder. Profiles: {0}.</WBD_LibFileLine>
+  <WBD_Preview>Preview</WBD_Preview>
+  <WBD_HidePreview>Hide</WBD_HidePreview>
+  <WBD_DeleteConfirm>Delete "{0}"? This cannot be undone.</WBD_DeleteConfirm>
+  <WBD_NeedsModMarker>Needs {0} (not active)</WBD_NeedsModMarker>
+  <WBD_UnknownMarker>Entries not in this game: {0}</WBD_UnknownMarker>
+  <WBD_MissingTipHead>Not available in this game:</WBD_MissingTipHead>
+  <WBD_MissingTipDefs>Unknown entries ({0}):</WBD_MissingTipDefs>
+  <WBD_MissingTipKept>Nothing is lost: missing parts are kept and skipped, and work again once the mod is back.</WBD_MissingTipKept>
+  <WBD_PvNothing>Nothing saved.</WBD_PvNothing>
+  <WBD_PvCount_Bills>{0} bill presets</WBD_PvCount_Bills>
+  <WBD_PvCount_Storage>{0} shelf presets</WBD_PvCount_Storage>
+  <WBD_PvCount_Plants>{0} plant grower presets</WBD_PvCount_Plants>
+  <WBD_PvCount_Zones>{0} zone presets</WBD_PvCount_Zones>
+  <WBD_PvCount_Other>{0} other presets</WBD_PvCount_Other>
+  <WBD_PvCount_Pawns>{0} colonist presets</WBD_PvCount_Pawns>
+  <WBD_PvPolicies>policies</WBD_PvPolicies>
+  <WBD_PvColony>colony settings</WBD_PvColony>
+  <WBD_PvBills>Bills ({0}):</WBD_PvBills>
+  <WBD_PvBillTimes>{0} ×{1}</WBD_PvBillTimes>
+  <WBD_PvBillUntil>{0}: until you have {1}</WBD_PvBillUntil>
+  <WBD_PvBillForever>{0}: forever</WBD_PvBillForever>
+  <WBD_PvSuspended>(paused)</WBD_PvSuspended>
+  <WBD_PvMore>... and {0} more</WBD_PvMore>
+  <WBD_PvMissingRecipe>{0} (not in this game)</WBD_PvMissingRecipe>
+  <WBD_PvMissingDef>{0} (not in this game)</WBD_PvMissingDef>
+  <WBD_PvStorage>Storage: priority {0}, {1} things allowed</WBD_PvStorage>
+  <WBD_PvIntent>remembers categories</WBD_PvIntent>
+  <WBD_PvPlant>Plant: {0}</WBD_PvPlant>
+  <WBD_PvSowOff>sowing off</WBD_PvSowOff>
+  <WBD_PvCutOff>cutting off</WBD_PvCutOff>
+  <WBD_PvSplitter>Conveyor splitter links: {0}</WBD_PvSplitter>
+  <WBD_PvSchedule>Schedule</WBD_PvSchedule>
+  <WBD_PvWork>Work priorities (jobs on: {0})</WBD_PvWork>
+  <WBD_PvPolicy_apparel>Outfit: {0}</WBD_PvPolicy_apparel>
+  <WBD_PvPolicy_drug>Drugs: {0}</WBD_PvPolicy_drug>
+  <WBD_PvPolicy_food>Food: {0}</WBD_PvPolicy_food>
+  <WBD_PvPolicy_reading>Reading: {0}</WBD_PvPolicy_reading>
+  <WBD_PvHostility>When enemies come: {0}</WBD_PvHostility>
+  <WBD_PvMedical>Medical care: {0}</WBD_PvMedical>
+  <WBD_PvEmptyPreset>(empty)</WBD_PvEmptyPreset>
+  <WBD_PvUnreadable>(cannot be shown: {0})</WBD_PvUnreadable>
+  <WBD_ProfHelp>A profile is a named copy of your defaults for a kind of run, for example "Tribal start" or "Mechanitor run". Applying a profile makes its presets your defaults again; presets it does not name stay as they are.</WBD_ProfHelp>
+  <WBD_ProfSaveSection>Save what you have as a profile</WBD_ProfSaveSection>
+  <WBD_ProfName>Name:</WBD_ProfName>
+  <WBD_ProfInclude>Include:</WBD_ProfInclude>
+  <WBD_PartBuildings>Bills, shelves, plants ({0})</WBD_PartBuildings>
+  <WBD_PartZones>Zones ({0})</WBD_PartZones>
+  <WBD_PartPawns>Colonist presets ({0})</WBD_PartPawns>
+  <WBD_PartPolicies>Policy set</WBD_PartPolicies>
+  <WBD_PartColony>Colony settings</WBD_PartColony>
+  <WBD_PartNothing>Nothing of this kind is saved.</WBD_PartNothing>
+  <WBD_ProfFromColony>Take policies and colony settings from this colony</WBD_ProfFromColony>
+  <WBD_ProfFromColonyTip>On: the profile gets the policies and colony settings this colony uses right now. Off: those saved in the library.</WBD_ProfFromColonyTip>
+  <WBD_ProfSave>Save as profile</WBD_ProfSave>
+  <WBD_ProfSaved>Profile "{0}" saved.</WBD_ProfSaved>
+  <WBD_ProfSaveNothing>Nothing to save: choose at least one part that has something saved.</WBD_ProfSaveNothing>
+  <WBD_ProfReplaceConfirm>A profile named "{0}" exists. Replace it?</WBD_ProfReplaceConfirm>
+  <WBD_ProfListSection>Your profiles ({0})</WBD_ProfListSection>
+  <WBD_ProfNone>No profiles yet. Save one above, or import a share string on Import and export.</WBD_ProfNone>
+  <WBD_ProfApply>Apply</WBD_ProfApply>
+  <WBD_ProfApplyTip>Its presets become your defaults. In a running colony its policies and colony settings are applied too.</WBD_ProfApplyTip>
+  <WBD_ProfApplyConfirm>Apply the profile "{0}"?\n\nIt holds: {1}.</WBD_ProfApplyConfirm>
+  <WBD_ProfApplyInGame>Its policies and colony settings are applied to this colony now.</WBD_ProfApplyInGame>
+  <WBD_ProfWouldReplace>Replaces your presets of the same name: {0}</WBD_ProfWouldReplace>
+  <WBD_ProfCopy>Copy share string</WBD_ProfCopy>
+  <WBD_ProfCopyTip>Copies this profile as text. Paste it in Discord or a Steam comment; others import it on Import and export.</WBD_ProfCopyTip>
+  <WBD_ProfDuplicate>Duplicate</WBD_ProfDuplicate>
+  <WBD_ProfDuplicated>"{0}" copied as "{1}".</WBD_ProfDuplicated>
+  <WBD_ShareHelp>A share string is a short text that holds presets: copy it here, paste it anywhere, and import it on another computer or in another game. It never holds a save.</WBD_ShareHelp>
+  <WBD_ShareExportSection>Export</WBD_ShareExportSection>
+  <WBD_ShareCopyLibrary>Copy my whole library</WBD_ShareCopyLibrary>
+  <WBD_ShareCopyLibraryTip>Every saved default (not the profiles) as one share string.</WBD_ShareCopyLibraryTip>
+  <WBD_ShareCopyProfile>Copy a profile...</WBD_ShareCopyProfile>
+  <WBD_ShareCopied>Copied "{0}" to the clipboard ({1} characters).</WBD_ShareCopied>
+  <WBD_ShareExportNote>Presets of mods the other player does not have are kept and marked there; nothing breaks.</WBD_ShareExportNote>
+  <WBD_ShareImportSection>Import</WBD_ShareImportSection>
+  <WBD_SharePaste>Paste from clipboard</WBD_SharePaste>
+  <WBD_ShareClear>Clear</WBD_ShareClear>
+  <WBD_SharePasteHint>Or paste into this field (it starts with SMD1:).</WBD_SharePasteHint>
+  <WBD_ShareHolds>"{0}" from {1}</WBD_ShareHolds>
+  <WBD_ShareStoreAs>Save as profile named:</WBD_ShareStoreAs>
+  <WBD_ShareImport>Import as profile</WBD_ShareImport>
+  <WBD_ShareImportNote>Importing only stores a profile. Your defaults change when you apply it.</WBD_ShareImportNote>
+  <WBD_ShareImported>Imported as profile "{0}". Apply it on Profiles.</WBD_ShareImported>
+  <WBD_CardTitle>Set my Defaults: how should this colony start?</WBD_CardTitle>
+  <WBD_CardTitleJoined>Set my Defaults joined this colony</WBD_CardTitleJoined>
+  <WBD_CardPitch>Your saved bills, shelves, zones, colonists and policies carry over to new colonies. Pick what this one starts with.</WBD_CardPitch>
+  <WBD_CardPitchJoined>Nothing in this colony was changed. Choose how much happens by itself from now on.</WBD_CardPitchJoined>
+  <WBD_CardStartWith>Start this colony with</WBD_CardStartWith>
+  <WBD_CardMine>Use my defaults</WBD_CardMine>
+  <WBD_CardRecommended>recommended</WBD_CardRecommended>
+  <WBD_CardMineEmpty>Nothing saved yet. Save bills, shelves, zones or colonists with the Defaults button, and new colonies get them.</WBD_CardMineEmpty>
+  <WBD_CardNoProfiles>Profiles ("Tribal start", "Mechanitor run") appear here once you save one: Defaults button, Library and profiles.</WBD_CardNoProfiles>
+  <WBD_CardAlsoPolicies>Also bring my saved policies into this colony</WBD_CardAlsoPolicies>
+  <WBD_CardAlsoPoliciesTip>Creates your saved outfit, drug, food and reading policies and moves the starting colonists to their defaults.</WBD_CardAlsoPoliciesTip>
+  <WBD_CardModes>What happens by itself</WBD_CardModes>
+  <WBD_CardHint>Everything here can be changed later with the Defaults button (Library and profiles) or in Mod settings. Closing this card keeps your choices.</WBD_CardHint>
+  <WBD_CardUseForAll>Use these choices for all new colonies</WBD_CardUseForAll>
+  <WBD_CardUseForAllTip>Saves "What happens by itself" as the template for new games.</WBD_CardUseForAllTip>
+  <WBD_CardNeverAgain>Don't show welcome cards again</WBD_CardNeverAgain>
+  <WBD_CardNeverAgainTip>For every JB mod: new colonies then use your defaults without asking. Switch the cards back on in Mod settings, JB Framework.</WBD_CardNeverAgainTip>
+  <WBD_CardOpenLibrary>Open library</WBD_CardOpenLibrary>
+  <WBD_CardStart>Start</WBD_CardStart>
+  <WBD_CardApplied>Profile "{0}" applied to this colony:</WBD_CardApplied>
+  <WBD_CardAppliedPawns>colonist preset for the starting colonists ({0})</WBD_CardAppliedPawns>
+  <WBD_PvCount_Bills_One>1 bill preset</WBD_PvCount_Bills_One>
+  <WBD_PvCount_Storage_One>1 shelf preset</WBD_PvCount_Storage_One>
+  <WBD_PvCount_Plants_One>1 plant grower preset</WBD_PvCount_Plants_One>
+  <WBD_PvCount_Zones_One>1 zone preset</WBD_PvCount_Zones_One>
+  <WBD_PvCount_Other_One>1 other preset</WBD_PvCount_Other_One>
+  <WBD_PvCount_Pawns_One>1 colonist preset</WBD_PvCount_Pawns_One>
+</LanguageData>

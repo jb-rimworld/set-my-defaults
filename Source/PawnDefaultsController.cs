@@ -43,9 +43,8 @@ namespace BetterWorkbenchDefaults
 
                 if (presets.presets.Count > 1)
                     options.Add(new FloatMenuOption("WBD_SetDefaultPreset".Translate(), () => OpenSetDefaultMenu()));
-
-                options.Add(new FloatMenuOption("WBD_ManagePresets".Translate(), WBD_Mod.OpenSettingsPawnTab));
             }
+            options.Add(new FloatMenuOption("WBD_OpenLibrary".Translate(), WBD_Mod.OpenSettingsPawnTab));
 
             Find.WindowStack.Add(new FloatMenu(options));
         }

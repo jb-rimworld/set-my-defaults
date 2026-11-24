@@ -86,11 +86,11 @@
   <SMD.Preset.manual.Desc>Nichts passiert von selbst; du wendest Vorlagen mit dem Knopf „Vorgaben“ an.</SMD.Preset.manual.Desc>
   <SMD.Preset.buildings>Nur Gebäude und Zonen</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Aufträge, Regale und Zonen; Kolonisten, Richtlinien und Kolonie-Einstellungen bleiben unberührt.</SMD.Preset.buildings.Desc>
-  <SMD.Page.buildingPresets>Gebäude-Vorlagen</SMD.Page.buildingPresets>
-  <SMD.Page.colonistPresets>Kolonisten-Vorlagen</SMD.Page.colonistPresets>
   <SMD.Page.policies>Richtlinien-Paket</SMD.Page.policies>
   <SMD.Page.colony>Kolonie-Vorgaben</SMD.Page.colony>
-  <SMD.Page.library>Bibliotheksdatei</SMD.Page.library>
+  <SMD.Page.library>Meine Vorgaben</SMD.Page.library>
+  <SMD.Page.profiles>Profile</SMD.Page.profiles>
+  <SMD.Page.share>Import und Export</SMD.Page.share>
   <SMD.Compat.NiceBillTab.What>Der Knopf „Vorgaben“ sitzt als Symbol in dessen Auftragsfenster; angewendete Aufträge erscheinen sofort.</SMD.Compat.NiceBillTab.What>
   <SMD.Compat.NiceInventoryTab.What>Der mitgelieferte Auftrags-Tab wird genauso unterstützt wie Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
   <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens so viele Aufträge wieder her und patcht selbst nichts.</SMD.Compat.NoMaxBillsRedux.What>

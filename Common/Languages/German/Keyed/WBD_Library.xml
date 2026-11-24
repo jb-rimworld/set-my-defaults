@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Library, profiles, import/export and the welcome card (2.0, M6/M7) -->
+  <WBD_OpenLibrary>Bibliothek und Profile ...</WBD_OpenLibrary>
+  <WBD_LibWindowTitle>Vorgaben-Bibliothek</WBD_LibWindowTitle>
+  <WBD_TabLibrary>Meine Vorgaben</WBD_TabLibrary>
+  <WBD_TabProfiles>Profile</WBD_TabProfiles>
+  <WBD_TabShare>Import und Export</WBD_TabShare>
+  <WBD_LibAllSettings>Alle Einstellungen ...</WBD_LibAllSettings>
+  <WBD_LibAllSettingsTip>Öffnet Set my Defaults in den Mod-Einstellungen: Bereiche an oder aus, was von selbst passiert, Kompatibilität.</WBD_LibAllSettingsTip>
+  <WBD_LibHelp>Alles, was du speicherst, liegt in einer Bibliothek außerhalb deiner Spielstände, damit jede Kolonie es nutzen kann. Klapp einen Eintrag auf, um zu sehen, was drinsteht. Der runde Knopf markiert die Vorgabe, die neue Gebäude, Zonen und Kolonisten bekommen.</WBD_LibHelp>
+  <WBD_LibEmpty>Noch nichts gespeichert. Wähle eine Werkbank, ein Regal, eine Zone oder einen Kolonisten, drück auf Vorgaben und wähle „Als Vorlage speichern“: Dann erscheint es hier und in jeder Kolonie.</WBD_LibEmpty>
+  <WBD_LibArea_Bills>Aufträge je Werkbank</WBD_LibArea_Bills>
+  <WBD_LibArea_Storage>Regale und Lager</WBD_LibArea_Storage>
+  <WBD_LibArea_Plants>Pflanzbehälter</WBD_LibArea_Plants>
+  <WBD_LibArea_Zones>Zonen</WBD_LibArea_Zones>
+  <WBD_LibArea_Other>Andere Gebäude</WBD_LibArea_Other>
+  <WBD_LibArea_Pawns>Kolonisten-Vorlagen</WBD_LibArea_Pawns>
+  <WBD_LibArea_Policies>Richtlinien</WBD_LibArea_Policies>
+  <WBD_LibArea_Colony>Kolonie-Einstellungen</WBD_LibArea_Colony>
+  <WBD_LibAlsoUsedBy>Gilt auch für {0} (verwandte Gebäude ohne eigene Vorlage).</WBD_LibAlsoUsedBy>
+  <WBD_LibPolicySet>Richtlinien-Paket</WBD_LibPolicySet>
+  <WBD_LibColonySet>Kolonie-Einstellungen</WBD_LibColonySet>
+  <WBD_LibFileSection>Bibliotheksdatei</WBD_LibFileSection>
+  <WBD_LibFileLine>Eine Datei für alle Kolonien: Library.xml im RimWorld-Einstellungsordner. Profile: {0}.</WBD_LibFileLine>
+  <WBD_Preview>Vorschau</WBD_Preview>
+  <WBD_HidePreview>Ausblenden</WBD_HidePreview>
+  <WBD_DeleteConfirm>„{0}“ löschen? Das lässt sich nicht rückgängig machen.</WBD_DeleteConfirm>
+  <WBD_NeedsModMarker>Braucht {0} (nicht aktiv)</WBD_NeedsModMarker>
+  <WBD_UnknownMarker>Einträge, die es hier nicht gibt: {0}</WBD_UnknownMarker>
+  <WBD_MissingTipHead>In diesem Spiel nicht verfügbar:</WBD_MissingTipHead>
+  <WBD_MissingTipDefs>Unbekannte Einträge ({0}):</WBD_MissingTipDefs>
+  <WBD_MissingTipKept>Es geht nichts verloren: Fehlende Teile bleiben gespeichert, werden übersprungen und funktionieren wieder, sobald die Mod zurück ist.</WBD_MissingTipKept>
+  <WBD_PvNothing>Nichts gespeichert.</WBD_PvNothing>
+  <WBD_PvCount_Bills>{0} Auftrags-Vorlagen</WBD_PvCount_Bills>
+  <WBD_PvCount_Storage>{0} Regal-Vorlagen</WBD_PvCount_Storage>
+  <WBD_PvCount_Plants>{0} Pflanzbehälter-Vorlagen</WBD_PvCount_Plants>
+  <WBD_PvCount_Zones>{0} Zonen-Vorlagen</WBD_PvCount_Zones>
+  <WBD_PvCount_Other>{0} andere Vorlagen</WBD_PvCount_Other>
+  <WBD_PvCount_Pawns>{0} Kolonisten-Vorlagen</WBD_PvCount_Pawns>
+  <WBD_PvPolicies>Richtlinien</WBD_PvPolicies>
+  <WBD_PvColony>Kolonie-Einstellungen</WBD_PvColony>
+  <WBD_PvBills>Aufträge ({0}):</WBD_PvBills>
+  <WBD_PvBillTimes>{0} ×{1}</WBD_PvBillTimes>
+  <WBD_PvBillUntil>{0}: bis {1} vorrätig</WBD_PvBillUntil>
+  <WBD_PvBillForever>{0}: unbegrenzt</WBD_PvBillForever>
+  <WBD_PvSuspended>(pausiert)</WBD_PvSuspended>
+  <WBD_PvMore>... und {0} weitere</WBD_PvMore>
+  <WBD_PvMissingRecipe>{0} (nicht in diesem Spiel)</WBD_PvMissingRecipe>
+  <WBD_PvMissingDef>{0} (nicht in diesem Spiel)</WBD_PvMissingDef>
+  <WBD_PvStorage>Lager: Priorität {0}, {1} Dinge erlaubt</WBD_PvStorage>
+  <WBD_PvIntent>merkt sich Kategorien</WBD_PvIntent>
+  <WBD_PvPlant>Pflanze: {0}</WBD_PvPlant>
+  <WBD_PvSowOff>Säen aus</WBD_PvSowOff>
+  <WBD_PvCutOff>Ernten aus</WBD_PvCutOff>
+  <WBD_PvSplitter>Verteiler-Verbindungen: {0}</WBD_PvSplitter>
+  <WBD_PvSchedule>Zeitplan</WBD_PvSchedule>
+  <WBD_PvWork>Arbeitsprioritäten (aktive Tätigkeiten: {0})</WBD_PvWork>
+  <WBD_PvPolicy_apparel>Kleidung: {0}</WBD_PvPolicy_apparel>
+  <WBD_PvPolicy_drug>Drogen: {0}</WBD_PvPolicy_drug>
+  <WBD_PvPolicy_food>Essen: {0}</WBD_PvPolicy_food>
+  <WBD_PvPolicy_reading>Lesen: {0}</WBD_PvPolicy_reading>
+  <WBD_PvHostility>Bei Feinden: {0}</WBD_PvHostility>
+  <WBD_PvMedical>Medizinische Versorgung: {0}</WBD_PvMedical>
+  <WBD_PvEmptyPreset>(leer)</WBD_PvEmptyPreset>
+  <WBD_PvUnreadable>(kann nicht angezeigt werden: {0})</WBD_PvUnreadable>
+  <WBD_ProfHelp>Ein Profil ist eine benannte Kopie deiner Vorgaben für eine Art von Spiel, zum Beispiel „Stammesstart“ oder „Mechanitor-Run“. Wendest du ein Profil an, werden seine Vorlagen wieder deine Vorgaben; Vorlagen, die es nicht enthält, bleiben unverändert.</WBD_ProfHelp>
+  <WBD_ProfSaveSection>Aktuellen Stand als Profil speichern</WBD_ProfSaveSection>
+  <WBD_ProfName>Name:</WBD_ProfName>
+  <WBD_ProfInclude>Enthält:</WBD_ProfInclude>
+  <WBD_PartBuildings>Aufträge, Regale, Pflanzen ({0})</WBD_PartBuildings>
+  <WBD_PartZones>Zonen ({0})</WBD_PartZones>
+  <WBD_PartPawns>Kolonisten-Vorlagen ({0})</WBD_PartPawns>
+  <WBD_PartPolicies>Richtlinien-Paket</WBD_PartPolicies>
+  <WBD_PartColony>Kolonie-Einstellungen</WBD_PartColony>
+  <WBD_PartNothing>Davon ist nichts gespeichert.</WBD_PartNothing>
+  <WBD_ProfFromColony>Richtlinien und Kolonie-Einstellungen aus dieser Kolonie nehmen</WBD_ProfFromColony>
+  <WBD_ProfFromColonyTip>An: Das Profil bekommt die Richtlinien und Kolonie-Einstellungen, die diese Kolonie gerade nutzt. Aus: die in der Bibliothek gespeicherten.</WBD_ProfFromColonyTip>
+  <WBD_ProfSave>Als Profil speichern</WBD_ProfSave>
+  <WBD_ProfSaved>Profil „{0}“ gespeichert.</WBD_ProfSaved>
+  <WBD_ProfSaveNothing>Nichts zu speichern: Wähle mindestens einen Teil, in dem etwas gespeichert ist.</WBD_ProfSaveNothing>
+  <WBD_ProfReplaceConfirm>Es gibt schon ein Profil „{0}“. Ersetzen?</WBD_ProfReplaceConfirm>
+  <WBD_ProfListSection>Deine Profile ({0})</WBD_ProfListSection>
+  <WBD_ProfNone>Noch keine Profile. Speichere oben eines oder importiere einen Teilen-Text unter Import und Export.</WBD_ProfNone>
+  <WBD_ProfApply>Anwenden</WBD_ProfApply>
+  <WBD_ProfApplyTip>Seine Vorlagen werden deine Vorgaben. In einer laufenden Kolonie werden auch seine Richtlinien und Kolonie-Einstellungen angewendet.</WBD_ProfApplyTip>
+  <WBD_ProfApplyConfirm>Profil „{0}“ anwenden?\n\nEs enthält: {1}.</WBD_ProfApplyConfirm>
+  <WBD_ProfApplyInGame>Seine Richtlinien und Kolonie-Einstellungen werden jetzt auf diese Kolonie angewendet.</WBD_ProfApplyInGame>
+  <WBD_ProfWouldReplace>Ersetzt deine gleichnamigen Vorlagen: {0}</WBD_ProfWouldReplace>
+  <WBD_ProfCopy>Teilen-Text kopieren</WBD_ProfCopy>
+  <WBD_ProfCopyTip>Kopiert dieses Profil als Text. Füg ihn in Discord oder einem Steam-Kommentar ein; andere importieren ihn unter Import und Export.</WBD_ProfCopyTip>
+  <WBD_ProfDuplicate>Duplizieren</WBD_ProfDuplicate>
+  <WBD_ProfDuplicated>„{0}“ als „{1}“ kopiert.</WBD_ProfDuplicated>
+  <WBD_ShareHelp>Ein Teilen-Text ist ein kurzer Text mit Vorlagen: Hier kopieren, irgendwo einfügen und auf einem anderen Rechner oder in einem anderen Spiel importieren. Er enthält nie einen Spielstand.</WBD_ShareHelp>
+  <WBD_ShareExportSection>Exportieren</WBD_ShareExportSection>
+  <WBD_ShareCopyLibrary>Ganze Bibliothek kopieren</WBD_ShareCopyLibrary>
+  <WBD_ShareCopyLibraryTip>Alle gespeicherten Vorgaben (ohne Profile) als ein Teilen-Text.</WBD_ShareCopyLibraryTip>
+  <WBD_ShareCopyProfile>Ein Profil kopieren ...</WBD_ShareCopyProfile>
+  <WBD_ShareCopied>„{0}“ in die Zwischenablage kopiert ({1} Zeichen).</WBD_ShareCopied>
+  <WBD_ShareExportNote>Vorlagen von Mods, die der andere nicht hat, bleiben erhalten und werden dort markiert; nichts geht kaputt.</WBD_ShareExportNote>
+  <WBD_ShareImportSection>Importieren</WBD_ShareImportSection>
+  <WBD_SharePaste>Aus Zwischenablage einfügen</WBD_SharePaste>
+  <WBD_ShareClear>Leeren</WBD_ShareClear>
+  <WBD_SharePasteHint>Oder in dieses Feld einfügen (beginnt mit SMD1:).</WBD_SharePasteHint>
+  <WBD_ShareHolds>„{0}“ vom {1}</WBD_ShareHolds>
+  <WBD_ShareStoreAs>Als Profil speichern unter:</WBD_ShareStoreAs>
+  <WBD_ShareImport>Als Profil importieren</WBD_ShareImport>
+  <WBD_ShareImportNote>Importieren speichert nur ein Profil. Deine Vorgaben ändern sich erst, wenn du es anwendest.</WBD_ShareImportNote>
+  <WBD_ShareImported>Als Profil „{0}“ importiert. Unter Profile kannst du es anwenden.</WBD_ShareImported>
+  <WBD_CardTitle>Set my Defaults: Womit startet diese Kolonie?</WBD_CardTitle>
+  <WBD_CardTitleJoined>Set my Defaults ist dieser Kolonie beigetreten</WBD_CardTitleJoined>
+  <WBD_CardPitch>Deine gespeicherten Aufträge, Regale, Zonen, Kolonisten und Richtlinien gehen in neue Kolonien mit. Wähle, womit diese startet.</WBD_CardPitch>
+  <WBD_CardPitchJoined>In dieser Kolonie wurde nichts geändert. Wähle, wie viel ab jetzt von selbst passiert.</WBD_CardPitchJoined>
+  <WBD_CardStartWith>Diese Kolonie startet mit</WBD_CardStartWith>
+  <WBD_CardMine>Meine Vorgaben</WBD_CardMine>
+  <WBD_CardRecommended>empfohlen</WBD_CardRecommended>
+  <WBD_CardMineEmpty>Noch nichts gespeichert. Speichere Aufträge, Regale, Zonen oder Kolonisten mit dem Vorgaben-Knopf, dann bekommen neue Kolonien sie.</WBD_CardMineEmpty>
+  <WBD_CardNoProfiles>Profile („Stammesstart“, „Mechanitor-Run“) erscheinen hier, sobald du eines speicherst: Vorgaben-Knopf, Bibliothek und Profile.</WBD_CardNoProfiles>
+  <WBD_CardAlsoPolicies>Auch meine gespeicherten Richtlinien in diese Kolonie übernehmen</WBD_CardAlsoPolicies>
+  <WBD_CardAlsoPoliciesTip>Legt deine gespeicherten Kleidungs-, Drogen-, Essens- und Leserichtlinien an und setzt die Startkolonisten auf deren Standard.</WBD_CardAlsoPoliciesTip>
+  <WBD_CardModes>Was von selbst passiert</WBD_CardModes>
+  <WBD_CardHint>Alles hier lässt sich später über den Vorgaben-Knopf (Bibliothek und Profile) oder in den Mod-Einstellungen ändern. Schließen der Karte behält deine Auswahl.</WBD_CardHint>
+  <WBD_CardUseForAll>Diese Auswahl für alle neuen Kolonien nutzen</WBD_CardUseForAll>
+  <WBD_CardUseForAllTip>Speichert „Was von selbst passiert“ als Vorlage für neue Spiele.</WBD_CardUseForAllTip>
+  <WBD_CardNeverAgain>Willkommenskarten nicht mehr zeigen</WBD_CardNeverAgain>
+  <WBD_CardNeverAgainTip>Für alle JB-Mods: Neue Kolonien nutzen dann ohne Nachfrage deine Vorgaben. Wieder einschalten in den Mod-Einstellungen, JB Framework.</WBD_CardNeverAgainTip>
+  <WBD_CardOpenLibrary>Bibliothek öffnen</WBD_CardOpenLibrary>
+  <WBD_CardStart>Los geht's</WBD_CardStart>
+  <WBD_CardApplied>Profil „{0}“ auf diese Kolonie angewendet:</WBD_CardApplied>
+  <WBD_CardAppliedPawns>Kolonisten-Vorlage für die Startkolonisten ({0})</WBD_CardAppliedPawns>
+  <WBD_PvCount_Bills_One>1 Auftrags-Vorlage</WBD_PvCount_Bills_One>
+  <WBD_PvCount_Storage_One>1 Regal-Vorlage</WBD_PvCount_Storage_One>
+  <WBD_PvCount_Plants_One>1 Pflanzbehälter-Vorlage</WBD_PvCount_Plants_One>
+  <WBD_PvCount_Zones_One>1 Zonen-Vorlage</WBD_PvCount_Zones_One>
+  <WBD_PvCount_Other_One>1 andere Vorlage</WBD_PvCount_Other_One>
+  <WBD_PvCount_Pawns_One>1 Kolonisten-Vorlage</WBD_PvCount_Pawns_One>
+</LanguageData>

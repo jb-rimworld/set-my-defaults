@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using JBFramework;
 using RimWorld;
@@ -42,8 +43,7 @@ namespace BetterWorkbenchDefaults
             Url = "https://github.com/jb-rimworld/set-my-defaults",
             LicenseLine = "MIT",
             HarmonyId = PackageId,
-            FirstStartPitch = "Set something up once, save it as a default, and every new workbench, shelf, zone and colonist gets it. "
-                + "Choose how much happens by itself below; everything can be changed later in Mod settings.",
+            // No FirstStartPitch: this mod draws its own welcome card (profiles), see Dialog_SmdStartCard. FW-REQUEST (7).
             Theme = new KitTheme { Accent = new Color(0.47f, 0.72f, 0.45f), MarkTex = "UI/WBD_Defaults" },
         })
         {
@@ -152,22 +152,11 @@ namespace BetterWorkbenchDefaults
                     "With Blueprints Forked, a blueprint remembers each building's bills and storage settings and recreates them when built.").InGroup("Compatibility").AsGlobal();
 
             // ---------------------------------------------------------------- presets (first-start card and Overview)
-            r.Preset("automatic", "Automatic (recommended)", "Everything on: new workbenches, shelves, zones and colonists get their defaults by themselves.", p =>
+            foreach (var m in Modes)
             {
-                foreach (var id in SmdSections.All) p.SetSection(id, true);
-                foreach (var key in AutoKeys) p.Set(key, true);
-            });
-            r.Preset("manual", "Only when I click Apply", "Nothing happens by itself; you apply presets with the Defaults button.", p =>
-            {
-                foreach (var id in SmdSections.All) p.SetSection(id, true);
-                foreach (var key in AutoKeys) p.Set(key, false);
-            });
-            r.Preset("buildings", "Buildings and zones only", "Bills, shelves and zones; colonists, policies and colony settings are left alone.", p =>
-            {
-                p.SetSection(SmdSections.Buildings, true); p.SetSection(SmdSections.Zones, true); p.SetSection(SmdSections.Library, true);
-                p.SetSection(SmdSections.Pawns, false); p.SetSection(SmdSections.Policies, false); p.SetSection(SmdSections.Colony, false);
-                foreach (var key in AutoKeys) p.Set(key, true);
-            });
+                var mode = m;
+                r.Preset(mode.Id, mode.LabelEn, mode.DescEn, mode.Apply).HighlightWhen(mode.Matches);
+            }
 
             // ---------------------------------------------------------------- compatibility (G13c)
             r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
@@ -183,12 +172,13 @@ namespace BetterWorkbenchDefaults
             r.Compat("Anomaly", KitDetect.AnomalyId, "Medical defaults for entities and ghouls are part of the colony settings.");
 
             // ---------------------------------------------------------------- custom pages (presets and the library are not plain numbers)
-            r.Page("buildingPresets", "Building presets", SmdPages.DrawBuildingPresets).WithOrder(15).InSection(SmdSections.Buildings);
-            r.Page("colonistPresets", "Colonist presets", SmdPages.DrawColonistPresets).WithOrder(35).InSection(SmdSections.Pawns);
+            // "Saved defaults" lists everything stored (all areas); profiles and import/export belong to the Library area. The same
+            // pages open in game from the Defaults buttons (Dialog_SmdLibrary), so the common path never needs Mod settings.
+            r.Page(SmdLibraryUi.PageLibrary, "My defaults", SmdLibraryUi.DrawLibrary).WithOrder(5);
             r.Page("policies", "Policy set", SmdPages.DrawPolicies).WithOrder(45).InSection(SmdSections.Policies);
             r.Page("colony", "Colony defaults", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
-            // The profile / share-string UI is drawn by SmdPages.DrawLibrary (hook for the next wave: SmdPages.LibraryPage).
-            r.Page("library", "Library file", SmdPages.DrawLibrary).WithOrder(65).InSection(SmdSections.Library);
+            r.Page(SmdLibraryUi.PageProfiles, "Profiles", SmdLibraryUi.DrawProfiles).WithOrder(65).InSection(SmdSections.Library);
+            r.Page(SmdLibraryUi.PageShare, "Import and export", SmdLibraryUi.DrawShare).WithOrder(66).InSection(SmdSections.Library);
 
             // ---------------------------------------------------------------- per save data (removal-safe: inside the framework's component)
             r.SaveData(SmdGameData.Expose, SmdGameData.Reset);
@@ -199,6 +189,58 @@ namespace BetterWorkbenchDefaults
         {
             "smd.autoApplyOnPlace", "smd.storageAutoApplyOnBuild", "smd.plantAutoApplyOnBuild",
             "smd.zoneAutoApplyOnCreate", "smd.growingAutoApplyOnCreate", "smd.autoApplyToNewPawns",
+        };
+
+        /// <summary>The mod was added to a running save: its welcome card offers the "what happens by itself" choice once.</summary>
+        protected override void OnGameLoaded(bool joinedExistingSave)
+        {
+            if (joinedExistingSave && SmdGameData.startCard == SmdGameData.StartNone)
+                SmdGameData.startCard = SmdGameData.StartJoined;
+        }
+
+        /// <summary>One "what happens by itself" choice: a framework preset (Overview) and a card on this mod's welcome card.</summary>
+        public sealed class Mode
+        {
+            public string Id, LabelEn, DescEn;
+            public Action<KitProfile> Apply;
+            public Func<KitProfile, bool> Matches;
+            public string Label => Tr("SMD.Preset." + Id, LabelEn);
+            public string Desc => Tr("SMD.Preset." + Id + ".Desc", DescEn);
+            static string Tr(string key, string en) => key.CanTranslate() ? key.Translate().ToString() : en;
+        }
+
+        static bool AllAuto(KitProfile p, bool on) => AutoKeys.All(key => p.GetBool(key) == on);
+
+        /// <summary>Automatic (recommended) / Only when I click Apply / Buildings and zones only.</summary>
+        public static readonly List<Mode> Modes = new List<Mode>
+        {
+            new Mode
+            {
+                Id = "automatic", LabelEn = "Automatic (recommended)",
+                DescEn = "Everything on: new workbenches, shelves, zones and colonists get their defaults by themselves.",
+                Apply = p => { foreach (var id in SmdSections.All) p.SetSection(id, true); foreach (var key in AutoKeys) p.Set(key, true); },
+                Matches = p => SmdSections.All.All(p.SectionOn) && AllAuto(p, true),
+            },
+            new Mode
+            {
+                Id = "manual", LabelEn = "Only when I click Apply",
+                DescEn = "Nothing happens by itself; you apply presets with the Defaults button.",
+                Apply = p => { foreach (var id in SmdSections.All) p.SetSection(id, true); foreach (var key in AutoKeys) p.Set(key, false); },
+                Matches = p => SmdSections.All.All(p.SectionOn) && AllAuto(p, false),
+            },
+            new Mode
+            {
+                Id = "buildings", LabelEn = "Buildings and zones only",
+                DescEn = "Bills, shelves and zones; colonists, policies and colony settings are left alone.",
+                Apply = p =>
+                {
+                    p.SetSection(SmdSections.Buildings, true); p.SetSection(SmdSections.Zones, true); p.SetSection(SmdSections.Library, true);
+                    p.SetSection(SmdSections.Pawns, false); p.SetSection(SmdSections.Policies, false); p.SetSection(SmdSections.Colony, false);
+                    foreach (var key in AutoKeys) p.Set(key, true);
+                },
+                Matches = p => p.SectionOn(SmdSections.Buildings) && p.SectionOn(SmdSections.Zones) && !p.SectionOn(SmdSections.Pawns)
+                    && !p.SectionOn(SmdSections.Policies) && !p.SectionOn(SmdSections.Colony) && AllAuto(p, true),
+            },
         };
 
         protected override void OnDefsLoaded()
@@ -261,8 +303,8 @@ namespace BetterWorkbenchDefaults
             if (string.IsNullOrEmpty(pageId)) k.OpenSettings(); else k.OpenSettings(pageId);
         }
 
-        /// <summary>Old entry point of the pawn "Manage" action.</summary>
-        public static void OpenSettingsPawnTab() => OpenSettings("page:colonistPresets");
+        /// <summary>Old entry point of the pawn "Manage" action: the in-game library window on the colonist presets.</summary>
+        public static void OpenSettingsPawnTab() => Dialog_SmdLibrary.Open(SmdLibraryUi.PageLibrary, "Pawns");
     }
 
     /// <summary>

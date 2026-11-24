@@ -60,8 +60,7 @@ namespace BetterWorkbenchDefaults
                 }
             }
 
-            if (DefaultBillsDatabase.AllSavedDefNames().Count > 0)
-                options.Add(new FloatMenuOption("WBD_ManagePresets".Translate(), OpenSettings));
+            options.Add(new FloatMenuOption("WBD_OpenLibrary".Translate(), () => OpenLibrary(thing)));
 
             Find.WindowStack.Add(new FloatMenu(options));
         }
@@ -179,9 +178,15 @@ namespace BetterWorkbenchDefaults
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        public static void OpenSettings()
+        /// <summary>The in-game library window, scrolled to this building's list (bills, storage or plants).</summary>
+        public static void OpenLibrary(Thing thing)
         {
-            WBD_Mod.OpenSettings("page:buildingPresets");
+            string area = null;
+            var set = thing != null ? DefaultBillsDatabase.GetStored(thing.def.defName) : null;
+            if (set != null && !set.IsEmpty) area = SmdPreview.AreaOf(set).ToString();
+            else if (thing is IBillGiver) area = nameof(LibArea.Bills);
+            else if (thing is IStoreSettingsParent) area = nameof(LibArea.Storage);
+            Dialog_SmdLibrary.Open(SmdLibraryUi.PageLibrary, area);
         }
 
         internal static string SaveFailedText() =>
@@ -233,7 +238,7 @@ namespace BetterWorkbenchDefaults
                 if (set.presets.Count > 1)
                     options.Add(new FloatMenuOption("WBD_SetDefaultFor".Translate(keyLabel), () => OpenSetDefaultMenu(key, keyLabel)));
             }
-            options.Add(new FloatMenuOption("WBD_ManagePresets".Translate(), OpenSettings));
+            options.Add(new FloatMenuOption("WBD_OpenLibrary".Translate(), () => Dialog_SmdLibrary.Open(SmdLibraryUi.PageLibrary, nameof(LibArea.Zones))));
             Find.WindowStack.Add(new FloatMenu(options));
         }
 

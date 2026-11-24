@@ -87,11 +87,11 @@
   <SMD.Preset.manual.Desc>Nothing happens by itself; you apply presets with the Defaults button.</SMD.Preset.manual.Desc>
   <SMD.Preset.buildings>Buildings and zones only</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Bills, shelves and zones; colonists, policies and colony settings are left alone.</SMD.Preset.buildings.Desc>
-  <SMD.Page.buildingPresets>Building presets</SMD.Page.buildingPresets>
-  <SMD.Page.colonistPresets>Colonist presets</SMD.Page.colonistPresets>
+  <SMD.Page.library>My defaults</SMD.Page.library>
   <SMD.Page.policies>Policy set</SMD.Page.policies>
   <SMD.Page.colony>Colony defaults</SMD.Page.colony>
-  <SMD.Page.library>Library file</SMD.Page.library>
+  <SMD.Page.profiles>Profiles</SMD.Page.profiles>
+  <SMD.Page.share>Import and export</SMD.Page.share>
   <SMD.Compat.NiceBillTab.What>The Defaults button sits as an icon in its bill window; applied bills show up at once.</SMD.Compat.NiceBillTab.What>
   <SMD.Compat.NiceInventoryTab.What>Its bundled bill tab is supported the same way as Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
   <SMD.Compat.NoMaxBillsRedux.What>Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.</SMD.Compat.NoMaxBillsRedux.What>
