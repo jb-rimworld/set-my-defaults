@@ -32,7 +32,7 @@ namespace BetterWorkbenchDefaults
                 yield return gizmo;
 
             var settings = WBD_Mod.Settings;
-            if (settings == null || !settings.showGizmo)
+            if (settings == null || !settings.showGizmo || !SmdSections.On(SmdSections.Buildings))
                 yield break;
 
             // Any building we can capture a config from (bills, storage, or a PRF splitter).

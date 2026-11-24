@@ -112,6 +112,8 @@ namespace BetterWorkbenchDefaults
                     e.snapshot.storage.ApplyTo(storeParent);
                 if (e.snapshot.splitterLinks != null && e.snapshot.splitterLinks.Count > 0)
                     PrfSplitter.Apply(b, e.snapshot.splitterLinks);
+                if (e.snapshot.plant != null && b is IPlantToGrowSettable settable)
+                    e.snapshot.plant.ApplyTo(settable);
                 e.nonBillsApplied = true;
             }
         }
@@ -144,6 +146,7 @@ namespace BetterWorkbenchDefaults
                 if (bill != null)
                 {
                     stack.AddBill(bill);
+                    template.ApplyMapBound(bill);
                     NiceBillTabCompat.RequestRefresh();
                 }
                 e.applied[i] = true;

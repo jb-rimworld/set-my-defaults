@@ -79,7 +79,7 @@ namespace BetterWorkbenchDefaults
         public static void Postfix(ITab_Bills __instance)
         {
             var settings = WBD_Mod.Settings;
-            if (settings == null || !settings.showTabButton)
+            if (settings == null || !settings.showTabButton || !SmdSections.On(SmdSections.Buildings))
                 return;
 
             var selected = Find.Selector.SingleSelectedThing;

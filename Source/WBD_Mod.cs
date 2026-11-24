@@ -44,6 +44,14 @@ namespace BetterWorkbenchDefaults
             TryPatch(harmony, typeof(Patch_Pawn_SpawnSetup));
             TryPatch(harmony, typeof(Patch_Pawn_SetFaction));
 
+            // 2.0: new construction (storage/plant defaults), zones (gizmos + defaults for new zones).
+            TryPatch(harmony, typeof(Patch_Frame_CompleteConstruction));
+            TryPatch(harmony, typeof(Patch_BlueprintStorage_PostMake));
+            TryPatch(harmony, typeof(Patch_ZoneStockpile_GetGizmos));
+            TryPatch(harmony, typeof(Patch_ZoneGrowing_GetGizmos));
+            TryPatch(harmony, typeof(Patch_DesignatorStockpile_MakeNewZone));
+            TryPatch(harmony, typeof(Patch_DesignatorGrowing_MakeNewZone));
+
             // Native >15 bills: register the self-contained bill-cap transpiler whenever no external
             // "No Max Bills" mod already raised the cap (interop, no double patch). The patched code reads
             // BillCap.Current() live, so the setting works without a restart (2.0, M3). Wrapped so a future

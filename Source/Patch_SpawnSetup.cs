@@ -42,9 +42,13 @@ namespace BetterWorkbenchDefaults
         }
 
         /// <summary>
-        /// Shared apply logic. Blueprint-placed config wins; otherwise per-type default bills
-        /// are applied to a genuinely fresh bill giver (empty stack). Storage/splitter are NOT
-        /// auto-applied here (only via blueprint or manual apply) to avoid clobbering re-spawns.
+        /// Shared apply logic. Blueprint-placed config wins; otherwise the building's default (own, else bench family):
+        ///  - bills to a fresh bill giver (empty stack), as in 1.x;
+        ///  - storage filter and plant ONLY on new construction (inside Frame.CompleteConstruction), never on a
+        ///    reinstall, a gravship landing or a load, so a shelf you moved keeps its settings (M9/M10).
+        /// Storage buildings that join storage groups get their default through their blueprint instead
+        /// (<see cref="Patch_BlueprintStorage_PostMake"/>), because vanilla copies the blueprint's settings over the
+        /// finished building right after it spawns.
         /// </summary>
         internal static void OnSpawn(Building building, Map map)
         {
@@ -55,18 +59,24 @@ namespace BetterWorkbenchDefaults
                     return;
 
                 var settings = WBD_Mod.Settings;
-                if (settings == null || !settings.autoApplyOnPlace)
+                if (settings == null || !SmdSections.On(SmdSections.Buildings))
                     return;
-                if (!(building is IBillGiver billGiver))
-                    return;
-                var stack = billGiver.BillStack;
-                if (stack == null || stack.Count > 0)
+
+                var parts = ConfigParts.None;
+                if (settings.autoApplyOnPlace && building is IBillGiver billGiver && billGiver.BillStack != null && billGiver.BillStack.Count == 0)
+                    parts |= ConfigParts.Bills;
+                bool newBuild = Patch_Frame_CompleteConstruction.Running;
+                if (newBuild && settings.storageAutoApplyOnBuild && building is IStoreSettingsParent && !(building is IStorageGroupMember))
+                    parts |= ConfigParts.Storage;
+                if (newBuild && settings.plantAutoApplyOnBuild && building is IPlantToGrowSettable)
+                    parts |= ConfigParts.Plant;
+                if (parts == ConfigParts.None)
                     return;
 
                 var config = DefaultBillsDatabase.GetDefaultConfig(building.def);
-                if (config == null || config.bills == null || config.bills.Count == 0)
+                if (config == null || config.IsEmpty)
                     return;
-                config.ApplyTo(building, replaceBills: false, includeNonBills: false);
+                config.ApplyTo(building, replaceBills: false, parts);
             }
             catch (Exception e)
             {
