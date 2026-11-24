@@ -916,7 +916,7 @@ namespace BetterWorkbenchDefaults.Suites
             t.Check(!text.Contains("BetterWorkbenchDefaults.PawnDefaultsGameComponent") && !text.Contains("BetterWorkbenchDefaults.WBD_PendingConfigs"), "no class of this mod in the save (removal-safe)");
             t.Check(!text.Contains("Class=\"BetterWorkbenchDefaults."), "no Class attribute naming this mod anywhere in the save");
             t.Check(text.Contains("<rosterVersion>1</rosterVersion>") && text.Contains("<known>"), "the roster is saved inside the framework's node");
-            t.Check(Current.Game.GetComponent<PawnDefaultsGameComponent>() != null && t.Map.GetComponent<WBD_PendingConfigs>() != null, "our components are back in the running game after saving");
+            t.Check(Current.Game.components.Count(c => c is PawnDefaultsGameComponent) == 1 && t.Map.components.Count(c => c is WBD_PendingConfigs) == 1, "exactly one of each of our components is back in the running game after saving");
             // read the node back the way a load does
             SmdGameData.Reset();
             t.Check(SmdGameData.KnownCount == 0, "reset clears the data (as before a load)");

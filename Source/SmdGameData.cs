@@ -143,7 +143,10 @@ namespace BetterWorkbenchDefaults
 
         static void Finalizer(Game __instance, List<GameComponent> __state)
         {
-            if (__state != null && __instance?.components != null) __instance.components.AddRange(__state);
+            // Game.ExposeSmallComponents fills missing components only while loading; drop any fresh copy anyway.
+            if (__state == null || __instance?.components == null) return;
+            __instance.components.RemoveAll(c => c is PawnDefaultsGameComponent && !__state.Contains(c));
+            __instance.components.AddRange(__state);
         }
     }
 
@@ -162,7 +165,11 @@ namespace BetterWorkbenchDefaults
 
         static void Finalizer(Map __instance, List<MapComponent> __state)
         {
-            if (__state != null && __instance?.components != null) __instance.components.AddRange(__state);
+            // Map.ExposeComponents calls FillComponents in every mode, so while saving it made a fresh copy of the component we took
+            // out: drop that copy, put ours back (found by kit.saveload: two components after a save).
+            if (__state == null || __instance?.components == null) return;
+            __instance.components.RemoveAll(c => c is WBD_PendingConfigs && !__state.Contains(c));
+            __instance.components.AddRange(__state);
         }
     }
 }

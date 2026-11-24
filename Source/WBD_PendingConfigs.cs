@@ -217,10 +217,13 @@ namespace BetterWorkbenchDefaults
             if (Scribe.mode != LoadSaveMode.LoadingVars && Scribe.mode != LoadSaveMode.ResolvingCrossRefs && Scribe.mode != LoadSaveMode.PostLoadInit)
                 return;
             Scribe_Collections.Look(ref _legacy, "wbdPending", LookMode.Deep);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && _legacy != null)
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                _legacy.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
-                SmdGameData.PendingFor(map).AddRange(_legacy);
+                if (_legacy != null)
+                {
+                    _legacy.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
+                    SmdGameData.PendingFor(map).AddRange(_legacy);
+                }
                 _legacy = null;
             }
         }
