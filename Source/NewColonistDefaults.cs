@@ -168,13 +168,16 @@ namespace BetterWorkbenchDefaults
         /// (they were defaulted with the old one seconds before, while the map was generated). Same rules as for a new colonist
         /// (axes, children, Free Will). Returns how many colonists were changed.
         /// </summary>
-        public static int ApplyDefaultToStartingColonists()
+        public static int ApplyDefaultToStartingColonists() => ApplyDefaultToStartingColonists(null);
+
+        /// <summary>The same with a given colonist preset (a profile's default, read straight from the profile); null = the library's.</summary>
+        public static int ApplyDefaultToStartingColonists(PawnConfigSnapshot preset)
         {
             var comp = Current.Game?.GetComponent<PawnDefaultsGameComponent>();
             var settings = WBD_Mod.Settings;
             if (comp == null || settings == null || !settings.autoApplyToNewPawns || !SmdSections.On(SmdSections.Pawns))
                 return 0;
-            var config = PawnDefaultsStore.GetDefaultConfig();
+            var config = preset ?? PawnDefaultsStore.GetDefaultConfig();
             if (config == null || config.IsEmpty)
                 return 0;
             int n = 0;

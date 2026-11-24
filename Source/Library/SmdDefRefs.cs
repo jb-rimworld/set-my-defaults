@@ -18,15 +18,20 @@ namespace BetterWorkbenchDefaults
 
         public bool IsEmpty => inactiveMods.Count == 0 && unknownDefs.Count == 0;
 
+        // de-duplication in constant time (a library with thousands of unknown items merged many reports in quadratic time)
+        HashSet<string> modIds, defSet;
+
         public void Merge(MissingReport other)
         {
-            if (other == null)
+            if (other == null || other.IsEmpty)
                 return;
+            if (modIds == null || modIds.Count != inactiveMods.Count) modIds = new HashSet<string>(inactiveMods.Select(m => m.id));
+            if (defSet == null || defSet.Count != unknownDefs.Count) defSet = new HashSet<string>(unknownDefs);
             foreach (var m in other.inactiveMods)
-                if (inactiveMods.All(x => x.id != m.id))
+                if (modIds.Add(m.id))
                     inactiveMods.Add(m);
             foreach (var d in other.unknownDefs)
-                if (!unknownDefs.Contains(d))
+                if (defSet.Add(d))
                     unknownDefs.Add(d);
         }
 
@@ -155,8 +160,24 @@ namespace BetterWorkbenchDefaults
             return r;
         }
 
-        public static MissingReport Missing(StoredPreset p) => p == null ? new MissingReport() : Missing(p.config, p.requiredMods);
-        public static MissingReport Missing(StoredBlock b) => b == null ? new MissingReport() : Missing(b.config, b.requiredMods);
+        // Results per stored object and library revision: the library window and the welcome card ask every frame, and the answer
+        // only changes when the library does (the set of loaded mods and defs is fixed for the session).
+        sealed class Cached { public int rev; public MissingReport report; }
+        static readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, Cached> cache = new System.Runtime.CompilerServices.ConditionalWeakTable<object, Cached>();
+
+        /// <summary>Cached per object and library revision (callers must not change the returned report).</summary>
+        internal static MissingReport CachedFor(object key, Func<MissingReport> make)
+        {
+            if (key == null) return make();
+            int rev = SmdLibraryStore.Revision;
+            if (cache.TryGetValue(key, out var c) && c.rev == rev) return c.report;
+            var r = make();
+            cache.AddOrUpdate(key, new Cached { rev = rev, report = r });
+            return r;
+        }
+
+        public static MissingReport Missing(StoredPreset p) => p == null ? new MissingReport() : CachedFor(p, () => Missing(p.config, p.requiredMods));
+        public static MissingReport Missing(StoredBlock b) => b == null ? new MissingReport() : CachedFor(b, () => Missing(b.config, b.requiredMods));
 
         public static bool IsModActive(string packageId)
         {

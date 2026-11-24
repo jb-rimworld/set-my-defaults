@@ -85,6 +85,18 @@ namespace BetterWorkbenchDefaults
             return PolicyDefaultsController.ApplySetToColony(set);
         }
 
+        /// <summary>Any stored policy block (a profile's) into the current colony, without touching the library.</summary>
+        public static bool ApplyBlockToCurrentColony(StoredBlock block)
+        {
+            if (Current.Game == null || Scribe.mode != LoadSaveMode.Inactive || block?.config == null)
+                return false;
+            var set = new PolicyDefaultsSet();
+            if (!SmdScribe.Read(block.config, set.ExposeData))
+                return false;
+            set.NormalizeDefault();
+            return !set.IsEmpty && PolicyDefaultsController.ApplySetToColony(set);
+        }
+
         public static void ClearAll() =>
             SmdLibraryStore.Mutate(lib =>
             {

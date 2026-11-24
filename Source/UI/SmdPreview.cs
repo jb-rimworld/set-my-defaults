@@ -45,7 +45,22 @@ namespace BetterWorkbenchDefaults
 
         // ------------------------------------------------------------------------------------------------ one line per content
         /// <summary>"4 bill presets for 3 workbenches · 1 shelf preset · 2 colonist presets · policies · colony settings".</summary>
+        sealed class LineCache { public int rev; public string lang; public string text; }
+        static readonly System.Runtime.CompilerServices.ConditionalWeakTable<SmdContent, LineCache> lines = new System.Runtime.CompilerServices.ConditionalWeakTable<SmdContent, LineCache>();
+
+        /// <summary>The one-line summary, cached per content object, library revision and language (asked every frame by the card).</summary>
         public static string OneLine(SmdContent c)
+        {
+            if (c == null) return OneLineUncached(null);
+            int rev = SmdLibraryStore.Revision;
+            string lang = LanguageDatabase.activeLanguage?.folderName;
+            if (lines.TryGetValue(c, out var lc) && lc.rev == rev && lc.lang == lang) return lc.text;
+            string t = OneLineUncached(c);
+            lines.AddOrUpdate(c, new LineCache { rev = rev, lang = lang, text = t });
+            return t;
+        }
+
+        static string OneLineUncached(SmdContent c)
         {
             if (c == null || c.IsEmpty) return "WBD_PvNothing".Translate();
             var parts = new List<string>();

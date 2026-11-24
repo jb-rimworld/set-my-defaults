@@ -218,11 +218,21 @@ namespace BetterWorkbenchDefaults
         /// the new one (vanilla ResetMedicalCare); pawns listed in <paramref name="keepMedical"/> are left alone.
         /// Returns false when nothing is saved or no game runs.
         /// </summary>
-        public static bool ApplyToCurrentGame(HashSet<int> keepMedical = null)
+        public static bool ApplyToCurrentGame(HashSet<int> keepMedical = null) => ApplyTemplate(Get(), keepMedical);
+
+        /// <summary>Any stored colony block (a profile's) into the running game, without touching the library.</summary>
+        public static bool ApplyBlockToCurrentGame(StoredBlock block, HashSet<int> keepMedical = null)
+        {
+            if (block?.config == null)
+                return false;
+            var t = new ColonySettingsTemplate();
+            return SmdScribe.Read(block.config, t.ExposeData) && ApplyTemplate(t, keepMedical);
+        }
+
+        static bool ApplyTemplate(ColonySettingsTemplate t, HashSet<int> keepMedical)
         {
             if (Current.Game == null || Scribe.mode != LoadSaveMode.Inactive)
                 return false;
-            var t = Get();
             if (t == null)
                 return false;
             var ps = Find.PlaySettings;
@@ -296,31 +306,45 @@ namespace BetterWorkbenchDefaults
         /// The library's colony settings into the running (new) colony, as at a new game's start. Used by the first-start card after
         /// a profile was chosen. False when nothing is saved or the area is off.
         /// </summary>
-        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp)
+        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp) => ApplyColonyToColony(comp, null, null);
+
+        /// <summary>
+        /// Like <see cref="ApplyColonyToColony(PawnDefaultsGameComponent)"/> with a given block and colonist preset (a profile's, read
+        /// straight from the profile, so the colony gets the profile even when the library could not be written). Null = the library's.
+        /// </summary>
+        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp, StoredBlock block, PawnConfigSnapshot preset)
         {
             var s = WBD_Mod.Settings;
-            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Colony) || !ColonySettingsStore.Has())
+            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Colony))
                 return false;
-            var preset = PawnDefaultsStore.GetDefaultConfig();
+            if (block == null && !ColonySettingsStore.Has())
+                return false;
+            preset = preset ?? PawnDefaultsStore.GetDefaultConfig();
             var keep = (preset?.misc != null && s.pawnApplyMedical) ? PresetPawns(comp, preset, s) : null;
-            return ColonySettingsStore.ApplyToCurrentGame(keep);
+            return block != null ? ColonySettingsStore.ApplyBlockToCurrentGame(block, keep) : ColonySettingsStore.ApplyToCurrentGame(keep);
         }
 
         /// <summary>
         /// The library's policy set into the running (new) colony: policies are created, the colony default is set, and pawns still on
         /// the old default policy move to the new one (kinds the colonist preset sets are skipped). False when nothing was applied.
         /// </summary>
-        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp)
+        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp) => ApplyPoliciesToColony(comp, null, null);
+
+        /// <summary>Like <see cref="ApplyPoliciesToColony(PawnDefaultsGameComponent)"/> with a given policy block and colonist preset
+        /// (a profile's); null = the library's.</summary>
+        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp, StoredBlock block, PawnConfigSnapshot preset)
         {
             var s = WBD_Mod.Settings;
-            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Policies) || !PolicyDefaultsStore.HasSet())
+            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Policies))
                 return false;
-            var preset = PawnDefaultsStore.GetDefaultConfig();
+            if (block == null && !PolicyDefaultsStore.HasSet())
+                return false;
+            preset = preset ?? PawnDefaultsStore.GetDefaultConfig();
             var byPreset = PresetPawns(comp, preset, s);
             var oldDefaults = new Dictionary<PolicyKind, object>();
             foreach (var kind in PolicyDefaultsController.AllKinds)
                 oldDefaults[kind] = PolicyDefaultsController.DefaultPolicy(kind);
-            if (!PolicyDefaultsStore.ApplyToCurrentColony())
+            if (!(block != null ? PolicyDefaultsStore.ApplyBlockToCurrentColony(block) : PolicyDefaultsStore.ApplyToCurrentColony()))
                 return false;
             int moved = 0;
             foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)

@@ -25,10 +25,17 @@ namespace BetterWorkbenchDefaults
         public readonly bool Joined;
         /// <summary>"" = my defaults, else a profile name.</summary>
         public string Choice = "";
-        public bool AlsoPolicies = true;
+        /// <summary>Starts from "Apply the saved policies to new games" (off by default: applying a set is the player's decision).</summary>
+        public bool AlsoPolicies;
         public bool UseForAll, NeverAgain;
+        /// <summary>The player confirmed that the chosen profile may replace presets of the same name (tests set it).</summary>
+        public bool ReplaceConfirmed;
+        /// <summary>Where the "what happens by itself" strip and the scrolling start choices were drawn last (window content coordinates; tests).</summary>
+        public Rect ModesRect, BodyRect, ContentRect;
         bool finished, openLibrary;
         Vector2 scroll; float bodyH = 400f;
+        // what the chosen profile would replace, per choice and library revision (not recomputed every frame)
+        string replFor; int replRev = -1; List<string> repl = new List<string>();
 
         public override Vector2 InitialSize => KitUI.Size(880f, 640f, 680f, 460f, 0.94f, 0.92f);
 
@@ -37,6 +44,36 @@ namespace BetterWorkbenchDefaults
             Joined = joined;
             forcePause = true; absorbInputAroundWindow = true; closeOnClickedOutside = false; doCloseX = false; doCloseButton = false;
             closeOnAccept = false; closeOnCancel = false; draggable = false; preventSave = false;
+            AlsoPolicies = WBD_Mod.Settings?.policyAutoApplyOnNewGame ?? false;
+        }
+
+        /// <summary>Library entries the chosen profile would overwrite with a different version ("Electric stove: Kitchen").</summary>
+        public List<string> WouldReplace()
+        {
+            if (Joined || string.IsNullOrEmpty(Choice)) return new List<string>();
+            if (replFor != Choice || replRev != SmdLibraryStore.Revision)
+            {
+                replFor = Choice; replRev = SmdLibraryStore.Revision;
+                try { repl = SmdLibraryApi.Preview(Choice)?.wouldReplace ?? new List<string>(); }
+                catch (Exception e) { repl = new List<string>(); WBD_Log.Warn("Could not preview the profile \"" + Choice + "\": " + e.Message); }
+            }
+            return repl;
+        }
+
+        /// <summary>Start (or open the library): when the chosen profile replaces presets of the same name, the player confirms first
+        /// and sees which ones (their old versions are kept as a profile anyway).</summary>
+        public void TryClose(bool thenLibrary)
+        {
+            var r = WouldReplace();
+            if (r.Count > 0 && !ReplaceConfirmed)
+            {
+                string list = string.Join(", ", r.Take(12)) + (r.Count > 12 ? " …" : "");
+                Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("WBD_CardReplaceConfirm".Translate(Choice, list, "WBD_BackupProfileName".Translate(Choice)),
+                    () => { ReplaceConfirmed = true; openLibrary = thenLibrary; Close(); }));
+                return;
+            }
+            openLibrary = thenLibrary;
+            Close();
         }
 
         public override void PreClose() { base.PreClose(); Finish(); }
@@ -91,17 +128,88 @@ namespace BetterWorkbenchDefaults
             float checksW = br.width - startW - libW - 30f;
             SmdUi.Check(br.x, br.y + 8f, checksW, "WBD_CardUseForAll".Translate(), ref UseForAll, false, "WBD_CardUseForAllTip".Translate());
             SmdUi.Check(br.x, br.y + 42f, checksW, "WBD_CardNeverAgain".Translate(), ref NeverAgain, false, "WBD_CardNeverAgainTip".Translate());
-            if (Widgets.ButtonText(new Rect(br.xMax - startW - libW - 10f, br.y + 22f, libW, 36f), lib)) { openLibrary = true; Close(); }
+            if (Widgets.ButtonText(new Rect(br.xMax - startW - libW - 10f, br.y + 22f, libW, 36f), lib)) TryClose(true);
             var sr = new Rect(br.xMax - startW, br.y + 22f, startW, 36f);
             Widgets.DrawBoxSolid(sr, SmdUi.AccentSoft);
-            if (Widgets.ButtonText(sr, start)) Close();
+            if (Widgets.ButtonText(sr, start)) TryClose(false);
+
+            if (Joined)
+            {
+                // the mod joined an existing colony: only the "what happens by itself" choice
+                ModesRect = new Rect(inRect.x, y, inRect.width, ModesHeight(inRect.width, false)); ContentRect = inRect; BodyRect = default;
+                try { Modes(ModesRect, false); }
+                finally { SmdUi.Reset(); }
+                return;
+            }
+
+            // "what happens by itself" stays in view above the footer (compact on small screens); the start choices scroll above it
+            bool compact = inRect.height < 600f;
+            float modesH = ModesHeight(inRect.width, compact);
+            var mr = new Rect(inRect.x, br.y - 6f - modesH, inRect.width, modesH);
+            ModesRect = mr; ContentRect = inRect;
+            try { Modes(mr, compact); }
+            finally { SmdUi.Reset(); }
 
             // body
-            var outer = new Rect(inRect.x, y, inRect.width, br.y - y - 6f);
+            var outer = new Rect(inRect.x, y, inRect.width, mr.y - y - 6f);
+            BodyRect = outer;
+            if (outer.height < 40f) return;
             var view = new Rect(0f, 0f, outer.width - 18f, Mathf.Max(bodyH, outer.height - 2f));
             Widgets.BeginScrollView(outer, ref scroll, view);
             try { bodyH = Body(view.width) + 6f; }
             finally { Widgets.EndScrollView(); SmdUi.Reset(); }
+        }
+
+        /// <summary>Height of the "what happens by itself" strip (full: label + description per card; compact: label only, the
+        /// description as tooltip).</summary>
+        float ModesHeight(float w, bool compact)
+        {
+            var modes = WBD_Mod.Modes;
+            int perRow = w >= (compact ? 420f : 640f) ? 3 : 1;
+            float gap = 12f, pw = (w - gap * (perRow - 1)) / perRow;
+            float cardH = CardH(pw, compact);
+            float h = SectionH(w) + ((modes.Count + perRow - 1) / perRow) * (cardH + gap) - gap + 6f;
+            if (!compact) h += SmdUi.TextH("WBD_CardHint".Translate(), w, GameFont.Tiny) + 4f;
+            return h;
+        }
+
+        static float SectionH(float w) => 34f;
+
+        float CardH(float pw, bool compact)
+        {
+            float cardH = compact ? 36f : 64f;
+            foreach (var m in WBD_Mod.Modes)
+                cardH = Mathf.Max(cardH, compact
+                    ? 10f + SmdUi.TextH(m.Label, pw - 24f, GameFont.Small) + 8f
+                    : 14f + SmdUi.TextH(m.Label, pw - 24f, GameFont.Small) + 4f + SmdUi.TextH(m.Desc, pw - 24f, GameFont.Tiny) + 12f);
+            return cardH;
+        }
+
+        void Modes(Rect area, bool compact)
+        {
+            float w = area.width, y = area.y;
+            SmdUi.Section(area.x, y, w, "WBD_CardModes".Translate());
+            y += SectionH(w);
+            var k = WBD_Mod.K;
+            var modes = WBD_Mod.Modes;
+            int perRow = w >= (compact ? 420f : 640f) ? 3 : 1;
+            float gap = 12f, pw = (w - gap * (perRow - 1)) / perRow, cardH = CardH(pw, compact);
+            for (int i = 0; i < modes.Count; i++)
+            {
+                var m = modes[i];
+                var r = new Rect(area.x + (i % perRow) * (pw + gap), y + (i / perRow) * (cardH + gap), pw, cardH);
+                bool sel = k?.SaveProfile != null && m.Matches(k.SaveProfile);
+                Widgets.DrawBoxSolid(r, sel ? SmdUi.AccentSoft : SmdUi.CardBg);
+                GUI.color = sel ? SmdUi.Accent : SmdUi.Line; Widgets.DrawBox(r, sel ? 2 : 1); GUI.color = Color.white;
+                if (Mouse.IsOver(r) && !sel) Widgets.DrawHighlight(r);
+                float lh = SmdUi.TextH(m.Label, r.width - 24f, GameFont.Small);
+                SmdUi.Para(r.x + 12f, r.y + (compact ? (cardH - lh) / 2f : 10f), r.width - 24f, m.Label, sel ? SmdUi.Accent : Color.white);
+                if (compact) TooltipHandler.TipRegion(r, m.Desc);
+                else SmdUi.Para(r.x + 12f, r.y + 14f + lh, r.width - 24f, m.Desc, SmdUi.Grey, GameFont.Tiny);
+                if (Widgets.ButtonInvisible(r) && k?.SaveProfile != null) m.Apply(k.SaveProfile);
+            }
+            y += ((modes.Count + perRow - 1) / perRow) * (cardH + gap) - gap + 6f;
+            if (!compact) SmdUi.Para(area.x, y, w, "WBD_CardHint".Translate(), SmdUi.DimGrey, GameFont.Tiny);
         }
 
         float Body(float w)
@@ -127,29 +235,6 @@ namespace BetterWorkbenchDefaults
                 y += 8f;
             }
 
-            // what happens by itself (the framework presets, applied to this save's profile)
-            y += SmdUi.Section(0f, y, w, "WBD_CardModes".Translate());
-            var k = WBD_Mod.K;
-            var modes = WBD_Mod.Modes;
-            int perRow = w >= 640f ? 3 : 1;
-            float gap = 12f, pw = (w - gap * (perRow - 1)) / perRow, cardH = 64f;
-            foreach (var m in modes)
-                cardH = Mathf.Max(cardH, 14f + SmdUi.TextH(m.Label, pw - 24f, GameFont.Small) + 4f + SmdUi.TextH(m.Desc, pw - 24f, GameFont.Tiny) + 12f);
-            for (int i = 0; i < modes.Count; i++)
-            {
-                var m = modes[i];
-                var r = new Rect((i % perRow) * (pw + gap), y + (i / perRow) * (cardH + gap), pw, cardH);
-                bool sel = k?.SaveProfile != null && m.Matches(k.SaveProfile);
-                Widgets.DrawBoxSolid(r, sel ? SmdUi.AccentSoft : SmdUi.CardBg);
-                GUI.color = sel ? SmdUi.Accent : SmdUi.Line; Widgets.DrawBox(r, sel ? 2 : 1); GUI.color = Color.white;
-                if (Mouse.IsOver(r) && !sel) Widgets.DrawHighlight(r);
-                float lh = SmdUi.TextH(m.Label, r.width - 24f, GameFont.Small);
-                SmdUi.Para(r.x + 12f, r.y + 10f, r.width - 24f, m.Label, sel ? SmdUi.Accent : Color.white);
-                SmdUi.Para(r.x + 12f, r.y + 14f + lh, r.width - 24f, m.Desc, SmdUi.Grey, GameFont.Tiny);
-                if (Widgets.ButtonInvisible(r) && k?.SaveProfile != null) m.Apply(k.SaveProfile);
-            }
-            y += ((modes.Count + perRow - 1) / perRow) * (cardH + gap) + 4f;
-            y += SmdUi.Para(0f, y, w, "WBD_CardHint".Translate(), SmdUi.DimGrey, GameFont.Tiny) + 6f;
             return y;
         }
 
@@ -161,6 +246,11 @@ namespace BetterWorkbenchDefaults
             float iw = w - 56f;
             string marker = SmdPreview.MissingMarker(missing);
             if (marker != null) line += "  <color=#F29E59>" + marker + "</color>";
+            if (sel && id != "")
+            {
+                var r0 = WouldReplace();
+                if (r0.Count > 0) line += "\n<color=#E8C46A>" + "WBD_CardWillReplace".Translate(r0.Count, "WBD_BackupProfileName".Translate(id)) + "</color>";
+            }
             float h = 8f + 24f + SmdUi.TextH(line, iw, GameFont.Tiny) + 8f;
             var r = new Rect(0f, y, w, h);
             Widgets.DrawBoxSolid(r, sel ? SmdUi.AccentSoft : SmdUi.CardBg);
@@ -185,6 +275,16 @@ namespace BetterWorkbenchDefaults
         public static bool Suppressed;
         /// <summary>How often a choice was applied this session (tests: exactly once).</summary>
         public static int AppliedCount;
+        /// <summary>The message the last applied profile showed (tests).</summary>
+        public static string LastMessage;
+
+        static PawnConfigSnapshot ReadPawnDefault(SmdProfile p)
+        {
+            var sp = p?.content?.pawns?.DefaultPreset;
+            if (sp?.config == null) return null;
+            var snap = new PawnConfigSnapshot();
+            return SmdScribe.Read(sp.config, snap.ExposeData) && !snap.IsEmpty ? snap : null;
+        }
         public const float Delay = 1.5f;
         static float readySince = -1f;
 
@@ -278,25 +378,35 @@ namespace BetterWorkbenchDefaults
                     WBD_Log.Msg("First-start card: this colony uses your defaults" + (SmdGameData.policiesAppliedAtStart ? " (with the saved policies)." : "."));
                     return true;
                 }
-                var p = SmdLibraryStore.Library.Profile(choice);
-                if (p == null) { WBD_Log.Warn("First-start card: the profile \"" + choice + "\" no longer exists; your defaults are used."); return true; }
+                var p0 = SmdLibraryStore.Library.Profile(choice);
+                if (p0 == null) { WBD_Log.Warn("First-start card: the profile \"" + choice + "\" no longer exists; your defaults are used."); return true; }
+                var p = p0.Clone();
+                // 1. the library: the profile's presets join it and become the defaults (replaced versions are kept as a profile)
                 var res = SmdLibraryApi.ApplyProfile(choice, ProfileParts.All, false, true);
+                // 2. this colony: straight from the profile, so it gets the profile even when the library could not be written
+                var pawnPreset = ReadPawnDefault(p);
                 var done = new List<string>();
-                if (p.content.colony != null && ColonyDefaults.ApplyColonyToColony(comp)) done.Add("WBD_PvColony".Translate());
-                if ((p.content.policies != null || alsoPolicies) && ColonyDefaults.ApplyPoliciesToColony(comp))
+                if (p.content.colony != null && ColonyDefaults.ApplyColonyToColony(comp, p.content.colony, pawnPreset)) done.Add("WBD_PvColony".Translate());
+                if (p.content.policies != null && ColonyDefaults.ApplyPoliciesToColony(comp, p.content.policies, pawnPreset))
                 {
                     SmdGameData.policiesAppliedAtStart = true;
                     done.Add("WBD_PvPolicies".Translate());
                 }
-                if (p.content.pawns != null)
+                if (pawnPreset != null)
                 {
-                    int n = NewColonistDefaults.ApplyDefaultToStartingColonists();
+                    int n = NewColonistDefaults.ApplyDefaultToStartingColonists(pawnPreset);
                     if (n > 0) done.Add("WBD_CardAppliedPawns".Translate(n));
                 }
                 string msg = "WBD_CardApplied".Translate(choice) + (done.Count > 0 ? " " + string.Join(", ", done) + "." : "");
+                if (!res.ok)
+                    msg += " " + "WBD_CardLibraryNotSaved".Translate(res.message ?? "?");
+                else if (res.backupProfile != null)
+                    msg += " " + "WBD_BackupProfileMade".Translate(res.backupProfile);
                 if (!res.missing.IsEmpty) msg += " " + res.missing.Summary();
-                Messages.Message(msg, MessageTypeDefOf.TaskCompletion, false);
-                WBD_Log.Msg("First-start card: profile \"" + choice + "\" applied (" + res.merged + " entries; " + string.Join(", ", done) + ").");
+                LastMessage = msg;
+                Messages.Message(msg, res.ok ? MessageTypeDefOf.TaskCompletion : MessageTypeDefOf.CautionInput, false);
+                WBD_Log.Msg("First-start card: profile \"" + choice + "\" applied to this colony (" + string.Join(", ", done) + "); library "
+                    + (res.ok ? "updated (" + res.merged + " entries" + (res.backupProfile != null ? ", replaced versions kept as \"" + res.backupProfile + "\"" : "") + ")" : "NOT updated: " + res.message) + ".");
             }
             catch (Exception e)
             {

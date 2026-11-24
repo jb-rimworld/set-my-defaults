@@ -227,6 +227,7 @@ namespace BetterWorkbenchDefaults
                 WBD_Log.Warn("Library is read-only this session: " + LoadError);
                 return false;
             }
+            LastSaveError = null;
             try
             {
                 var r = _disk.Commit(_lib, edit);

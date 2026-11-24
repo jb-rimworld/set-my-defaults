@@ -38,6 +38,8 @@ namespace BetterWorkbenchDefaults
         public int merged;
         public bool colonyApplied;
         public bool policiesApplied;
+        /// <summary>Name of the profile that keeps the library's previous versions of what the apply replaced (null = nothing replaced).</summary>
+        public string backupProfile;
         public string message;
         public MissingReport missing = new MissingReport();
     }
@@ -97,11 +99,11 @@ namespace BetterWorkbenchDefaults
         /// <summary>Everything in the live library that needs a mod or def that is missing now.</summary>
         public static MissingReport MissingInLibrary() => MissingFor(SmdLibraryStore.Content);
 
-        public static MissingReport MissingFor(SmdContent c)
+        public static MissingReport MissingFor(SmdContent c) => c == null ? new MissingReport() : SmdDefRefs.CachedFor(c, () => MissingForUncached(c));
+
+        static MissingReport MissingForUncached(SmdContent c)
         {
             var r = new MissingReport();
-            if (c == null)
-                return r;
             foreach (var set in c.buildings)
                 foreach (var p in set.presets)
                     r.Merge(SmdDefRefs.Missing(p));
@@ -115,8 +117,19 @@ namespace BetterWorkbenchDefaults
 
         // ---------------- profiles ----------------
 
-        public static List<ProfileInfo> ListProfiles() =>
-            SmdLibraryStore.Library.profiles.Select(Info).ToList();
+        static int listRev = -1; static List<ProfileInfo> listCache;
+
+        /// <summary>Summaries of every profile (cached per library revision: the Profiles page asks every frame).</summary>
+        public static List<ProfileInfo> ListProfiles()
+        {
+            var lib = SmdLibraryStore.Library;
+            if (listCache == null || listRev != SmdLibraryStore.Revision)
+            {
+                listCache = lib.profiles.Select(Info).ToList();
+                listRev = SmdLibraryStore.Revision;
+            }
+            return listCache.ToList();
+        }
 
         public static ProfileInfo Info(SmdProfile p)
         {
@@ -241,37 +254,34 @@ namespace BetterWorkbenchDefaults
             var pv = new ProfilePreview { info = Info(new SmdProfile { name = p.name, description = p.description, createdAt = p.createdAt, content = sub }) };
             var lib = SmdLibraryStore.Content;
             foreach (var set in sub.buildings)
-            {
-                var mine = lib.Buildings(set.key);
                 pv.lines.Add("WBD_PreviewPresetsFor".Translate(set.presets.Count, DefaultBillsDatabase.KeyLabel(set.key),
                     string.Join(", ", set.presets.Select(x => x.name))).ToString());
-                if (mine != null)
-                    foreach (var x in set.presets)
-                        if (mine.Get(x.name) != null)
-                            pv.wouldReplace.Add(DefaultBillsDatabase.KeyLabel(set.key) + ": " + x.name);
-            }
             if (sub.pawns != null)
-            {
                 pv.lines.Add("WBD_PreviewPawnPresets".Translate(sub.pawns.presets.Count, string.Join(", ", sub.pawns.presets.Select(x => x.name))).ToString());
-                if (lib.pawns != null)
-                    foreach (var x in sub.pawns.presets)
-                        if (lib.pawns.Get(x.name) != null)
-                            pv.wouldReplace.Add("WBD_PreviewColonists".Translate() + ": " + x.name);
-            }
             if (sub.policies != null)
-            {
                 pv.lines.Add("WBD_PreviewPolicies".Translate().ToString());
-                if (lib.policies != null)
-                    pv.wouldReplace.Add("WBD_PreviewPolicies".Translate().ToString());
-            }
             if (sub.colony != null)
-            {
                 pv.lines.Add("WBD_PreviewColony".Translate().ToString());
-                if (lib.colony != null)
-                    pv.wouldReplace.Add("WBD_PreviewColony".Translate().ToString());
-            }
+            // only entries that exist here AND differ count as replaced (an identical copy changes nothing)
+            pv.wouldReplace = ReplacedLabels(lib.ReplacedBy(sub, parts));
             pv.missing = pv.info.missing;
             return pv;
+        }
+
+        /// <summary>"Electric stove: Kitchen", "Colonists: Worker", "Policy set", "Colony settings".</summary>
+        public static List<string> ReplacedLabels(SmdContent replaced)
+        {
+            var l = new List<string>();
+            if (replaced == null) return l;
+            foreach (var set in replaced.buildings)
+                foreach (var x in set.presets)
+                    l.Add(DefaultBillsDatabase.KeyLabel(set.key) + ": " + x.name);
+            if (replaced.pawns != null)
+                foreach (var x in replaced.pawns.presets)
+                    l.Add("WBD_PreviewColonists".Translate() + ": " + x.name);
+            if (replaced.policies != null) l.Add("WBD_PreviewPolicies".Translate().ToString());
+            if (replaced.colony != null) l.Add("WBD_PreviewColony".Translate().ToString());
+            return l;
         }
 
         /// <summary>
@@ -297,18 +307,37 @@ namespace BetterWorkbenchDefaults
                 return res;
             }
             int merged = 0;
+            string backup = null;
+            var incoming = p.content.Clone();
             bool saved = SmdLibraryStore.Mutate(lib =>
             {
-                merged = lib.content.MergeFrom(p.content, parts, takeDefaults);
+                // Nothing the profile overwrites is lost: the library's previous versions of every entry that really changes go
+                // into a profile of their own ("Before Tribal start"), in the same write.
+                var replaced = lib.content.ReplacedBy(incoming, parts);
+                merged = lib.content.MergeFrom(incoming, parts, takeDefaults);
+                backup = null;
+                if (!replaced.IsEmpty)
+                {
+                    backup = lib.UniqueProfileName("WBD_BackupProfileName".Translate(p.name).ToString());
+                    lib.profiles.Add(new SmdProfile
+                    {
+                        name = backup,
+                        createdAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                        description = "WBD_BackupProfileDesc".Translate(p.name, DateTime.Now.ToString("yyyy-MM-dd HH:mm")).ToString(),
+                        content = replaced
+                    });
+                }
                 return merged > 0;
             });
             res.merged = merged;
             res.missing = MissingFor(p.content.Subset(parts));
-            if (!saved && merged > 0)
+            // not saved: either nothing to merge (fine) or the write failed (the edit may not even have run: lock, read-only)
+            if (!saved && (merged > 0 || SmdLibraryStore.LastSaveError != null || SmdLibraryStore.ReadOnly))
             {
                 res.message = DefaultBillsController.SaveFailedText();
                 return res;
             }
+            res.backupProfile = saved ? backup : null;
             if (applyToCurrentGame && Current.Game != null)
             {
                 if ((parts & ProfileParts.Colony) != 0 && p.content.colony != null && SmdSections.On(SmdSections.Colony))
@@ -318,6 +347,8 @@ namespace BetterWorkbenchDefaults
             }
             res.ok = true;
             res.message = "WBD_ProfileApplied".Translate(p.name, merged).ToString();
+            if (res.backupProfile != null)
+                res.message += " " + "WBD_BackupProfileMade".Translate(res.backupProfile);
             if (!res.missing.IsEmpty)
                 res.message += " " + res.missing.Summary();
             return res;

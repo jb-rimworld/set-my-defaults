@@ -545,13 +545,31 @@ namespace BetterWorkbenchDefaults
         }
 
         // ================================================================================================ shared bits
+        /// <summary>Read-only library: what happened, what the session uses, and the way out (restore the backup, open the folder).</summary>
         static float ReadOnlyBanner(float y, float w)
         {
             if (!SmdLibraryStore.ReadOnly) return 0f;
-            float h = SmdUi.TextH("WBD_LibraryReadOnly".Translate(), w - 16f, GameFont.Small) + 10f;
+            string text = "WBD_LibraryReadOnly".Translate().ToString() + (SmdLibraryStore.UsingBackup ? " " + "WBD_LibraryUsingBackup".Translate().ToString() : "")
+                + "\n" + "WBD_LibraryReadOnlyWhy".Translate(SmdLibraryStore.LoadError ?? "?").ToString();
+            var btns = new List<SmdUi.Btn>
+            {
+                new SmdUi.Btn("WBD_LibRestoreBackup".Translate(), () => RestoreBackupNow(), System.IO.File.Exists(SmdPaths.LibraryFile + LibraryFile.BackupSuffix), "WBD_LibRestoreBackupTip".Translate(), true),
+                new SmdUi.Btn("WBD_LibOpenFolder".Translate(), OpenFolder),
+            };
+            float h = SmdUi.TextH(text, w - 16f, GameFont.Small) + 10f + MeasureButtons(w - 16f, btns) + 8f;
             Widgets.DrawBoxSolid(new Rect(0f, y, w, h), new Color(SmdUi.Bad.r, SmdUi.Bad.g, SmdUi.Bad.b, 0.15f));
-            SmdUi.Para(8f, y + 5f, w - 16f, "WBD_LibraryReadOnly".Translate(), SmdUi.Bad);
+            float ty = y + 5f + SmdUi.Para(8f, y + 5f, w - 16f, text, SmdUi.Bad) + 4f;
+            SmdUi.Buttons(8f, ty, w - 16f, btns, 80f);
             return h + 8f;
+        }
+
+        /// <summary>"Restore the backup": Library.xml.bak becomes Library.xml again (the current file is kept as Library.broken-….xml).</summary>
+        public static string RestoreBackupNow()
+        {
+            string err = SmdLibraryStore.RestoreBackup();
+            if (err == null) Messages.Message("WBD_LibRestoreDone".Translate(), MessageTypeDefOf.TaskCompletion, false);
+            else Messages.Message("WBD_LibRestoreFailed".Translate(err), MessageTypeDefOf.RejectInput, false);
+            return err;
         }
 
         static void Toggle(string id) { if (!Expanded.Remove(id)) Expanded.Add(id); }
