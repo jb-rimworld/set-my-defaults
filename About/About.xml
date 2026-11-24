@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Set my Defaults (and more)</name>
+  <author>juliusberger00</author>
+  <packageId>juliusberger.workbenchbilldefaults</packageId>
+  <description>You have configured the same colonist forty times and the same kitchen a hundred times. This mod exists because the alternative was therapy.
+
+Set something up once, save it as a default, and it gets applied automatically from then on. Colonists, workbenches, shelves, policies. You will still find something to complain about, but it will not be this.
+
+== UPDATE ==
+- Fixed the settings window losing its mind when you switch between the Buildings, Pawns and Policies &amp; bills tabs. Yes, an entire update for a tab switch. We are not discussing it.
+- Compatible with Nice Bill Tab (Andromeda). That mod replaces the whole Bills tab, so the Defaults button now sits there as a small icon in the top right corner of the bill window, next to its own icons. Only used when Nice Bill Tab is actually enabled.
+
+== COLONISTS ==
+Set up one colonist exactly how you like, then save them as a named preset. One preset is the default (the first one you save becomes it) and is applied ONCE to every colonist who joins after that: starting pawns, recruits, refugees and quest joiners, and babies born into the colony. Children are included by default, and their work priorities kick in once they are old enough to work. Prisoners, guests, slaves and mechs are not auto-configured (you can still apply a preset to a slave by hand). A default created later never rewrites colonists who joined before it existed. Nobody likes surprises.
+
+A preset can hold any mix of:
+- Schedule (the 24-hour timetable)
+- Work priorities
+- Apparel / outfit policy, drug policy, food policy, reading policy
+- Hostility response
+- Medical care and self-tend
+
+Select a colonist and click the "Defaults" button to save their setup, apply a preset to that colonist (or to everyone you have selected), set the default, or manage presets (rename, delete). Every part above can be switched off separately in the mod settings (Pawns tab).
+
+Presets are saved globally on disk, so they work across colonies and save games. Policies are matched by name in the colony you are in, or recreated with the saved content if they do not exist yet. One policy per name, never duplicated.
+
+== POLICIES ACROSS SAVES ==
+Outfit, drug, food and reading policies live inside each save, so a new game starts from scratch and you rebuild them again. Rude.
+
+In the mod settings (Policies &amp; bills tab) you can save this colony's policies into a global set and apply that set in any other save. Each policy is matched by name or recreated, and the one you marked as default becomes the colony default again. Existing policies with the same name are used as they are, not overwritten. An optional toggle (off by default) applies the saved set once to every new game.
+
+The same tab lets you pick, per kind, which policy is the colony default that brand-new colonists inherit, and opens the vanilla policy editor for creating and editing the policies themselves.
+
+== WORKBENCHES AND SHELVES ==
+Build a new kitchen, stonecutter, smithy, machining table or whatever, and it comes with the bills you saved as the default for that type of workbench. Defaults are stored per building type, globally on disk, so they follow you into every colony.
+
+The "Defaults" button sits in the Bills tab and as a command button on the selected building (both can be hidden in settings). From there you can save the current setup as a named preset, apply a preset (bills are replaced), or manage your presets.
+
+Shelves and other storage buildings can have their item filter and priority saved and applied the same way. That one is NOT applied automatically on build, because it would overwrite a shelf you only moved. Use Apply.
+
+== MORE THAN 15 BILLS PER WORKBENCH ==
+Vanilla caps a workbench at 15 bills. This mod can lift that cap by itself, no other mod needed. It is OFF by default: tick the box in the Policies &amp; bills tab and set a limit between 15 and 250 (the slider starts at 50). If "No Max Bills" or "No Max Bills Redux" is installed, this mod stays out of the way and leaves the limit to that one. Restored default bills respect the same limit either way. A workbench works through all its bills, so a very high limit costs performance. Your problem now.
+
+== COMPATIBILITY ==
+- Requires Harmony. RimWorld 1.6 and 1.7.
+- Standalone. Sits next to Better Workbench Management (Falconne) without conflict; it adds the default bills that mod does not have.
+- Nice Bill Tab (Andromeda): supported, see Update.
+- Project RimFactory Revived (optional): S.A.L. assemblers and other bill-giving machines get default bills, storage machines get storage defaults, conveyor splitters get their routing and filters saved. Rotate or flip a blueprint with a splitter and you should re-check its output directions.
+- Blueprints Forked (optional): a blueprint remembers each captured building's bills and storage settings and recreates them when built, even across different saves.
+- Free Will / Free-ish Will (optional): detected automatically. They keep rewriting work priorities, so the work part of a default is skipped for colonists they manage. Schedule and policies still apply.
+- Combat Extended: fine. Only vanilla schedule, work, policy and medical state is touched, never CE's loadouts or ammo.
+
+== NOTES ==
+- Colony-specific bill settings (a specific worker, a specific stockpile target) are stripped when saving, so a default works in any colony.
+- Safe to add to an existing save. Safe to remove; nothing this mod adds is needed to load your save.
+- Formerly "Workbench Defaults". Old saves and saved presets keep working.
+
+== KEYWORDS ==
+quality of life, QoL, automation, templates, copy paste, clone, work tab, interface, recipes, UI
+
+== TRANSPARENCY ==
+This mod was made with the help of Claude Code. Copyright belongs to Julius Berger. The code is free for you to use: do whatever you want with it. Credit and a mention are welcome but not required. The AI did the typing, the human did the complaining.</description>
+  <supportedVersions>
+    <li>1.6</li>
+    <li>1.7</li>
+  </supportedVersions>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+      <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>falconne.BWM</li>
+    <li>S1.BWBMLocalComplete</li>
+    <li>spdskatr.projectrimfactory</li>
+    <li>Defi.Blueprints.fork</li>
+    <li>freemapa.freewill</li>
+    <li>stoneman.freewill</li>
+    <li>CETeam.CombatExtended</li>
+    <li>justharry.nomaxbillsredux</li>
+  </loadAfter>
+</ModMetaData>
