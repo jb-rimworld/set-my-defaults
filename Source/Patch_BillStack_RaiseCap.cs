@@ -21,10 +21,10 @@ namespace BetterWorkbenchDefaults
     /// (the patch is registered through <c>WBD_Mod.TryPatch</c>, which swallows the throw) rather than
     /// silently mis-targeting.</para>
     ///
-    /// <para>This class is patched in MANUALLY from <see cref="WBD_Mod"/> ONLY when
-    /// <c>Settings.nativeRaiseBillCap</c> is on AND <see cref="BillCapCompat.Active"/> is false (i.e. no
-    /// external No Max Bills mod has already raised the cap). It carries no <c>[HarmonyPatch]</c>
-    /// attribute so it is never auto-applied by a blanket PatchAll.</para>
+    /// <para>Since 2.0 this class is patched in MANUALLY from <see cref="WBD_Mod"/> whenever
+    /// <see cref="BillCapCompat.Active"/> is false (no external No Max Bills mod), regardless of the setting:
+    /// <see cref="BillCap.Current"/> returns vanilla's 15 while the option is off, so the patch is inert until the
+    /// player ticks the box. It carries no <c>[HarmonyPatch]</c> attribute so it is never auto-applied.</para>
     /// </summary>
     public static class Patch_BillStack_RaiseCap
     {
@@ -40,17 +40,23 @@ namespace BetterWorkbenchDefaults
                 yield return fillTab;
         }
 
+        private static readonly MethodInfo CurrentCap = AccessTools.Method(typeof(BillCap), nameof(BillCap.Current));
+
+        /// <summary>
+        /// Replaces the single inlined load of the literal 15 with a call to <see cref="BillCap.Current"/>, so the limit
+        /// is read live every frame: ticking the box or moving the slider takes effect immediately, no restart
+        /// (2.0, M3). The instruction object is mutated in place, so labels and exception blocks stay attached.
+        /// </summary>
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
         {
-            int cap = WBD_Mod.Settings != null ? WBD_Mod.Settings.maxBillsCap : 50;
             int replaced = 0;
 
             foreach (var instruction in instructions)
             {
                 if (replaced == 0 && LoadsIntegerValue(instruction, BillStack.MaxCount))
                 {
-                    instruction.opcode = OpCodes.Ldc_I4;
-                    instruction.operand = cap;
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = CurrentCap;
                     replaced++;
                 }
                 yield return instruction;
@@ -106,6 +112,18 @@ namespace BetterWorkbenchDefaults
 
             value = -1;
             return false;
+        }
+    }
+
+    /// <summary>The live bill limit read by the patched vanilla UI (see <see cref="Patch_BillStack_RaiseCap"/>).</summary>
+    public static class BillCap
+    {
+        public static int Current()
+        {
+            var s = WBD_Mod.Settings;
+            if (s == null || !s.nativeRaiseBillCap)
+                return BillStack.MaxCount;
+            return s.maxBillsCap < BillStack.MaxCount ? BillStack.MaxCount : (s.maxBillsCap > 250 ? 250 : s.maxBillsCap);
         }
     }
 }

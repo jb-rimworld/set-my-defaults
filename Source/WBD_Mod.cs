@@ -16,6 +16,9 @@ namespace BetterWorkbenchDefaults
     {
         public static WBD_Settings Settings { get; private set; }
 
+        /// <summary>True once the live bill-cap transpiler is in place (false when No Max Bills owns the limit or the patch failed).</summary>
+        public static bool BillCapPatched { get; private set; }
+
         public WBD_Mod(ModContentPack content) : base(content)
         {
             Settings = GetSettings<WBD_Settings>();
@@ -41,10 +44,11 @@ namespace BetterWorkbenchDefaults
             TryPatch(harmony, typeof(Patch_Pawn_SpawnSetup));
             TryPatch(harmony, typeof(Patch_Pawn_SetFaction));
 
-            // Native >15 bills: register the self-contained bill-cap transpiler ONLY when the player
-            // enabled it AND no external "No Max Bills" mod already raised the cap (interop, no double
-            // patch). Wrapped so a future vanilla IL change degrades to "cap feature off".
-            if (Settings != null && Settings.nativeRaiseBillCap && !BillCapCompat.Active)
+            // Native >15 bills: register the self-contained bill-cap transpiler whenever no external
+            // "No Max Bills" mod already raised the cap (interop, no double patch). The patched code reads
+            // BillCap.Current() live, so the setting works without a restart (2.0, M3). Wrapped so a future
+            // vanilla IL change degrades to "cap feature off".
+            if (!BillCapCompat.Active)
                 TryPatchBillCap(harmony);
         }
 
@@ -58,18 +62,20 @@ namespace BetterWorkbenchDefaults
             try
             {
                 var transpiler = new HarmonyMethod(typeof(Patch_BillStack_RaiseCap), nameof(Patch_BillStack_RaiseCap.Transpiler));
+                int ok = 0;
                 foreach (var target in Patch_BillStack_RaiseCap.TargetMethods())
                 {
                     try
                     {
                         harmony.Patch(target, transpiler: transpiler);
+                        ok++;
                     }
                     catch (Exception e)
                     {
                         WBD_Log.Error("Failed to raise bill cap on " + target?.Name + ": " + e);
                     }
                 }
-                WBD_Log.Msg("Native bill cap raised to " + Settings.maxBillsCap + " (No Max Bills not detected).");
+                BillCapPatched = ok > 0;
             }
             catch (Exception e)
             {
@@ -456,6 +462,27 @@ namespace BetterWorkbenchDefaults
         public int maxBillsCap = 50;              // configurable cap (15-250); also the UI literal the transpiler writes
         public bool policyAutoApplyOnNewGame = false; // optional: apply saved policy defaults once per new game
 
+        // ---- Feature areas (2.0). Each one switches a whole area off; saved data is kept. Read only through
+        // SmdSections.On(id), never directly, so the kit can take these over in one place. ----
+        public bool sectionBuildings = true;   // workbench bills + building storage/plant presets, gizmo, bills-tab button
+        public bool sectionZones = true;       // stockpile and growing zone presets (gizmo + auto-apply on new zones)
+        public bool sectionPawns = true;       // colonist presets (gizmo + auto-apply to new colonists)
+        public bool sectionPolicies = true;    // cross-save outfit/drug/food/reading policy set
+        public bool sectionColony = true;      // cross-save colony settings (medical defaults, auto home, auto rebuild, manual priorities)
+        public bool sectionLibrary = true;     // profiles, share strings, import/export
+
+        // ---- Buildings / storage / zones (2.0) ----
+        public bool storageAutoApplyOnBuild = true;  // shelves and other storage get their default filter when newly constructed
+        public bool plantAutoApplyOnBuild = true;    // hydroponics and other plant growers get their default plant when newly constructed
+        public bool zoneAutoApplyOnCreate = true;    // new stockpile / dumping zones get their default filter
+        public bool growingAutoApplyOnCreate = true; // new growing zones get their default plant (+ sow/cut toggles)
+        public bool benchFamilies = true;            // a building without its own preset uses the default of a closely related building
+        public bool filterIntent = true;             // filters remember categories + exceptions, so newly added items of a category are included
+        public bool billMatchStockpileByName = true; // "specific stockpile" (store in / count in) is restored when a stockpile of that name exists
+
+        // ---- Colony (2.0) ----
+        public bool colonyApplyOnNewGame = true;     // apply the saved colony settings when a new game starts (only if any are saved)
+
         /// <summary>
         /// The effective per-workbench bill cap. Returns the player's configured cap whenever the
         /// built-in raiser is on OR an external "No Max Bills" mod is present (so the visible UI cap and
@@ -463,9 +490,9 @@ namespace BetterWorkbenchDefaults
         /// </summary>
         public int EffectiveBillCap()
         {
-            return (nativeRaiseBillCap || BillCapCompat.Active)
-                ? Mathf.Max(maxBillsCap, BillStack.MaxCount)
-                : BillStack.MaxCount;
+            if (BillCapCompat.Active)
+                return Mathf.Max(maxBillsCap, BillStack.MaxCount);
+            return BillCap.Current();
         }
 
         /// <summary>The set of pawn axes the player currently has enabled for auto-apply.</summary>
@@ -505,13 +532,33 @@ namespace BetterWorkbenchDefaults
             Scribe_Values.Look(ref nativeRaiseBillCap, "nativeRaiseBillCap", false);
             Scribe_Values.Look(ref maxBillsCap, "maxBillsCap", 50);
             Scribe_Values.Look(ref policyAutoApplyOnNewGame, "policyAutoApplyOnNewGame", false);
+
+            Scribe_Values.Look(ref sectionBuildings, "sectionBuildings", true);
+            Scribe_Values.Look(ref sectionZones, "sectionZones", true);
+            Scribe_Values.Look(ref sectionPawns, "sectionPawns", true);
+            Scribe_Values.Look(ref sectionPolicies, "sectionPolicies", true);
+            Scribe_Values.Look(ref sectionColony, "sectionColony", true);
+            Scribe_Values.Look(ref sectionLibrary, "sectionLibrary", true);
+
+            Scribe_Values.Look(ref storageAutoApplyOnBuild, "storageAutoApplyOnBuild", true);
+            Scribe_Values.Look(ref plantAutoApplyOnBuild, "plantAutoApplyOnBuild", true);
+            Scribe_Values.Look(ref zoneAutoApplyOnCreate, "zoneAutoApplyOnCreate", true);
+            Scribe_Values.Look(ref growingAutoApplyOnCreate, "growingAutoApplyOnCreate", true);
+            Scribe_Values.Look(ref benchFamilies, "benchFamilies", true);
+            Scribe_Values.Look(ref filterIntent, "filterIntent", true);
+            Scribe_Values.Look(ref billMatchStockpileByName, "billMatchStockpileByName", true);
+
+            Scribe_Values.Look(ref colonyApplyOnNewGame, "colonyApplyOnNewGame", true);
+
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+                maxBillsCap = Mathf.Clamp(maxBillsCap, BillStack.MaxCount, 250);
         }
     }
 
     /// <summary>Tiny logging helper so every message is greppable and prefixed.</summary>
     public static class WBD_Log
     {
-        private const string Prefix = "[Better Workbench Defaults] ";
+        private const string Prefix = "[Set my Defaults] ";
         public static void Msg(string m) => Log.Message(Prefix + m);
         public static void Warn(string m) => Log.Warning(Prefix + m);
         public static void Error(string m) => Log.Error(Prefix + m);
