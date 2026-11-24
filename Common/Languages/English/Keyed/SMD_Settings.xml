@@ -35,6 +35,8 @@
   <SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>A stockpile or dumping zone you draw gets the default you saved for that kind of zone.</SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>
   <SMD.Setting.smd.growingAutoApplyOnCreate>Default plant on new growing zones</SMD.Setting.smd.growingAutoApplyOnCreate>
   <SMD.Setting.smd.growingAutoApplyOnCreate.Desc>A growing zone you draw gets the default plant and the sow and cut switches you saved.</SMD.Setting.smd.growingAutoApplyOnCreate.Desc>
+  <SMD.Setting.smd.zoneShowGizmo>Defaults button on zones</SMD.Setting.smd.zoneShowGizmo>
+  <SMD.Setting.smd.zoneShowGizmo.Desc>Shows the Defaults button when a stockpile, dumping or growing zone is selected.</SMD.Setting.smd.zoneShowGizmo.Desc>
   <SMD.SettingCat.Newcolonists>New colonists</SMD.SettingCat.Newcolonists>
   <SMD.Setting.smd.autoApplyToNewPawns>Apply the default preset to new colonists</SMD.Setting.smd.autoApplyToNewPawns>
   <SMD.Setting.smd.autoApplyToNewPawns.Desc>Every colonist who joins (start, recruit, wanderer, quest, birth) gets the default preset once. Colonists you already had are never changed.</SMD.Setting.smd.autoApplyToNewPawns.Desc>
@@ -88,12 +90,12 @@
   <SMD.Preset.buildings>Buildings and zones only</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Bills, shelves and zones; colonists, policies and colony settings are left alone.</SMD.Preset.buildings.Desc>
   <SMD.Page.library>My defaults</SMD.Page.library>
-  <SMD.Page.policies>Policy set</SMD.Page.policies>
-  <SMD.Page.colony>Colony defaults</SMD.Page.colony>
+  <SMD.Page.policies>Saved policies</SMD.Page.policies>
+  <SMD.Page.colony>Saved colony settings</SMD.Page.colony>
   <SMD.Page.profiles>Profiles</SMD.Page.profiles>
   <SMD.Page.share>Import and export</SMD.Page.share>
   <SMD.Compat.NiceBillTab.What>The Defaults button sits as an icon in its bill window; applied bills show up at once.</SMD.Compat.NiceBillTab.What>
-  <SMD.Compat.NiceInventoryTab.What>Its bundled bill tab is supported the same way as Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
+  <SMD.Compat.NiceInventoryTab.What>Works side by side: its 1.7 version has no bill tab of its own, so there is nothing to adapt.</SMD.Compat.NiceInventoryTab.What>
   <SMD.Compat.NoMaxBillsRedux.What>Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.</SMD.Compat.NoMaxBillsRedux.What>
   <SMD.Compat.ProjectRimFactoryRevived.What>Assemblers, storage machines and conveyor splitters get their defaults.</SMD.Compat.ProjectRimFactoryRevived.What>
   <SMD.Compat.BlueprintsForked.What>Blueprints remember bills and storage settings, even across saves.</SMD.Compat.BlueprintsForked.What>

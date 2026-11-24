@@ -34,6 +34,8 @@
   <SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>Eine Lager- oder Abladezone, die du ziehst, bekommt den Standard, den du für diese Zonenart gespeichert hast.</SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>
   <SMD.Setting.smd.growingAutoApplyOnCreate>Standard-Pflanze auf neuen Anbauzonen</SMD.Setting.smd.growingAutoApplyOnCreate>
   <SMD.Setting.smd.growingAutoApplyOnCreate.Desc>Eine Anbauzone, die du ziehst, bekommt die gespeicherte Standard-Pflanze und die Schalter für Säen und Ernten.</SMD.Setting.smd.growingAutoApplyOnCreate.Desc>
+  <SMD.Setting.smd.zoneShowGizmo>Knopf „Vorgaben“ an Zonen</SMD.Setting.smd.zoneShowGizmo>
+  <SMD.Setting.smd.zoneShowGizmo.Desc>Zeigt den Knopf „Vorgaben“, wenn eine Lager-, Abfall- oder Anbauzone ausgewählt ist.</SMD.Setting.smd.zoneShowGizmo.Desc>
   <SMD.SettingCat.Newcolonists>Neue Kolonisten</SMD.SettingCat.Newcolonists>
   <SMD.Setting.smd.autoApplyToNewPawns>Standardvorlage auf neue Kolonisten anwenden</SMD.Setting.smd.autoApplyToNewPawns>
   <SMD.Setting.smd.autoApplyToNewPawns.Desc>Jede Person, die dazukommt (Start, Rekrutierung, Wanderer, Quest, Geburt), bekommt die Standardvorlage einmal. Wer schon da war, wird nie verändert.</SMD.Setting.smd.autoApplyToNewPawns.Desc>
@@ -86,13 +88,13 @@
   <SMD.Preset.manual.Desc>Nichts passiert von selbst; du wendest Vorlagen mit dem Knopf „Vorgaben“ an.</SMD.Preset.manual.Desc>
   <SMD.Preset.buildings>Nur Gebäude und Zonen</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Aufträge, Regale und Zonen; Kolonisten, Richtlinien und Kolonie-Einstellungen bleiben unberührt.</SMD.Preset.buildings.Desc>
-  <SMD.Page.policies>Richtlinien-Paket</SMD.Page.policies>
-  <SMD.Page.colony>Kolonie-Vorgaben</SMD.Page.colony>
+  <SMD.Page.policies>Gespeicherte Richtlinien</SMD.Page.policies>
+  <SMD.Page.colony>Gespeicherte Kolonie-Einstellungen</SMD.Page.colony>
   <SMD.Page.library>Meine Vorgaben</SMD.Page.library>
   <SMD.Page.profiles>Profile</SMD.Page.profiles>
   <SMD.Page.share>Import und Export</SMD.Page.share>
   <SMD.Compat.NiceBillTab.What>Der Knopf „Vorgaben“ sitzt als Symbol in dessen Auftragsfenster; angewendete Aufträge erscheinen sofort.</SMD.Compat.NiceBillTab.What>
-  <SMD.Compat.NiceInventoryTab.What>Der mitgelieferte Auftrags-Tab wird genauso unterstützt wie Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
+  <SMD.Compat.NiceInventoryTab.What>Arbeitet nebeneinander: Die 1.7-Fassung hat keinen eigenen Auftrags-Tab, es gibt also nichts anzupassen.</SMD.Compat.NiceInventoryTab.What>
   <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens so viele Aufträge wieder her und patcht selbst nichts.</SMD.Compat.NoMaxBillsRedux.What>
   <SMD.Compat.ProjectRimFactoryRevived.What>Montierer, Lagermaschinen und Förderband-Verteiler bekommen ihre Vorgaben.</SMD.Compat.ProjectRimFactoryRevived.What>
   <SMD.Compat.BlueprintsForked.What>Blaupausen merken sich Aufträge und Lager-Einstellungen, auch über Spielstände hinweg.</SMD.Compat.BlueprintsForked.What>

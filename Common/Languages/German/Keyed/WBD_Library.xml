@@ -134,4 +134,17 @@
   <WBD_PvCount_Zones_One>1 Zonen-Vorlage</WBD_PvCount_Zones_One>
   <WBD_PvCount_Other_One>1 andere Vorlage</WBD_PvCount_Other_One>
   <WBD_PvCount_Pawns_One>1 Kolonisten-Vorlage</WBD_PvCount_Pawns_One>
+  <WBD_BackupProfileName>Vor {0}</WBD_BackupProfileName>
+  <WBD_BackupProfileDesc>Automatisch aufbewahrt am {1}: deine Fassungen der Vorlagen, die das Profil „{0}“ ersetzt hat.</WBD_BackupProfileDesc>
+  <WBD_BackupProfileMade>Deine bisherigen Fassungen liegen im Profil „{0}“.</WBD_BackupProfileMade>
+  <WBD_SaveFailedReason>Die Bibliothek ließ sich nicht speichern ({0}). Nichts wurde geändert; deine Vorlagen sind wie vorher.</WBD_SaveFailedReason>
+  <WBD_CardReplaceConfirm>Mit „{0}“ starten?\n\nDas Profil ersetzt diese Vorlagen in deiner Bibliothek durch seine eigenen Fassungen: {1}\n\nDeine bisherigen Fassungen bleiben im Profil „{2}“ erhalten, du bekommst sie jederzeit zurück.</WBD_CardReplaceConfirm>
+  <WBD_CardWillReplace>Ersetzt {0} deiner Vorlagen durch seine eigenen Fassungen (deine bleiben im Profil „{1}“).</WBD_CardWillReplace>
+  <WBD_CardLibraryNotSaved>Deine Bibliothek ließ sich nicht aktualisieren ({0}): Diese Kolonie nutzt das Profil, neue Gebäude und Kolonisten bekommen aber die Vorlagen, die deine Bibliothek hatte.</WBD_CardLibraryNotSaved>
+  <WBD_LibraryUsingBackup>Bis dahin nutzt dieses Spiel die vorige Fassung (Library.xml.bak), neue Gebäude und Kolonisten bekommen also weiter deine Vorgaben.</WBD_LibraryUsingBackup>
+  <WBD_LibraryReadOnlyWhy>Grund: {0}</WBD_LibraryReadOnlyWhy>
+  <WBD_LibRestoreBackup>Sicherung zurückholen</WBD_LibRestoreBackup>
+  <WBD_LibRestoreBackupTip>Macht Library.xml.bak wieder zu Library.xml. Die jetzige Datei wird nicht gelöscht, sondern als Library.broken-&lt;Datum&gt;.xml im selben Ordner aufbewahrt.</WBD_LibRestoreBackupTip>
+  <WBD_LibRestoreDone>Die Sicherung ist zurückgeholt; deine Vorlagen lassen sich wieder ändern.</WBD_LibRestoreDone>
+  <WBD_LibRestoreFailed>Die Sicherung ließ sich nicht zurückholen: {0}</WBD_LibRestoreFailed>
 </LanguageData>

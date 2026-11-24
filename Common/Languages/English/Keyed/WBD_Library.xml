@@ -134,4 +134,17 @@
   <WBD_PvCount_Zones_One>1 zone preset</WBD_PvCount_Zones_One>
   <WBD_PvCount_Other_One>1 other preset</WBD_PvCount_Other_One>
   <WBD_PvCount_Pawns_One>1 colonist preset</WBD_PvCount_Pawns_One>
+  <WBD_BackupProfileName>Before {0}</WBD_BackupProfileName>
+  <WBD_BackupProfileDesc>Kept automatically on {1}: your versions of the presets that applying the profile "{0}" replaced.</WBD_BackupProfileDesc>
+  <WBD_BackupProfileMade>Your previous versions are kept as the profile "{0}".</WBD_BackupProfileMade>
+  <WBD_SaveFailedReason>Could not save the library ({0}). Nothing was changed; your presets are as before.</WBD_SaveFailedReason>
+  <WBD_CardReplaceConfirm>Start with "{0}"?\n\nThe profile replaces these presets in your library with its own versions: {1}\n\nYour current versions are kept as the profile "{2}", so you can get them back at any time.</WBD_CardReplaceConfirm>
+  <WBD_CardWillReplace>Replaces {0} of your presets with its own versions (yours are kept as the profile "{1}").</WBD_CardWillReplace>
+  <WBD_CardLibraryNotSaved>Your library could not be updated ({0}): this colony uses the profile, but new buildings and colonists get the presets your library had.</WBD_CardLibraryNotSaved>
+  <WBD_LibraryUsingBackup>Until then this game uses the previous version (Library.xml.bak), so new buildings and colonists still get your defaults.</WBD_LibraryUsingBackup>
+  <WBD_LibraryReadOnlyWhy>Reason: {0}</WBD_LibraryReadOnlyWhy>
+  <WBD_LibRestoreBackup>Restore the backup</WBD_LibRestoreBackup>
+  <WBD_LibRestoreBackupTip>Puts Library.xml.bak back as Library.xml. The current file is not deleted: it is kept as Library.broken-&lt;date&gt;.xml in the same folder.</WBD_LibRestoreBackupTip>
+  <WBD_LibRestoreDone>The backup was restored; your presets can be changed again.</WBD_LibRestoreDone>
+  <WBD_LibRestoreFailed>The backup could not be restored: {0}</WBD_LibRestoreFailed>
 </LanguageData>

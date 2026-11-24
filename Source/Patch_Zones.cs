@@ -42,7 +42,7 @@ namespace BetterWorkbenchDefaults
         public static Gizmo Make(Zone zone)
         {
             var s = WBD_Mod.Settings;
-            if (s == null || !s.showGizmo || !SmdSections.On(SmdSections.Zones) || zone == null)
+            if (s == null || !s.zoneShowGizmo || !SmdSections.On(SmdSections.Zones) || zone == null)
                 return null;
             if (_icon == null)
                 _icon = ContentFinder<Texture2D>.Get("UI/WBD_Defaults", false) ?? BaseContent.BadTex;

@@ -107,6 +107,8 @@ namespace BetterWorkbenchDefaults
                     "A stockpile or dumping zone you draw gets the default you saved for that kind of zone.").InGroup("New zones").Legacy("zoneAutoApplyOnCreate");
             r.Bool(Z, "smd.growingAutoApplyOnCreate", true, "Default plant on new growing zones",
                     "A growing zone you draw gets the default plant and the sow and cut switches you saved.").InGroup("New zones").Legacy("growingAutoApplyOnCreate");
+            r.Bool(Z, "smd.zoneShowGizmo", true, "Defaults button on zones",
+                    "Shows the Defaults button when a stockpile, dumping or growing zone is selected.").InGroup("Buttons").AsGlobal();
 
             // ---------------------------------------------------------------- Colonists
             const string P = SmdSections.Pawns;
@@ -160,7 +162,7 @@ namespace BetterWorkbenchDefaults
 
             // ---------------------------------------------------------------- compatibility (G13c)
             r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
-            r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Its bundled bill tab is supported the same way as Nice Bill Tab.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
+            r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Works side by side: its 1.7 version has no bill tab of its own, so there is nothing to adapt.");
             r.Compat("No Max Bills Redux", "justharry.nomaxbillsredux", "Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.");
             r.Compat("Project RimFactory Revived", "spdskatr.projectrimfactory", "Assemblers, storage machines and conveyor splitters get their defaults.").HealthyWhen(() => PrfCompat.PatchApplied);
             r.Compat("Blueprints Forked", "Defi.Blueprints.fork", "Blueprints remember bills and storage settings, even across saves.").HealthyWhen(() => BlueprintsCompat.Hooked);
@@ -175,8 +177,8 @@ namespace BetterWorkbenchDefaults
             // "Saved defaults" lists everything stored (all areas); profiles and import/export belong to the Library area. The same
             // pages open in game from the Defaults buttons (Dialog_SmdLibrary), so the common path never needs Mod settings.
             r.Page(SmdLibraryUi.PageLibrary, "My defaults", SmdLibraryUi.DrawLibrary).WithOrder(5);
-            r.Page("policies", "Policy set", SmdPages.DrawPolicies).WithOrder(45).InSection(SmdSections.Policies);
-            r.Page("colony", "Colony defaults", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
+            r.Page("policies", "Saved policies", SmdPages.DrawPolicies).WithOrder(45).InSection(SmdSections.Policies);
+            r.Page("colony", "Saved colony settings", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
             r.Page(SmdLibraryUi.PageProfiles, "Profiles", SmdLibraryUi.DrawProfiles).WithOrder(65).InSection(SmdSections.Library);
             r.Page(SmdLibraryUi.PageShare, "Import and export", SmdLibraryUi.DrawShare).WithOrder(66).InSection(SmdSections.Library);
 
@@ -321,6 +323,7 @@ namespace BetterWorkbenchDefaults
         public bool autoApplyOnPlace { get => B("smd.autoApplyOnPlace", true); set => SetB("smd.autoApplyOnPlace", value); }
         public bool showTabButton { get => B("smd.showTabButton", true); set => SetB("smd.showTabButton", value); }
         public bool showGizmo { get => B("smd.showGizmo", true); set => SetB("smd.showGizmo", value); }
+        public bool zoneShowGizmo { get => B("smd.zoneShowGizmo", true); set => SetB("smd.zoneShowGizmo", value); }
 
         // Pawns
         public bool autoApplyToNewPawns { get => B("smd.autoApplyToNewPawns", true); set => SetB("smd.autoApplyToNewPawns", value); }
