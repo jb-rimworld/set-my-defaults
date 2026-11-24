@@ -31,22 +31,32 @@ namespace BetterWorkbenchDefaults.Lib
             using (var r = XmlReader.Create(sr, Settings))
                 return XDocument.Load(r);
         }
+
+        public static XDocument Parse(byte[] bytes)
+        {
+            using (var ms = new MemoryStream(bytes, false))
+            using (var r = XmlReader.Create(ms, Settings))
+                return XDocument.Load(r);
+        }
     }
 
     /// <summary>
-    /// Reads and writes Library.xml. Writing is atomic (temp file, then replace) and keeps the previous version as
-    /// Library.xml.bak. A file that cannot be parsed is never overwritten: <see cref="Load"/> reports the error and
-    /// the store goes read-only for the session, so a typo in a hand-edited file cannot wipe a player's presets.
+    /// Reads and writes Library.xml. Writing is atomic (a temp file with a name of its own, then replace) and keeps the previous version as
+    /// Library.xml.bak. A file that cannot be parsed is never overwritten: <see cref="Load"/> reports the error and the store goes
+    /// read-only for the session, so a typo in a hand-edited file cannot wipe a player's presets. Several games at once and the
+    /// concurrency rules live in <see cref="LibraryDisk"/>.
     /// </summary>
     public static class LibraryFile
     {
         public const string FileName = "Library.xml";
+        public const string BackupSuffix = ".bak";
 
         public sealed class LoadResult
         {
             public SmdLibrary library;   // null when the file did not exist or could not be read
             public bool existed;
             public string error;         // set when the file exists but could not be read
+            public byte[] bytes;         // what was read (null when the file did not exist)
         }
 
         public static LoadResult Load(string path)
@@ -57,30 +67,135 @@ namespace BetterWorkbenchDefaults.Lib
             r.existed = true;
             try
             {
-                r.library = SmdLibrary.FromXml(XmlSafe.LoadFile(path).Root);
+                r.bytes = File.ReadAllBytes(path);
+                r.library = Parse(r.bytes);
             }
             catch (Exception e)
             {
+                r.library = null;
                 r.error = e.GetType().Name + ": " + e.Message;
             }
             return r;
         }
 
-        public static void Save(string path, SmdLibrary lib)
+        public static SmdLibrary Parse(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0)
+                throw new FormatException("the file is empty");
+            return SmdLibrary.FromXml(XmlSafe.Parse(bytes).Root);
+        }
+
+        public static byte[] Serialize(SmdLibrary lib)
+        {
+            var doc = new XDocument(new XDeclaration("1.0", "utf-8", null), lib.ToXml());
+            var ws = new XmlWriterSettings { Indent = true, IndentChars = "  ", Encoding = new UTF8Encoding(false), NewLineChars = "\n" };
+            using (var ms = new MemoryStream())
+            {
+                using (var w = XmlWriter.Create(ms, ws))
+                    doc.Save(w);
+                return ms.ToArray();
+            }
+        }
+
+        /// <summary>Writes the library and returns the bytes written. Throws when it could not (the old file is then unchanged).</summary>
+        public static byte[] Save(string path, SmdLibrary lib)
         {
             var dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
-            var tmp = path + ".tmp";
-            var doc = new XDocument(new XDeclaration("1.0", "utf-8", null), lib.ToXml());
-            var ws = new XmlWriterSettings { Indent = true, IndentChars = "  ", Encoding = new UTF8Encoding(false), NewLineChars = "\n" };
-            using (var w = XmlWriter.Create(tmp, ws))
-                doc.Save(w);
-            // sanity: what we wrote must parse back before it replaces anything
-            SmdLibrary.FromXml(XmlSafe.LoadFile(tmp).Root);
-            if (File.Exists(path))
-                File.Copy(path, path + ".bak", true);
-            File.Move(tmp, path, true);
+            var bytes = Serialize(lib);
+            // sanity: what we write must parse back before it replaces anything
+            Parse(bytes);
+            // A temp name of its own: a leftover temp file of a crash (even a read-only one) or another game writing at the same
+            // moment can never block or mix with this write.
+            var tmp = path + "." + Guid.NewGuid().ToString("N").Substring(0, 12) + ".tmp";
+            try
+            {
+                File.WriteAllBytes(tmp, bytes);   // disk full throws here; Library.xml is untouched
+                if (File.Exists(path))
+                {
+                    // the backup is a convenience: a backup that cannot be written (read-only .bak) never blocks the save
+                    try { CopyOver(path, path + BackupSuffix); }
+                    catch { }
+                }
+                File.Move(tmp, path, true);
+            }
+            catch
+            {
+                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                throw;
+            }
+            return bytes;
+        }
+
+        static void CopyOver(string from, string to)
+        {
+            try { File.Copy(from, to, true); }
+            catch (UnauthorizedAccessException)
+            {
+                File.SetAttributes(to, FileAttributes.Normal);
+                File.Copy(from, to, true);
+            }
+        }
+
+        /// <summary>Removes temp files of earlier writes that crashed (older than a minute, so another game's write in progress is left alone).</summary>
+        public static int CleanStaleTemps(string path)
+        {
+            int n = 0;
+            try
+            {
+                var dir = Path.GetDirectoryName(path);
+                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+                    return 0;
+                foreach (var f in Directory.GetFiles(dir, Path.GetFileName(path) + "*.tmp"))
+                {
+                    try
+                    {
+                        if ((DateTime.UtcNow - File.GetLastWriteTimeUtc(f)).TotalSeconds < 60)
+                            continue;
+                        File.SetAttributes(f, FileAttributes.Normal);
+                        File.Delete(f);
+                        n++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return n;
+        }
+
+        /// <summary>
+        /// Puts Library.xml.bak back as Library.xml. The current file (unreadable or not) is never deleted: it is renamed to
+        /// Library.broken-&lt;time&gt;.xml first. Returns null on success, else the reason; <paramref name="keptAs"/> names the kept file.
+        /// </summary>
+        public static string RestoreBackup(string path, out string keptAs)
+        {
+            keptAs = null;
+            var bak = path + BackupSuffix;
+            var b = Load(bak);
+            if (!b.existed)
+                return "there is no " + Path.GetFileName(bak);
+            if (b.library == null)
+                return Path.GetFileName(bak) + " cannot be read either (" + b.error + ")";
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var dir = Path.GetDirectoryName(path) ?? "";
+                    keptAs = Path.Combine(dir, "Library.broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".xml");
+                    for (int i = 2; File.Exists(keptAs); i++)
+                        keptAs = Path.Combine(dir, "Library.broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + i + ".xml");
+                    File.Move(path, keptAs);
+                }
+                var tmp = path + "." + Guid.NewGuid().ToString("N").Substring(0, 12) + ".tmp";
+                File.WriteAllBytes(tmp, b.bytes);
+                File.Move(tmp, path, true);
+                return null;
+            }
+            catch (Exception e)
+            {
+                return e.GetType().Name + ": " + e.Message;
+            }
         }
     }
 

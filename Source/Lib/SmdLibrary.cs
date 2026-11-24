@@ -7,19 +7,72 @@ using System.Xml.Linq;
 // (Source/Tests/SmdLibTests), which proves the file format, the migration and the share codec without the game.
 namespace BetterWorkbenchDefaults.Lib
 {
+    /// <summary>
+    /// What a newer version of the mod wrote into an element that this version does not know (attributes and child elements).
+    /// It is kept and written back unchanged, so opening Library.xml with an older version never drops a newer version's data
+    /// (one library is shared by every game on the machine, and players switch mod versions).
+    /// </summary>
+    public sealed class XExtra
+    {
+        public List<XAttribute> attrs = new List<XAttribute>();
+        public List<XElement> elems = new List<XElement>();
+
+        public bool IsEmpty => attrs.Count == 0 && elems.Count == 0;
+
+        public static XExtra Capture(XElement e, string[] knownAttrs, string[] knownElems)
+        {
+            var x = new XExtra();
+            if (e == null)
+                return x;
+            foreach (var a in e.Attributes())
+                if (!a.IsNamespaceDeclaration && Array.IndexOf(knownAttrs, a.Name.LocalName) < 0)
+                    x.attrs.Add(new XAttribute(a));
+            foreach (var c in e.Elements())
+                if (Array.IndexOf(knownElems, c.Name.LocalName) < 0)
+                    x.elems.Add(new XElement(c));
+            return x;
+        }
+
+        public void WriteTo(XElement e)
+        {
+            foreach (var a in attrs)
+                if (e.Attribute(a.Name) == null)
+                    e.Add(new XAttribute(a));
+            foreach (var c in elems)
+                e.Add(new XElement(c));
+        }
+
+        public XExtra Clone() => new XExtra
+        {
+            attrs = attrs.Select(a => new XAttribute(a)).ToList(),
+            elems = elems.Select(c => new XElement(c)).ToList()
+        };
+    }
+
     /// <summary>A mod a stored preset needs (recorded when the preset is saved).</summary>
     public sealed class ModRef
     {
         public string id;   // packageId as the player sees it (lower case), e.g. "vanillaexpanded.vcooke"
         public string name; // display name at save time, e.g. "Vanilla Cooking Expanded"
+        public XExtra extra = new XExtra();
 
         public ModRef() { }
         public ModRef(string id, string name) { this.id = id; this.name = name; }
 
-        public XElement ToXml() => new XElement("mod", new XAttribute("id", id ?? ""), new XAttribute("name", name ?? ""));
+        public ModRef Clone() => new ModRef(id, name) { extra = extra.Clone() };
+
+        public XElement ToXml()
+        {
+            var e = new XElement("mod", new XAttribute("id", id ?? ""), new XAttribute("name", name ?? ""));
+            extra.WriteTo(e);
+            return e;
+        }
 
         public static ModRef FromXml(XElement e) =>
-            new ModRef((string)e.Attribute("id") ?? "", (string)e.Attribute("name") ?? "");
+            new ModRef((string)e.Attribute("id") ?? "", (string)e.Attribute("name") ?? "")
+            {
+                extra = XExtra.Capture(e, new[] { "id", "name" }, new string[0])
+            };
 
         public static List<ModRef> ListFromXml(XElement parent)
         {
@@ -56,14 +109,30 @@ namespace BetterWorkbenchDefaults.Lib
         public XElement config;               // root element named "config"
         public List<ModRef> requiredMods = new List<ModRef>();
         public string savedAt;                // ISO date (informational)
+        public XExtra extra = new XExtra();   // what a newer version wrote here (kept)
+
+        private static readonly string[] KnownAttrs = { "name", "savedAt" };
+        private static readonly string[] KnownElems = { "requiredMods", "config" };
 
         public StoredPreset Clone() => new StoredPreset
         {
             name = name,
             config = config != null ? new XElement(config) : null,
-            requiredMods = requiredMods.Select(m => new ModRef(m.id, m.name)).ToList(),
-            savedAt = savedAt
+            requiredMods = requiredMods.Select(m => m.Clone()).ToList(),
+            savedAt = savedAt,
+            extra = extra.Clone()
         };
+
+        /// <summary>Same stored content (config, required mods and kept extras; the name and the date do not count).</summary>
+        public bool SameContent(StoredPreset other)
+        {
+            if (other == null)
+                return false;
+            var a = ToXml(); var b = other.ToXml();
+            a.SetAttributeValue("name", null); a.SetAttributeValue("savedAt", null);
+            b.SetAttributeValue("name", null); b.SetAttributeValue("savedAt", null);
+            return XNode.DeepEquals(a, b);
+        }
 
         public XElement ToXml()
         {
@@ -74,6 +143,7 @@ namespace BetterWorkbenchDefaults.Lib
             if (req != null)
                 e.Add(req);
             e.Add(config != null ? new XElement(config) { Name = "config" } : new XElement("config"));
+            extra.WriteTo(e);
             return e;
         }
 
@@ -82,7 +152,8 @@ namespace BetterWorkbenchDefaults.Lib
             name = (string)e.Attribute("name") ?? "",
             savedAt = (string)e.Attribute("savedAt"),
             requiredMods = ModRef.ListFromXml(e),
-            config = e.Element("config") != null ? new XElement(e.Element("config")) : new XElement("config")
+            config = e.Element("config") != null ? new XElement(e.Element("config")) : new XElement("config"),
+            extra = XExtra.Capture(e, KnownAttrs, KnownElems)
         };
     }
 
@@ -96,8 +167,23 @@ namespace BetterWorkbenchDefaults.Lib
         public string key;
         public string defaultName;
         public List<StoredPreset> presets = new List<StoredPreset>();
+        public XExtra extra = new XExtra();   // what a newer version wrote here (kept)
 
         public bool IsEmpty => presets.Count == 0;
+
+        /// <summary>A name that no preset of this set uses: "name", else "name (2)", "name (3)", ...</summary>
+        public string UniqueName(string wanted)
+        {
+            wanted = string.IsNullOrWhiteSpace(wanted) ? "Preset" : wanted.Trim();
+            if (Get(wanted) == null)
+                return wanted;
+            for (int i = 2; ; i++)
+            {
+                var n = wanted + " (" + i + ")";
+                if (Get(n) == null)
+                    return n;
+            }
+        }
 
         public StoredPreset Get(string name) => presets.FirstOrDefault(p => p.name == name);
 
@@ -149,10 +235,22 @@ namespace BetterWorkbenchDefaults.Lib
 
         public void Normalize()
         {
-            presets.RemoveAll(p => p == null || string.IsNullOrEmpty(p.name));
-            // duplicate names: keep the first (a hand-edited file must not break the set)
+            presets.RemoveAll(p => p == null);
+            // Empty or duplicate names (a hand-edited file, two sets of one key): nothing is dropped, the later ones get a free
+            // name ("Stove (2)"); the first keeps its name, so a default that names it still points at the same preset.
             var seen = new HashSet<string>();
-            presets.RemoveAll(p => !seen.Add(p.name));
+            foreach (var p in presets)
+            {
+                if (string.IsNullOrWhiteSpace(p.name))
+                    p.name = "Preset";
+                if (seen.Add(p.name))
+                    continue;
+                int i = 2;
+                while (seen.Contains(p.name + " (" + i + ")") || presets.Any(o => o != p && o.name == p.name + " (" + i + ")"))
+                    i++;
+                p.name = p.name + " (" + i + ")";
+                seen.Add(p.name);
+            }
             if (IsEmpty)
                 defaultName = null;
             else if (defaultName == null || Get(defaultName) == null)
@@ -163,7 +261,8 @@ namespace BetterWorkbenchDefaults.Lib
         {
             key = key,
             defaultName = defaultName,
-            presets = presets.Select(p => p.Clone()).ToList()
+            presets = presets.Select(p => p.Clone()).ToList(),
+            extra = extra.Clone()
         };
 
         public XElement ToXml(string elementName = "set")
@@ -175,6 +274,7 @@ namespace BetterWorkbenchDefaults.Lib
                 e.Add(new XAttribute("default", defaultName));
             foreach (var p in presets)
                 e.Add(p.ToXml());
+            extra.WriteTo(e);
             return e;
         }
 
@@ -183,7 +283,8 @@ namespace BetterWorkbenchDefaults.Lib
             var set = new PresetSet
             {
                 key = keyOverride ?? (string)e.Attribute("key"),
-                defaultName = (string)e.Attribute("default")
+                defaultName = (string)e.Attribute("default"),
+                extra = XExtra.Capture(e, new[] { "key", "default" }, new[] { "preset" })
             };
             foreach (var p in e.Elements("preset"))
                 set.presets.Add(StoredPreset.FromXml(p));
@@ -198,13 +299,25 @@ namespace BetterWorkbenchDefaults.Lib
         public XElement config;
         public List<ModRef> requiredMods = new List<ModRef>();
         public string savedAt;
+        public XExtra extra = new XExtra();   // what a newer version wrote here (kept)
 
         public StoredBlock Clone() => new StoredBlock
         {
             config = config != null ? new XElement(config) : null,
-            requiredMods = requiredMods.Select(m => new ModRef(m.id, m.name)).ToList(),
-            savedAt = savedAt
+            requiredMods = requiredMods.Select(m => m.Clone()).ToList(),
+            savedAt = savedAt,
+            extra = extra.Clone()
         };
+
+        /// <summary>Same stored content (the date does not count).</summary>
+        public bool SameContent(StoredBlock other)
+        {
+            if (other == null)
+                return false;
+            var a = ToXml("b"); var b = other.ToXml("b");
+            a.SetAttributeValue("savedAt", null); b.SetAttributeValue("savedAt", null);
+            return XNode.DeepEquals(a, b);
+        }
 
         public XElement ToXml(string elementName)
         {
@@ -215,6 +328,7 @@ namespace BetterWorkbenchDefaults.Lib
             if (req != null)
                 e.Add(req);
             e.Add(config != null ? new XElement(config) { Name = "config" } : new XElement("config"));
+            extra.WriteTo(e);
             return e;
         }
 
@@ -226,7 +340,8 @@ namespace BetterWorkbenchDefaults.Lib
             {
                 savedAt = (string)e.Attribute("savedAt"),
                 requiredMods = ModRef.ListFromXml(e),
-                config = e.Element("config") != null ? new XElement(e.Element("config")) : new XElement("config")
+                config = e.Element("config") != null ? new XElement(e.Element("config")) : new XElement("config"),
+                extra = XExtra.Capture(e, new[] { "savedAt" }, new[] { "requiredMods", "config" })
             };
         }
     }
@@ -254,13 +369,15 @@ namespace BetterWorkbenchDefaults.Lib
         public string description;
         public string createdAt;
         public SmdContent content = new SmdContent();
+        public XExtra extra = new XExtra();   // what a newer version wrote here, e.g. a section this version has no idea of (kept)
 
         public SmdProfile Clone() => new SmdProfile
         {
             name = name,
             description = description,
             createdAt = createdAt,
-            content = content.Clone()
+            content = content.Clone(),
+            extra = extra.Clone()
         };
 
         public XElement ToXml()
@@ -271,6 +388,7 @@ namespace BetterWorkbenchDefaults.Lib
             if (!string.IsNullOrEmpty(description))
                 e.Add(new XElement("description", description));
             content.WriteInto(e);
+            extra.WriteTo(e);
             return e;
         }
 
@@ -279,7 +397,8 @@ namespace BetterWorkbenchDefaults.Lib
             name = (string)e.Attribute("name") ?? "",
             createdAt = (string)e.Attribute("createdAt"),
             description = (string)e.Element("description"),
-            content = SmdContent.ReadFrom(e)
+            content = SmdContent.ReadFrom(e),
+            extra = XExtra.Capture(e, new[] { "name", "createdAt" }, new[] { "description", "buildings", "pawns", "policies", "colony" })
         };
     }
 
@@ -290,6 +409,7 @@ namespace BetterWorkbenchDefaults.Lib
         public PresetSet pawns;                                    // key "pawns"
         public StoredBlock policies;                               // PolicyDefaultsSet (Scribe layout)
         public StoredBlock colony;                                 // ColonySettingsTemplate (Scribe layout)
+        public XExtra buildingsExtra = new XExtra();               // what a newer version wrote into <buildings> (kept)
 
         public const string ZonePrefix = "zone:";
 
@@ -325,8 +445,63 @@ namespace BetterWorkbenchDefaults.Lib
             buildings = buildings.Select(b => b.Clone()).ToList(),
             pawns = pawns?.Clone(),
             policies = policies?.Clone(),
-            colony = colony?.Clone()
+            colony = colony?.Clone(),
+            buildingsExtra = buildingsExtra.Clone()
         };
+
+        /// <summary>
+        /// The entries of THIS content that merging <paramref name="incoming"/> (<paramref name="parts"/>) would overwrite with something
+        /// different: same key and name but other content, or a policy set / colony block that differs. A deep copy, with this content's
+        /// defaults where they are among the copied presets. Empty when the merge changes nothing that exists (identical entries do not count).
+        /// </summary>
+        public SmdContent ReplacedBy(SmdContent incoming, ProfileParts parts)
+        {
+            var r = new SmdContent();
+            if (incoming == null)
+                return r;
+            var sub = incoming.Subset(parts);
+            foreach (var inc in sub.buildings)
+            {
+                var mine = Buildings(inc.key);
+                if (mine == null)
+                    continue;
+                PresetSet hit = null;
+                foreach (var p in inc.presets)
+                {
+                    var old = mine.Get(p.name);
+                    if (old == null || old.SameContent(p))
+                        continue;
+                    if (hit == null)
+                        r.buildings.Add(hit = new PresetSet { key = mine.key });
+                    hit.presets.Add(old.Clone());
+                }
+                if (hit != null)
+                    hit.defaultName = hit.Get(mine.defaultName) != null ? mine.defaultName : hit.presets[0].name;
+            }
+            if (sub.pawns != null && pawns != null)
+            {
+                PresetSet hit = null;
+                foreach (var p in sub.pawns.presets)
+                {
+                    var old = pawns.Get(p.name);
+                    if (old == null || old.SameContent(p))
+                        continue;
+                    if (hit == null)
+                        hit = new PresetSet { key = "pawns" };
+                    hit.presets.Add(old.Clone());
+                }
+                if (hit != null)
+                {
+                    hit.defaultName = hit.Get(pawns.defaultName) != null ? pawns.defaultName : hit.presets[0].name;
+                    r.pawns = hit;
+                }
+            }
+            if (sub.policies != null && policies != null && !policies.SameContent(sub.policies))
+                r.policies = policies.Clone();
+            if (sub.colony != null && colony != null && !colony.SameContent(sub.colony))
+                r.colony = colony.Clone();
+            return r;
+        }
 
         /// <summary>Only the requested parts (a deep copy).</summary>
         public SmdContent Subset(ProfileParts parts)
@@ -421,8 +596,12 @@ namespace BetterWorkbenchDefaults.Lib
 
         public void WriteInto(XElement parent)
         {
-            if (buildings.Count > 0)
-                parent.Add(new XElement("buildings", buildings.OrderBy(b => b.key, StringComparer.Ordinal).Select(b => b.ToXml("set"))));
+            if (buildings.Count > 0 || !buildingsExtra.IsEmpty)
+            {
+                var be = new XElement("buildings", buildings.OrderBy(b => b.key, StringComparer.Ordinal).Select(b => b.ToXml("set")));
+                buildingsExtra.WriteTo(be);
+                parent.Add(be);
+            }
             if (pawns != null && !pawns.IsEmpty)
                 parent.Add(pawns.ToXml("pawns"));
             if (policies != null)
@@ -437,17 +616,26 @@ namespace BetterWorkbenchDefaults.Lib
             var b = parent.Element("buildings");
             if (b != null)
             {
+                c.buildingsExtra = XExtra.Capture(b, new string[0], new[] { "set" });
                 foreach (var s in b.Elements("set"))
                 {
                     var set = PresetSet.FromXml(s);
                     if (string.IsNullOrEmpty(set.key) || set.IsEmpty)
+                    {
+                        // a set without a key cannot be used, but it is not ours to delete
+                        if (!set.IsEmpty)
+                            c.buildingsExtra.elems.Add(new XElement(s));
                         continue;
+                    }
                     var existing = c.Buildings(set.key);
                     if (existing == null)
                         c.buildings.Add(set);
                     else
-                        foreach (var p in set.presets)
-                            existing.AddOrReplace(p, false);
+                    {
+                        // two sets of one key (hand-edited file): keep every preset, same names get a free name
+                        existing.presets.AddRange(set.presets);
+                        existing.Normalize();
+                    }
                 }
             }
             var pw = parent.Element("pawns");
@@ -477,6 +665,10 @@ namespace BetterWorkbenchDefaults.Lib
         public List<SmdProfile> profiles = new List<SmdProfile>();
         public List<XElement> migrationLog = new List<XElement>();
         public List<XElement> unknownElements = new List<XElement>();
+        public XExtra rootExtra = new XExtra();       // unknown attributes of the root (kept)
+        public XExtra profilesExtra = new XExtra();   // unknown content of <profiles> (kept)
+        /// <summary>The format version of the file as read (a file of a NEWER version is larger than <see cref="CurrentVersion"/>).</summary>
+        public int FileVersion => version;
 
         private static readonly HashSet<string> Known = new HashSet<string>
             { "buildings", "pawns", "policies", "colony", "profiles", "migration" };
@@ -505,19 +697,27 @@ namespace BetterWorkbenchDefaults.Lib
                 content = content.Clone(),
                 profiles = profiles.Select(p => p.Clone()).ToList(),
                 migrationLog = migrationLog.Select(e => new XElement(e)).ToList(),
-                unknownElements = unknownElements.Select(e => new XElement(e)).ToList()
+                unknownElements = unknownElements.Select(e => new XElement(e)).ToList(),
+                rootExtra = rootExtra.Clone(),
+                profilesExtra = profilesExtra.Clone()
             };
             return l;
         }
 
         public XElement ToXml()
         {
-            var root = new XElement(RootName, new XAttribute("version", Math.Max(version, CurrentVersion)));
+            // version: never lowered (a newer version's file stays marked as such); writtenBy: the version that wrote it last
+            var root = new XElement(RootName, new XAttribute("version", Math.Max(version, CurrentVersion)), new XAttribute("writtenBy", CurrentVersion));
+            rootExtra.WriteTo(root);
             if (migrationLog.Count > 0)
                 root.Add(new XElement("migration", migrationLog.Select(e => new XElement(e))));
             content.WriteInto(root);
-            if (profiles.Count > 0)
-                root.Add(new XElement("profiles", profiles.Select(p => p.ToXml())));
+            if (profiles.Count > 0 || !profilesExtra.IsEmpty)
+            {
+                var pe = new XElement("profiles", profiles.Select(p => p.ToXml()));
+                profilesExtra.WriteTo(pe);
+                root.Add(pe);
+            }
             foreach (var u in unknownElements)
                 root.Add(new XElement(u));
             return root;
@@ -530,15 +730,20 @@ namespace BetterWorkbenchDefaults.Lib
             var lib = new SmdLibrary();
             int v;
             lib.version = int.TryParse((string)root.Attribute("version"), out v) ? v : 0;
+            lib.rootExtra = XExtra.Capture(root, new[] { "version", "writtenBy" }, Known.ToArray().Concat(root.Elements().Select(e => e.Name.LocalName)).ToArray());
             lib.content = SmdContent.ReadFrom(root);
             var prof = root.Element("profiles");
             if (prof != null)
+            {
+                lib.profilesExtra = XExtra.Capture(prof, new string[0], new[] { "profile" });
                 foreach (var p in prof.Elements("profile"))
                 {
+                    // nothing is dropped: an empty or taken name (hand-edited file) gets a free one
                     var sp = SmdProfile.FromXml(p);
-                    if (!string.IsNullOrEmpty(sp.name) && lib.Profile(sp.name) == null)
-                        lib.profiles.Add(sp);
+                    sp.name = lib.UniqueProfileName(sp.name);
+                    lib.profiles.Add(sp);
                 }
+            }
             var mig = root.Element("migration");
             if (mig != null)
                 lib.migrationLog = mig.Elements().Select(e => new XElement(e)).ToList();
