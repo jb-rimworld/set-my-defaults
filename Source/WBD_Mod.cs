@@ -179,7 +179,7 @@ namespace BetterWorkbenchDefaults
             r.Compat("Free-ish Will", "stoneman.freewill", "Work priorities are left to Free-ish Will for the colonists it manages.");
             r.Compat("Better Workbench Management", "falconne.BWM", "Works side by side. A default bill uses the store mode saved in the preset, not BWM's own default.");
             r.Compat("Combat Extended", "CETeam.CombatExtended", "Fine: only vanilla schedule, work, policy and medical state is touched, never loadouts or ammo.");
-            r.Compat("Ideology", KitDetect.IdeologyId, "Bill styles (and Ideology's own style choices) are saved with the bill and restored.");
+            r.Compat("Ideology", KitDetect.IdeologyId, "A bill's style is saved with it and restored when that style exists.");
             r.Compat("Anomaly", KitDetect.AnomalyId, "Medical defaults for entities and ghouls are part of the colony settings.");
 
             // ---------------------------------------------------------------- custom pages (presets and the library are not plain numbers)

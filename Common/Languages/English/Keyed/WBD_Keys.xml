@@ -174,4 +174,44 @@
   <WBD_ColonySaved>Saved this colony's settings for every new game.</WBD_ColonySaved>
   <WBD_ColonyApplied>Applied the saved colony settings to this colony.</WBD_ColonyApplied>
   <WBD_ColonyNoneSaved>Nothing saved yet. Load a colony and press "Save this colony's settings".</WBD_ColonyNoneSaved>
+  <!-- 2.0 settings pages -->
+  <WBD_SetDefault>Make this the default</WBD_SetDefault>
+  <WBD_PageBuildingPresets>Saved building presets</WBD_PageBuildingPresets>
+  <WBD_PageBuildingPresetsHelp>Presets you saved with the Defaults button, by building type. The marked one is the default that new buildings of that type get.</WBD_PageBuildingPresetsHelp>
+  <WBD_DeleteAllConfirm>Delete every preset saved for {0}? This cannot be undone.</WBD_DeleteAllConfirm>
+  <WBD_PageColonistPresets>Saved colonist presets</WBD_PageColonistPresets>
+  <WBD_PageColonistPresetsHelp>Presets you saved with the Defaults button on a colonist. The marked one is applied once to every new colonist.</WBD_PageColonistPresetsHelp>
+  <WBD_PagePoliciesHelp>Save this colony's outfit, drug, food and reading policies as one set and apply it in any other colony. Policies are matched by name or recreated, never duplicated.</WBD_PagePoliciesHelp>
+  <WBD_PolicyNoneSaved>No policy set saved yet.</WBD_PolicyNoneSaved>
+  <WBD_PolicyClearConfirm>Delete the saved policy set? The policies in your colonies stay as they are.</WBD_PolicyClearConfirm>
+  <WBD_PageColonyHelp>Medical care per group, auto home area, auto rebuild and manual work priorities. Save them in one colony, apply them in another or to every new game.</WBD_PageColonyHelp>
+  <WBD_ColonyClearConfirm>Delete the saved colony settings? Your colonies stay as they are.</WBD_ColonyClearConfirm>
+  <WBD_PageLibrary>Defaults library</WBD_PageLibrary>
+  <WBD_PageLibraryHelp>Everything you save lives in one library outside your saves, so it works in every colony. Profiles and share strings come in a later update.</WBD_PageLibraryHelp>
+  <WBD_LibCounts>{0} building presets for {1} building types, {2} zone presets, {3} colonist presets.</WBD_LibCounts>
+  <WBD_LibPoliciesYes>A policy set is saved.</WBD_LibPoliciesYes>
+  <WBD_LibPoliciesNo>No policy set saved.</WBD_LibPoliciesNo>
+  <WBD_LibColonyYes>Colony settings are saved.</WBD_LibColonyYes>
+  <WBD_LibColonyNo>No colony settings saved.</WBD_LibColonyNo>
+  <WBD_LibProfiles>Profiles: {0}</WBD_LibProfiles>
+  <WBD_LibMissing>Some presets need mods that are not running: {0}. They are kept and skip only what is missing.</WBD_LibMissing>
+  <WBD_LibMigrated>Your presets from the previous version were imported this session. The old files were not changed.</WBD_LibMigrated>
+  <WBD_LibOpenFolder>Open library folder</WBD_LibOpenFolder>
+  <WBD_LibReimport>Import old presets again</WBD_LibReimport>
+  <WBD_LibReimportTip>Reads the preset files of the previous version (1.6) again. Presets with the same name are kept as they are.</WBD_LibReimportTip>
+  <WBD_ColSumCare>Medical care, {0}: {1}</WBD_ColSumCare>
+  <WBD_CareGroup_Colonist>colonists</WBD_CareGroup_Colonist>
+  <WBD_CareGroup_Prisoner>prisoners</WBD_CareGroup_Prisoner>
+  <WBD_CareGroup_Slave>slaves</WBD_CareGroup_Slave>
+  <WBD_CareGroup_TamedAnimal>tamed animals</WBD_CareGroup_TamedAnimal>
+  <WBD_CareGroup_Friendly>friendly</WBD_CareGroup_Friendly>
+  <WBD_CareGroup_Neutral>neutral</WBD_CareGroup_Neutral>
+  <WBD_CareGroup_Hostile>hostile</WBD_CareGroup_Hostile>
+  <WBD_CareGroup_NoFaction>no faction</WBD_CareGroup_NoFaction>
+  <WBD_CareGroup_Wildlife>wildlife</WBD_CareGroup_Wildlife>
+  <WBD_CareGroup_Entities>entities</WBD_CareGroup_Entities>
+  <WBD_CareGroup_Ghouls>ghouls</WBD_CareGroup_Ghouls>
+  <WBD_ColSumHome>Auto home area: {0}</WBD_ColSumHome>
+  <WBD_ColSumRebuild>Auto rebuild: {0}</WBD_ColSumRebuild>
+  <WBD_ColSumPriorities>Manual work priorities: {0}</WBD_ColSumPriorities>
 </LanguageData>

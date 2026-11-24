@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <SMD.Section.buildings>Werkbänke und Regale</SMD.Section.buildings>
+  <SMD.Section.buildings.Desc>Standard-Aufträge für Werkbänke, Standard-Filter für Regale und andere Lager, Standard-Pflanzen für Hydrokultur. Der Knopf „Vorgaben“ an Gebäuden und im Aufträge-Tab.</SMD.Section.buildings.Desc>
+  <SMD.Section.zones>Lager- und Anbauzonen</SMD.Section.zones>
+  <SMD.Section.zones.Desc>Standard-Filter für neue Lager- und Abladezonen, Standard-Pflanze für neue Anbauzonen. Der Knopf „Vorgaben“ an Zonen.</SMD.Section.zones.Desc>
+  <SMD.Section.pawns>Kolonisten</SMD.Section.pawns>
+  <SMD.Section.pawns.Desc>Kolonisten-Vorlagen (Zeitplan, Arbeit, Richtlinien, Feindverhalten, medizinische Versorgung) und die einmalige Anwendung der Standardvorlage auf jede neue Person. Der Knopf „Vorgaben“ an Kolonisten.</SMD.Section.pawns.Desc>
+  <SMD.Section.policies>Richtlinien</SMD.Section.policies>
+  <SMD.Section.policies.Desc>Ein gespeichertes Paket aus Kleidungs-, Drogen-, Essens- und Leserichtlinien, das du in jeder Kolonie anwenden kannst, auf Wunsch auch in jedem neuen Spiel.</SMD.Section.policies.Desc>
+  <SMD.Section.colony>Kolonie-Einstellungen</SMD.Section.colony>
+  <SMD.Section.colony.Desc>Medizinische Versorgung je Gruppe, automatisches Heimgebiet, automatischer Wiederaufbau und manuelle Arbeitsprioritäten, einmal gespeichert und in neuen Spielen gesetzt.</SMD.Section.colony.Desc>
+  <SMD.Section.library>Bibliothek und Profile</SMD.Section.library>
+  <SMD.Section.library.Desc>Die spielstandübergreifende Bibliotheksdatei mit allen Vorlagen, benannten Profilen und Teilen-Texten zum Importieren und Exportieren.</SMD.Section.library.Desc>
+  <SMD.SettingCat.Automatic>Automatisch</SMD.SettingCat.Automatic>
+  <SMD.Setting.smd.autoApplyOnPlace>Standard-Aufträge auf neuen Werkbänken</SMD.Setting.smd.autoApplyOnPlace>
+  <SMD.Setting.smd.autoApplyOnPlace.Desc>Eine neu gebaute Werkbank bekommt die Aufträge, die du als ihren Standard gespeichert hast.</SMD.Setting.smd.autoApplyOnPlace.Desc>
+  <SMD.Setting.smd.storageAutoApplyOnBuild>Standard-Filter auf neuen Regalen</SMD.Setting.smd.storageAutoApplyOnBuild>
+  <SMD.Setting.smd.storageAutoApplyOnBuild.Desc>Ein neu gebautes Regal oder anderes Lager bekommt seinen Standard-Filter und seine Priorität; ein versetztes oder wieder aufgestelltes behält seinen eigenen.</SMD.Setting.smd.storageAutoApplyOnBuild.Desc>
+  <SMD.Setting.smd.plantAutoApplyOnBuild>Standard-Pflanze in neuer Hydrokultur</SMD.Setting.smd.plantAutoApplyOnBuild>
+  <SMD.Setting.smd.plantAutoApplyOnBuild.Desc>Ein neu gebautes Hydrokulturbecken, ein Pflanzkübel oder ein anderes Pflanzgefäß bekommt seine Standard-Pflanze.</SMD.Setting.smd.plantAutoApplyOnBuild.Desc>
+  <SMD.Setting.smd.benchFamilies>Verwandte Gebäude teilen Vorgaben</SMD.Setting.smd.benchFamilies>
+  <SMD.Setting.smd.benchFamilies.Desc>Ein Gebäude ohne eigene Vorlage nutzt den Standard eines nahen Verwandten, z. B. nimmt der Holzofen die Aufträge des Elektroherds.</SMD.Setting.smd.benchFamilies.Desc>
+  <SMD.SettingCat.Bills>Aufträge</SMD.SettingCat.Bills>
+  <SMD.Setting.smd.billMatchStockpileByName>Lagerzonen über den Namen wiederfinden</SMD.Setting.smd.billMatchStockpileByName>
+  <SMD.Setting.smd.billMatchStockpileByName.Desc>Aufträge, die in eine bestimmte Lagerzone ablegen oder dort zählen, finden in der neuen Kolonie eine Lagerzone mit demselben Namen wieder.</SMD.Setting.smd.billMatchStockpileByName.Desc>
+  <SMD.SettingCat.Buttons>Knöpfe</SMD.SettingCat.Buttons>
+  <SMD.Setting.smd.showGizmo>Knopf „Vorgaben“ an Gebäuden</SMD.Setting.smd.showGizmo>
+  <SMD.Setting.smd.showGizmo.Desc>Zeigt den Knopf „Vorgaben“, wenn eine Werkbank, ein Regal oder ein Pflanzgefäß ausgewählt ist.</SMD.Setting.smd.showGizmo.Desc>
+  <SMD.Setting.smd.showTabButton>Knopf „Vorgaben“ im Aufträge-Tab</SMD.Setting.smd.showTabButton>
+  <SMD.Setting.smd.showTabButton.Desc>Zeigt den Knopf „Vorgaben“ im Aufträge-Tab einer Werkbank (mit Nice Bill Tab als kleines Symbol).</SMD.Setting.smd.showTabButton.Desc>
+  <SMD.SettingCat.Newzones>Neue Zonen</SMD.SettingCat.Newzones>
+  <SMD.Setting.smd.zoneAutoApplyOnCreate>Standard-Filter auf neuen Lagerzonen</SMD.Setting.smd.zoneAutoApplyOnCreate>
+  <SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>Eine Lager- oder Abladezone, die du ziehst, bekommt den Standard, den du für diese Zonenart gespeichert hast.</SMD.Setting.smd.zoneAutoApplyOnCreate.Desc>
+  <SMD.Setting.smd.growingAutoApplyOnCreate>Standard-Pflanze auf neuen Anbauzonen</SMD.Setting.smd.growingAutoApplyOnCreate>
+  <SMD.Setting.smd.growingAutoApplyOnCreate.Desc>Eine Anbauzone, die du ziehst, bekommt die gespeicherte Standard-Pflanze und die Schalter für Säen und Ernten.</SMD.Setting.smd.growingAutoApplyOnCreate.Desc>
+  <SMD.SettingCat.Newcolonists>Neue Kolonisten</SMD.SettingCat.Newcolonists>
+  <SMD.Setting.smd.autoApplyToNewPawns>Standardvorlage auf neue Kolonisten anwenden</SMD.Setting.smd.autoApplyToNewPawns>
+  <SMD.Setting.smd.autoApplyToNewPawns.Desc>Jede Person, die dazukommt (Start, Rekrutierung, Wanderer, Quest, Geburt), bekommt die Standardvorlage einmal. Wer schon da war, wird nie verändert.</SMD.Setting.smd.autoApplyToNewPawns.Desc>
+  <SMD.Setting.smd.pawnIncludeChildren>Kinder einbeziehen</SMD.Setting.smd.pawnIncludeChildren>
+  <SMD.Setting.smd.pawnIncludeChildren.Desc>Kinder bekommen die Vorlage auch; ihre Arbeitsprioritäten werden gesetzt, sobald sie alt genug zum Arbeiten sind.</SMD.Setting.smd.pawnIncludeChildren.Desc>
+  <SMD.Setting.smd.pawnSkipWorkUnderFreeWill>Arbeit Free Will überlassen</SMD.Setting.smd.pawnSkipWorkUnderFreeWill>
+  <SMD.Setting.smd.pawnSkipWorkUnderFreeWill.Desc>Mit Free Will oder Free-ish Will werden die Arbeitsprioritäten bei den Kolonisten übersprungen, die jene Mod steuert; alles andere gilt weiter.</SMD.Setting.smd.pawnSkipWorkUnderFreeWill.Desc>
+  <SMD.Setting.smd.pawnShowGizmo>Knopf „Vorgaben“ an Kolonisten</SMD.Setting.smd.pawnShowGizmo>
+  <SMD.Setting.smd.pawnShowGizmo.Desc>Zeigt den Knopf „Vorgaben“, wenn eine Kolonistin oder ein Kolonist ausgewählt ist.</SMD.Setting.smd.pawnShowGizmo.Desc>
+  <SMD.SettingCat.Whatapresetsets>Was eine Vorlage setzt</SMD.SettingCat.Whatapresetsets>
+  <SMD.Setting.smd.pawnApplySchedule>Zeitplan</SMD.Setting.smd.pawnApplySchedule>
+  <SMD.Setting.smd.pawnApplySchedule.Desc>Der 24-Stunden-Plan.</SMD.Setting.smd.pawnApplySchedule.Desc>
+  <SMD.Setting.smd.pawnApplyWork>Arbeitsprioritäten</SMD.Setting.smd.pawnApplyWork>
+  <SMD.Setting.smd.pawnApplyWork.Desc>Die Prioritäten im Arbeit-Tab (und manuelle Prioritätszahlen).</SMD.Setting.smd.pawnApplyWork.Desc>
+  <SMD.Setting.smd.pawnApplyApparel>Kleidungsrichtlinie</SMD.Setting.smd.pawnApplyApparel>
+  <SMD.Setting.smd.pawnApplyApparel.Desc>Die Kleidungsrichtlinie, über den Namen gefunden oder neu angelegt.</SMD.Setting.smd.pawnApplyApparel.Desc>
+  <SMD.Setting.smd.pawnApplyDrug>Drogenrichtlinie</SMD.Setting.smd.pawnApplyDrug>
+  <SMD.Setting.smd.pawnApplyDrug.Desc>Die Drogenrichtlinie, über den Namen gefunden oder neu angelegt.</SMD.Setting.smd.pawnApplyDrug.Desc>
+  <SMD.Setting.smd.pawnApplyFood>Essensrichtlinie</SMD.Setting.smd.pawnApplyFood>
+  <SMD.Setting.smd.pawnApplyFood.Desc>Die Essensbeschränkung, über den Namen gefunden oder neu angelegt.</SMD.Setting.smd.pawnApplyFood.Desc>
+  <SMD.Setting.smd.pawnApplyReading>Leserichtlinie</SMD.Setting.smd.pawnApplyReading>
+  <SMD.Setting.smd.pawnApplyReading.Desc>Die Leserichtlinie, über den Namen gefunden oder neu angelegt.</SMD.Setting.smd.pawnApplyReading.Desc>
+  <SMD.Setting.smd.pawnApplyHostility>Feindverhalten</SMD.Setting.smd.pawnApplyHostility>
+  <SMD.Setting.smd.pawnApplyHostility.Desc>Fliehen, angreifen oder ignorieren, wenn Feinde nahe kommen.</SMD.Setting.smd.pawnApplyHostility.Desc>
+  <SMD.Setting.smd.pawnApplyMedical>Medizinische Versorgung</SMD.Setting.smd.pawnApplyMedical>
+  <SMD.Setting.smd.pawnApplyMedical.Desc>Welche Medizin die Person bekommen darf, und Selbstbehandlung.</SMD.Setting.smd.pawnApplyMedical.Desc>
+  <SMD.SettingCat.Newgames>Neue Spiele</SMD.SettingCat.Newgames>
+  <SMD.Setting.smd.policyAutoApplyOnNewGame>Gespeicherte Richtlinien in neuen Spielen anwenden</SMD.Setting.smd.policyAutoApplyOnNewGame>
+  <SMD.Setting.smd.policyAutoApplyOnNewGame.Desc>Beginnt eine neue Kolonie, wird das gespeicherte Richtlinien-Paket angelegt und die Startkolonisten wechseln zu dessen Standards.</SMD.Setting.smd.policyAutoApplyOnNewGame.Desc>
+  <SMD.Setting.smd.colonyApplyOnNewGame>Gespeicherte Kolonie-Einstellungen in neuen Spielen anwenden</SMD.Setting.smd.colonyApplyOnNewGame>
+  <SMD.Setting.smd.colonyApplyOnNewGame.Desc>Beginnt eine neue Kolonie, werden die gespeicherte medizinische Versorgung, das automatische Heimgebiet, der automatische Wiederaufbau und die manuellen Prioritäten gesetzt (nur wenn du welche gespeichert hast).</SMD.Setting.smd.colonyApplyOnNewGame.Desc>
+  <SMD.SettingCat.Billlimit>Auftragsgrenze</SMD.SettingCat.Billlimit>
+  <SMD.Setting.smd.nativeRaiseBillCap>Mehr als 15 Aufträge erlauben</SMD.Setting.smd.nativeRaiseBillCap>
+  <SMD.Setting.smd.nativeRaiseBillCap.Desc>Hebt die Grenze von 15 Aufträgen je Werkbank ohne weitere Mod auf. Ungenutzt, solange No Max Bills installiert ist.</SMD.Setting.smd.nativeRaiseBillCap.Desc>
+  <SMD.Setting.smd.maxBillsCap>Aufträge je Werkbank</SMD.Setting.smd.maxBillsCap>
+  <SMD.Setting.smd.maxBillsCap.Desc>Die Grenze, solange mehr als 15 Aufträge erlaubt sind (gilt auch beim Wiederherstellen unter No Max Bills). Viele Aufträge kosten Leistung.</SMD.Setting.smd.maxBillsCap.Desc>
+  <SMD.SettingCat.Filters>Filter</SMD.SettingCat.Filters>
+  <SMD.Setting.smd.filterIntent>Kategorien in Filtern merken</SMD.Setting.smd.filterIntent>
+  <SMD.Setting.smd.filterIntent.Desc>Gespeicherte Filter merken sich ganze Kategorien, sodass Dinge, die eine Mod später zu einer Kategorie hinzufügt, mit erfasst werden. Aus = genaue Listen wie in 1.x.</SMD.Setting.smd.filterIntent.Desc>
+  <SMD.SettingCat.Compatibility>Kompatibilität</SMD.SettingCat.Compatibility>
+  <SMD.Setting.smd.compatNiceBillTab>Nice Bill Tab: nach dem Anwenden neu zeichnen</SMD.Setting.smd.compatNiceBillTab>
+  <SMD.Setting.smd.compatNiceBillTab.Desc>Bittet Nice Bill Tab, seine Liste neu aufzubauen, damit angewendete Aufträge sofort erscheinen.</SMD.Setting.smd.compatNiceBillTab.Desc>
+  <SMD.Setting.smd.compatPrf>Project-RimFactory-Maschinen</SMD.Setting.smd.compatPrf>
+  <SMD.Setting.smd.compatPrf.Desc>S.A.L.-Montierer bekommen ihre Aufträge, sobald ihre Rezepte da sind; Lagermaschinen und Verteiler bekommen ihre Vorgaben.</SMD.Setting.smd.compatPrf.Desc>
+  <SMD.Setting.smd.compatBlueprints>Blaupausen merken sich Einstellungen</SMD.Setting.smd.compatBlueprints>
+  <SMD.Setting.smd.compatBlueprints.Desc>Mit Blueprints Forked merkt sich eine Blaupause die Aufträge und Lager-Einstellungen jedes Gebäudes und stellt sie beim Bau wieder her.</SMD.Setting.smd.compatBlueprints.Desc>
+  <SMD.Preset.automatic>Automatisch (empfohlen)</SMD.Preset.automatic>
+  <SMD.Preset.automatic.Desc>Alles an: neue Werkbänke, Regale, Zonen und Kolonisten bekommen ihre Vorgaben von selbst.</SMD.Preset.automatic.Desc>
+  <SMD.Preset.manual>Nur wenn ich auf Anwenden klicke</SMD.Preset.manual>
+  <SMD.Preset.manual.Desc>Nichts passiert von selbst; du wendest Vorlagen mit dem Knopf „Vorgaben“ an.</SMD.Preset.manual.Desc>
+  <SMD.Preset.buildings>Nur Gebäude und Zonen</SMD.Preset.buildings>
+  <SMD.Preset.buildings.Desc>Aufträge, Regale und Zonen; Kolonisten, Richtlinien und Kolonie-Einstellungen bleiben unberührt.</SMD.Preset.buildings.Desc>
+  <SMD.Page.buildingPresets>Gebäude-Vorlagen</SMD.Page.buildingPresets>
+  <SMD.Page.colonistPresets>Kolonisten-Vorlagen</SMD.Page.colonistPresets>
+  <SMD.Page.policies>Richtlinien-Paket</SMD.Page.policies>
+  <SMD.Page.colony>Kolonie-Einstellungen</SMD.Page.colony>
+  <SMD.Page.library>Bibliothek</SMD.Page.library>
+  <SMD.Compat.NiceBillTab.What>Der Knopf „Vorgaben“ sitzt als Symbol in dessen Auftragsfenster; angewendete Aufträge erscheinen sofort.</SMD.Compat.NiceBillTab.What>
+  <SMD.Compat.NiceInventoryTab.What>Der mitgelieferte Auftrags-Tab wird genauso unterstützt wie Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
+  <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens so viele Aufträge wieder her und patcht selbst nichts.</SMD.Compat.NoMaxBillsRedux.What>
+  <SMD.Compat.ProjectRimFactoryRevived.What>Montierer, Lagermaschinen und Förderband-Verteiler bekommen ihre Vorgaben.</SMD.Compat.ProjectRimFactoryRevived.What>
+  <SMD.Compat.BlueprintsForked.What>Blaupausen merken sich Aufträge und Lager-Einstellungen, auch über Spielstände hinweg.</SMD.Compat.BlueprintsForked.What>
+  <SMD.Compat.FreeWill.What>Arbeitsprioritäten bleiben bei Free Will für die Kolonisten, die es steuert.</SMD.Compat.FreeWill.What>
+  <SMD.Compat.FreeishWill.What>Arbeitsprioritäten bleiben bei Free-ish Will für die Kolonisten, die es steuert.</SMD.Compat.FreeishWill.What>
+  <SMD.Compat.BetterWorkbenchManagement.What>Arbeitet nebeneinander. Ein Standard-Auftrag nutzt die Ablageart aus der Vorlage, nicht BWMs eigenen Standard.</SMD.Compat.BetterWorkbenchManagement.What>
+  <SMD.Compat.CombatExtended.What>Kein Problem: Nur Zeitplan, Arbeit, Richtlinien und Medizin aus Vanilla werden angefasst, nie Ausrüstungen oder Munition.</SMD.Compat.CombatExtended.What>
+  <SMD.Compat.Ideology.What>Der Stil eines Auftrags wird mitgespeichert und wiederhergestellt, wenn es den Stil gibt.</SMD.Compat.Ideology.What>
+  <SMD.Compat.Anomaly.What>Medizinische Standards für Wesenheiten und Ghule gehören zu den Kolonie-Einstellungen.</SMD.Compat.Anomaly.What>
+</LanguageData>
