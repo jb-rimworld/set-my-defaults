@@ -1,6 +1,0 @@
-<Project>
-  <!-- The 1.7 project keeps its intermediates in obj17/ (set here, before Microsoft.Common.props, so MSBuild does not warn). -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'BetterWorkbenchDefaults.rw17'">
-    <BaseIntermediateOutputPath>obj17/</BaseIntermediateOutputPath>
-  </PropertyGroup>
-</Project>

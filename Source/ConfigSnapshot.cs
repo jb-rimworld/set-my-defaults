@@ -166,7 +166,7 @@ namespace BetterWorkbenchDefaults
                 pair.Key.ApplyMapBound(pair.Value);
                 added++;
             }
-            NiceBillTabCompat.RequestRefresh(); // otherwise Nice Bill Tab shows its stale cached list
+            SmdCompat.RefreshBillsTab(); // otherwise Nice Bill Tab shows its stale cached list
             return added;
         }
 

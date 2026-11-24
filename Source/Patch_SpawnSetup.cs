@@ -14,15 +14,19 @@ namespace BetterWorkbenchDefaults
     /// </summary>
     public static class Patch_SpawnSetup
     {
+        /// <summary>True once the postfix is in place.</summary>
+        public static bool Applied { get; private set; }
+
         public static void Apply(Harmony harmony)
         {
             var target = AccessTools.Method(typeof(Building), "SpawnSetup", new[] { typeof(Map), typeof(bool) });
             if (target == null)
             {
-                WBD_Log.Error("Could not locate Building.SpawnSetup; auto-apply of defaults is disabled.");
+                WBD_Log.Warn("Could not locate Building.SpawnSetup; new buildings will not get their defaults.");
                 return;
             }
             harmony.Patch(target, postfix: new HarmonyMethod(typeof(Patch_SpawnSetup), nameof(Postfix)));
+            Applied = true;
         }
 
         public static void Postfix(Building __instance, Map map, bool respawningAfterLoad)
@@ -80,7 +84,7 @@ namespace BetterWorkbenchDefaults
             }
             catch (Exception e)
             {
-                WBD_Log.Error("Error while applying defaults to " + building.def?.defName + ": " + e);
+                WBD_Log.Warn("Error while applying defaults to " + building.def?.defName + ": " + e);
             }
         }
     }

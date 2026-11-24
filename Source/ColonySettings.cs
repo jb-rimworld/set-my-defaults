@@ -153,6 +153,24 @@ namespace BetterWorkbenchDefaults
 
         public static bool Has() => GetStored() != null;
 
+        /// <summary>Readable lines of the saved colony settings (settings page).</summary>
+        public static System.Collections.Generic.List<string> SummaryLines()
+        {
+            var l = new System.Collections.Generic.List<string>();
+            var t = Get();
+            if (t == null) return l;
+            string yn(bool b) => (b ? "Yes" : "No").Translate().ToString();
+            void care(string group, MedicalCareCategory c) => l.Add("WBD_ColSumCare".Translate(("WBD_CareGroup_" + group).Translate(), c.GetLabel()));
+            care("Colonist", t.careColonist); care("Prisoner", t.carePrisoner); care("Slave", t.careSlave); care("TamedAnimal", t.careTamedAnimal);
+            care("Friendly", t.careFriendly); care("Neutral", t.careNeutral); care("Hostile", t.careHostile); care("NoFaction", t.careNoFaction);
+            care("Wildlife", t.careWildlife);
+            if (ModsConfig.AnomalyActive) { care("Entities", t.careEntities); care("Ghouls", t.careGhouls); }
+            l.Add("WBD_ColSumHome".Translate(yn(t.autoHomeArea)));
+            l.Add("WBD_ColSumRebuild".Translate(yn(t.autoRebuild)));
+            l.Add("WBD_ColSumPriorities".Translate(yn(t.useWorkPriorities)));
+            return l;
+        }
+
         /// <summary>Save the running game's play settings as the cross-save colony settings.</summary>
         public static bool SaveCurrentGame()
         {

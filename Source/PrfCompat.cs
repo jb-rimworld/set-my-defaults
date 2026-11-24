@@ -39,10 +39,12 @@ namespace BetterWorkbenchDefaults
         /// so the generic SpawnSetup postfix should skip it and let us handle it later.
         /// If the patch failed to apply, we do NOT defer (the generic path still runs).
         /// </summary>
+        public static bool PatchApplied => _patchApplied;
+
         public static bool IsDeferredBillGiver(Thing thing)
         {
             Resolve();
-            return _patchApplied && _dynamicBillGiver != null && thing != null
+            return WBD_Mod.Settings?.compatPrf != false && _patchApplied && _dynamicBillGiver != null && thing != null
                    && _dynamicBillGiver.IsInstanceOfType(thing);
         }
 
@@ -66,14 +68,14 @@ namespace BetterWorkbenchDefaults
             }
             catch (Exception e)
             {
-                WBD_Log.Error("Failed to patch PRF assembler SpawnSetup: " + e);
+                WBD_Log.Warn("Could not patch the PRF assembler; assemblers use the generic path: " + e.Message);
             }
         }
 
         // Runs after the assembler has injected its dynamic recipes into def.AllRecipes.
         public static void Postfix(Building __instance, Map map, bool respawningAfterLoad)
         {
-            if (__instance == null || respawningAfterLoad)
+            if (__instance == null || respawningAfterLoad || WBD_Mod.Settings?.compatPrf == false)
                 return;
             if (__instance.Faction != Faction.OfPlayerSilentFail)
                 return;

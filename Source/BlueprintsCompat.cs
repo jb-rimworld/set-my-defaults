@@ -27,6 +27,9 @@ namespace BetterWorkbenchDefaults
         private static PropertyInfo _positionProp;
         private static PropertyInfo _buildableDefProp;
 
+        /// <summary>All three Blueprints Forked hooks are in place.</summary>
+        public static bool Hooked { get; private set; }
+
         public static void Apply(Harmony harmony)
         {
             _buildableInfoType = GenTypes.GetTypeInAnyAssembly("Blueprints.BuildableInfo");
@@ -51,13 +54,15 @@ namespace BetterWorkbenchDefaults
 
                 if (ctor != null && expose != null && designate != null
                     && _positionProp != null && _buildableDefProp != null)
+                    Hooked = true;
+                if (Hooked)
                     WBD_Log.Msg("Blueprints Forked support enabled (blueprints remember bills & storage).");
                 else
                     WBD_Log.Warn("Blueprints Forked detected but some hooks were missing; integration may be partial.");
             }
             catch (Exception e)
             {
-                WBD_Log.Error("Failed to apply Blueprints Forked patches: " + e);
+                WBD_Log.Warn("Could not hook Blueprints Forked; blueprints will not remember settings: " + e.Message);
             }
         }
 
@@ -65,6 +70,8 @@ namespace BetterWorkbenchDefaults
         // For non-building entries (blueprints/frames/terrain) Capture returns null -> ignored.
         public static void Ctor_Postfix(object __instance, Thing thing)
         {
+            if (WBD_Mod.Settings?.compatBlueprints == false)
+                return;
             try
             {
                 var cfg = ConfigSnapshot.Capture(thing);
@@ -108,6 +115,8 @@ namespace BetterWorkbenchDefaults
         {
             try
             {
+                if (WBD_Mod.Settings?.compatBlueprints == false)
+                    return;
                 if (!_captured.TryGetValue(__instance, out var cfg) || cfg == null)
                     return;
                 var map = Find.CurrentMap;

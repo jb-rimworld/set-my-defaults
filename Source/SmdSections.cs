@@ -2,8 +2,7 @@ namespace BetterWorkbenchDefaults
 {
     /// <summary>
     /// The switchable feature areas of Set my Defaults. <see cref="On"/> is the ONE function every patch, gizmo and
-    /// auto-apply path asks before doing anything. Today it reads plain fields of <see cref="WBD_Settings"/>; the shared
-    /// kit (JB.Kit, next wave) replaces the body with <c>Kit.On(id)</c> without touching any caller.
+    /// auto-apply path asks before doing anything. Since 2.0 it asks JB Framework (<c>Kit.On(id)</c>).
     /// Switching an area off stops its gizmos, buttons and auto-apply; saved presets are kept.
     /// </summary>
     public static class SmdSections
@@ -17,21 +16,7 @@ namespace BetterWorkbenchDefaults
 
         public static readonly string[] All = { Buildings, Zones, Pawns, Policies, Colony, Library };
 
-        public static bool On(string id)
-        {
-            var s = WBD_Mod.Settings;
-            if (s == null)
-                return false;
-            switch (id)
-            {
-                case Buildings: return s.sectionBuildings;
-                case Zones: return s.sectionZones;
-                case Pawns: return s.sectionPawns;
-                case Policies: return s.sectionPolicies;
-                case Colony: return s.sectionColony;
-                case Library: return s.sectionLibrary;
-            }
-            return false;
-        }
+        /// <summary>The area is on right now (available, not paused by the framework's error fence, switched on in this save).</summary>
+        public static bool On(string id) => WBD_Mod.K?.On(id) == true;
     }
 }

@@ -1,6 +1,7 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using HarmonyLib;
+using JBFramework;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -8,63 +9,231 @@ using Verse;
 namespace BetterWorkbenchDefaults
 {
     /// <summary>
-    /// Mod entry point. Holds settings and bootstraps Harmony patches exactly once.
-    /// Kept deliberately small: all heavy lifting lives in the static helpers, and no
-    /// per-tick or per-frame work is introduced beyond a couple of cheap guarded patches.
+    /// Mod entry point on JB Framework (2.0). The class name stays WBD_Mod: it names the settings file
+    /// (Mod_BetterWorkbenchDefaults_WBD_Mod.xml), so no player loses values. The framework applies every [HarmonyPatch] class of this
+    /// assembly one by one; the two manual patches (building spawn hook, bill-cap transpiler) are applied here.
+    ///
+    /// Per save: the framework's template (settings file) holds the defaults for new colonies; each save keeps its own copy ("this
+    /// save" = what this colony uses). Interface preferences, the bill limit and the new-game switches are the same in every game
+    /// (AsGlobal). The presets themselves (bills, shelves, zones, colonists, policies, colony settings) always live in the cross-save
+    /// library, never in a save: that is the point of the mod.
     /// </summary>
-    public class WBD_Mod : Mod
+    public sealed class WBD_Mod : KitModBase
     {
-        public static WBD_Settings Settings { get; private set; }
+        public const string PackageId = "juliusberger.workbenchbilldefaults";
+
+        /// <summary>The settings object (properties that read and write the framework's values).</summary>
+        public static WBD_Settings Settings => K?.Settings as WBD_Settings;
+
+        /// <summary>This mod's framework context (null only before RimWorld created the mod class).</summary>
+        internal static KitMod K => Framework.Of<WBD_Mod>();
 
         /// <summary>True once the live bill-cap transpiler is in place (false when No Max Bills owns the limit or the patch failed).</summary>
         public static bool BillCapPatched { get; private set; }
 
-        public WBD_Mod(ModContentPack content) : base(content)
+        public WBD_Mod(ModContentPack content) : base(content, new KitInfo
         {
-            Settings = GetSettings<WBD_Settings>();
-
-            var harmony = new Harmony("juliusberger.workbenchbilldefaults");
-            // Apply each patch independently so one failing patch can never disable the
-            // others (and never aborts mod init with an unhandled exception).
-            TryPatch(harmony, typeof(Patch_Building_GetGizmos));
-            TryPatch(harmony, typeof(Patch_ITab_Bills_FillTab));
-            // Manual patch for SpawnSetup (resolved defensively so a future API change
-            // degrades to "feature off" instead of a hard crash).
-            try
-            {
-                Patch_SpawnSetup.Apply(harmony);
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to apply SpawnSetup patch: " + e);
-            }
-
-            // Pawn-defaults feature (schedule / work / policies / hostility / medical).
-            TryPatch(harmony, typeof(Patch_Pawn_GetGizmos));
-            TryPatch(harmony, typeof(Patch_Pawn_SpawnSetup));
-            TryPatch(harmony, typeof(Patch_Pawn_SetFaction));
-
-            // 2.0: new construction (storage/plant defaults), zones (gizmos + defaults for new zones).
-            TryPatch(harmony, typeof(Patch_Frame_CompleteConstruction));
-            TryPatch(harmony, typeof(Patch_BlueprintStorage_PostMake));
-            TryPatch(harmony, typeof(Patch_ZoneStockpile_GetGizmos));
-            TryPatch(harmony, typeof(Patch_ZoneGrowing_GetGizmos));
-            TryPatch(harmony, typeof(Patch_DesignatorStockpile_MakeNewZone));
-            TryPatch(harmony, typeof(Patch_DesignatorGrowing_MakeNewZone));
-
-            // Native >15 bills: register the self-contained bill-cap transpiler whenever no external
-            // "No Max Bills" mod already raised the cap (interop, no double patch). The patched code reads
-            // BillCap.Current() live, so the setting works without a restart (2.0, M3). Wrapped so a future
-            // vanilla IL change degrades to "cap feature off".
+            Name = "Set my Defaults",
+            ShortId = "SMD",
+            KeyPrefix = "SMD",
+            Version = "2.0.0",
+            PerSave = true,
+            WorkshopId = "3737034968",
+            Url = "https://github.com/jb-rimworld/set-my-defaults",
+            LicenseLine = "MIT",
+            HarmonyId = PackageId,
+            FirstStartPitch = "Set something up once, save it as a default, and every new workbench, shelf, zone and colonist gets it. "
+                + "Choose how much happens by itself below; everything can be changed later in Mod settings.",
+            Theme = new KitTheme { Accent = new Color(0.47f, 0.72f, 0.45f), MarkTex = "UI/WBD_Defaults" },
+        })
+        {
+            var harmony = new Harmony(PackageId + ".manual");
+            try { Patch_SpawnSetup.Apply(harmony); }
+            catch (Exception e) { WBD_Log.Warn("The building spawn hook could not be applied; new buildings will not get their defaults: " + e.Message); }
+            // Native >15 bills: the transpiler reads BillCap.Current() live (no restart). Not registered when a "No Max Bills" mod
+            // already owns the limit (no double patch).
             if (!BillCapCompat.Active)
                 TryPatchBillCap(harmony);
         }
 
-        /// <summary>
-        /// Manually patch the two vanilla bill-UI methods via our transpiler (the patch class carries no
-        /// HarmonyPatch attribute, so it is never auto-applied). Any failure is logged and swallowed,
-        /// leaving every other patch — and the internal EffectiveBillCap clamp — fully functional.
-        /// </summary>
+        protected override void Register(KitRegistry r)
+        {
+            // ---------------------------------------------------------------- areas (G13a: off = hidden, no new effects; saved presets stay)
+            r.Section(SmdSections.Buildings, "Workbenches and shelves",
+                    "Default bills for workbenches, default filters for shelves and other storage, default plants for hydroponics. The Defaults button on buildings and in the Bills tab.")
+                .WithOrder(10).LegacyEnabled("sectionBuildings")
+                .WithDiagnosis(() => new[] { "Building preset sets: " + SafeStatus(s => s.buildingSets) + ", presets: " + SafeStatus(s => s.buildingPresets) });
+            r.Section(SmdSections.Zones, "Stockpiles and growing zones",
+                    "Default filters for new stockpile and dumping zones, default plant for new growing zones. The Defaults button on zones.")
+                .WithOrder(20).LegacyEnabled("sectionZones")
+                .WithDiagnosis(() => new[] { "Zone presets: " + SafeStatus(s => s.zonePresets) });
+            r.Section(SmdSections.Pawns, "Colonists",
+                    "Colonist presets (schedule, work, policies, hostility, medical care) and applying the default preset once to every new colonist. The Defaults button on colonists.")
+                .WithOrder(30).LegacyEnabled("sectionPawns")
+                .WithDiagnosis(() => new[] { "Colonist presets: " + SafeStatus(s => s.pawnPresets) + "; known colonists in this save: " + SmdGameData.KnownCount });
+            r.Section(SmdSections.Policies, "Policies",
+                    "A saved set of outfit, drug, food and reading policies that you can apply in any colony, and optionally to every new game.")
+                .WithOrder(40).LegacyEnabled("sectionPolicies")
+                .WithDiagnosis(() => new[] { "Policy set saved: " + SafeStatus(s => s.hasPolicies) });
+            r.Section(SmdSections.Colony, "Colony settings",
+                    "Medical care defaults per group, auto home area, auto rebuild and manual work priorities, saved once and applied to new games.")
+                .WithOrder(50).LegacyEnabled("sectionColony")
+                .WithDiagnosis(() => new[] { "Colony settings saved: " + SafeStatus(s => s.hasColony) });
+            r.Section(SmdSections.Library, "Library and profiles",
+                    "The cross-save library file that holds every preset, named profiles and share strings for importing and exporting.")
+                .WithOrder(60).LegacyEnabled("sectionLibrary")
+                .WithDiagnosis(LibraryDiagnosis);
+
+            // ---------------------------------------------------------------- Workbenches and shelves
+            const string B = SmdSections.Buildings;
+            r.Bool(B, "smd.autoApplyOnPlace", true, "Default bills on new workbenches",
+                    "A newly built workbench gets the bills you saved as its default.").InGroup("Automatic").Legacy("autoApplyOnPlace");
+            r.Bool(B, "smd.storageAutoApplyOnBuild", true, "Default filter on new shelves",
+                    "A newly built shelf or other storage gets its default filter and priority; a moved or reinstalled one keeps its own.").InGroup("Automatic").Legacy("storageAutoApplyOnBuild");
+            r.Bool(B, "smd.plantAutoApplyOnBuild", true, "Default plant on new hydroponics",
+                    "A newly built hydroponics basin, plant pot or other plant grower gets its default plant.").InGroup("Automatic").Legacy("plantAutoApplyOnBuild");
+            r.Bool(B, "smd.benchFamilies", true, "Related buildings share defaults",
+                    "A building without its own preset uses the default of a close relative, e.g. the fueled stove uses the electric stove's bills.").InGroup("Automatic").Legacy("benchFamilies");
+            r.Bool(B, "smd.billMatchStockpileByName", true, "Restore stockpiles by name",
+                    "Bills that drop in or count in a specific stockpile find a stockpile of the same name again in the new colony.").InGroup("Bills").Legacy("billMatchStockpileByName");
+            r.Bool(B, "smd.showGizmo", true, "Defaults button on buildings",
+                    "Shows the Defaults button when a workbench, shelf or plant grower is selected.").InGroup("Buttons").AsGlobal().Legacy("showGizmo");
+            r.Bool(B, "smd.showTabButton", true, "Defaults button in the Bills tab",
+                    "Shows the Defaults button inside the Bills tab of a workbench (a small icon when Nice Bill Tab is used).").InGroup("Buttons").AsGlobal().Legacy("showTabButton");
+
+            // ---------------------------------------------------------------- Stockpiles and growing zones
+            const string Z = SmdSections.Zones;
+            r.Bool(Z, "smd.zoneAutoApplyOnCreate", true, "Default filter on new stockpiles",
+                    "A stockpile or dumping zone you draw gets the default you saved for that kind of zone.").InGroup("New zones").Legacy("zoneAutoApplyOnCreate");
+            r.Bool(Z, "smd.growingAutoApplyOnCreate", true, "Default plant on new growing zones",
+                    "A growing zone you draw gets the default plant and the sow and cut switches you saved.").InGroup("New zones").Legacy("growingAutoApplyOnCreate");
+
+            // ---------------------------------------------------------------- Colonists
+            const string P = SmdSections.Pawns;
+            r.Bool(P, "smd.autoApplyToNewPawns", true, "Apply the default preset to new colonists",
+                    "Every colonist who joins (start, recruit, wanderer, quest, birth) gets the default preset once. Colonists you already had are never changed.").InGroup("New colonists").Legacy("autoApplyToNewPawns");
+            r.Bool(P, "smd.pawnIncludeChildren", true, "Include children",
+                    "Children get the preset too; their work priorities are set once they are old enough to work.").InGroup("New colonists").Legacy("pawnIncludeChildren");
+            r.Bool(P, "smd.pawnSkipWorkUnderFreeWill", true, "Leave work to Free Will",
+                    "With Free Will or Free-ish Will, work priorities are skipped for colonists that mod manages; everything else still applies.").InGroup("New colonists").Legacy("pawnSkipWorkUnderFreeWill");
+            r.Bool(P, "smd.pawnShowGizmo", true, "Defaults button on colonists",
+                    "Shows the Defaults button when a colonist is selected.").InGroup("Buttons").AsGlobal().Legacy("pawnShowGizmo");
+            const string Axes = "What a preset sets";
+            r.Bool(P, "smd.pawnApplySchedule", true, "Schedule", "The 24-hour timetable.").InGroup(Axes).Legacy("pawnApplySchedule");
+            r.Bool(P, "smd.pawnApplyWork", true, "Work priorities", "The work tab priorities (and manual priority numbers).").InGroup(Axes).Legacy("pawnApplyWork");
+            r.Bool(P, "smd.pawnApplyApparel", true, "Outfit policy", "The apparel policy, matched by name or recreated.").InGroup(Axes).Legacy("pawnApplyApparel");
+            r.Bool(P, "smd.pawnApplyDrug", true, "Drug policy", "The drug policy, matched by name or recreated.").InGroup(Axes).Legacy("pawnApplyDrug");
+            r.Bool(P, "smd.pawnApplyFood", true, "Food policy", "The food restriction, matched by name or recreated.").InGroup(Axes).Legacy("pawnApplyFood");
+            r.Bool(P, "smd.pawnApplyReading", true, "Reading policy", "The reading policy, matched by name or recreated.").InGroup(Axes).Legacy("pawnApplyReading");
+            r.Bool(P, "smd.pawnApplyHostility", true, "Hostility response", "Flee, attack or ignore when enemies come close.").InGroup(Axes).Legacy("pawnApplyHostility");
+            r.Bool(P, "smd.pawnApplyMedical", true, "Medical care", "The medicine the colonist may receive, and self-tend.").InGroup(Axes).Legacy("pawnApplyMedical");
+
+            // ---------------------------------------------------------------- Policies and colony settings (new games: the same in every game)
+            r.Bool(SmdSections.Policies, "smd.policyAutoApplyOnNewGame", false, "Apply the saved policies to new games",
+                    "When a new colony starts, the saved policy set is created and starting colonists move to its defaults.").InGroup("New games").AsGlobal().Legacy("policyAutoApplyOnNewGame");
+            r.Bool(SmdSections.Colony, "smd.colonyApplyOnNewGame", true, "Apply the saved colony settings to new games",
+                    "When a new colony starts, the saved medical defaults, auto home area, auto rebuild and manual priorities are set (only if you saved any).").InGroup("New games").AsGlobal().Legacy("colonyApplyOnNewGame");
+
+            // ---------------------------------------------------------------- General
+            r.Bool(KitMod.Core, "smd.nativeRaiseBillCap", false, "Allow more than 15 bills",
+                    "Lifts vanilla's limit of 15 bills per workbench without another mod. Not used while No Max Bills is installed.").InGroup("Bill limit").AsGlobal().Legacy("nativeRaiseBillCap");
+            r.Int(KitMod.Core, "smd.maxBillsCap", 50, 15, 250, "Bills per workbench",
+                    "The limit while more than 15 bills are allowed (also used when restoring defaults under No Max Bills). Many bills cost performance.")
+                .InGroup("Bill limit").AsGlobal().HardLimits(15, 250).Legacy("maxBillsCap");
+            r.Bool(KitMod.Core, "smd.filterIntent", true, "Remember categories in filters",
+                    "Saved filters remember whole categories, so items a mod adds to a category later are included. Off = exact item lists as in 1.x.").InGroup("Filters").AsGlobal().AsNerd().Legacy("filterIntent");
+
+            // ---------------------------------------------------------------- Compatibility switches (G13c: on when the mod is present)
+            r.Bool(KitMod.Core, "smd.compatNiceBillTab", true, "Nice Bill Tab: refresh after applying",
+                    "Tells Nice Bill Tab to redraw its list, so applied bills show up at once.").InGroup("Compatibility").AsGlobal();
+            r.Bool(KitMod.Core, "smd.compatPrf", true, "Project RimFactory machines",
+                    "S.A.L. assemblers get their bills after their recipes appear, storage machines and splitters get their defaults.").InGroup("Compatibility").AsGlobal();
+            r.Bool(KitMod.Core, "smd.compatBlueprints", true, "Blueprints remember settings",
+                    "With Blueprints Forked, a blueprint remembers each building's bills and storage settings and recreates them when built.").InGroup("Compatibility").AsGlobal();
+
+            // ---------------------------------------------------------------- presets (first-start card and Overview)
+            r.Preset("automatic", "Automatic (recommended)", "Everything on: new workbenches, shelves, zones and colonists get their defaults by themselves.", p =>
+            {
+                foreach (var id in SmdSections.All) p.SetSection(id, true);
+                foreach (var key in AutoKeys) p.Set(key, true);
+            });
+            r.Preset("manual", "Only when I click Apply", "Nothing happens by itself; you apply presets with the Defaults button.", p =>
+            {
+                foreach (var id in SmdSections.All) p.SetSection(id, true);
+                foreach (var key in AutoKeys) p.Set(key, false);
+            });
+            r.Preset("buildings", "Buildings and zones only", "Bills, shelves and zones; colonists, policies and colony settings are left alone.", p =>
+            {
+                p.SetSection(SmdSections.Buildings, true); p.SetSection(SmdSections.Zones, true); p.SetSection(SmdSections.Library, true);
+                p.SetSection(SmdSections.Pawns, false); p.SetSection(SmdSections.Policies, false); p.SetSection(SmdSections.Colony, false);
+                foreach (var key in AutoKeys) p.Set(key, true);
+            });
+
+            // ---------------------------------------------------------------- compatibility (G13c)
+            r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => KitNiceBillTab.Active);
+            r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Its bundled bill tab is supported the same way as Nice Bill Tab.").HealthyWhen(() => KitNiceBillTab.Active);
+            r.Compat("No Max Bills Redux", "justharry.nomaxbillsredux", "Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.");
+            r.Compat("Project RimFactory Revived", "spdskatr.projectrimfactory", "Assemblers, storage machines and conveyor splitters get their defaults.").HealthyWhen(() => PrfCompat.PatchApplied);
+            r.Compat("Blueprints Forked", "Defi.Blueprints.fork", "Blueprints remember bills and storage settings, even across saves.").HealthyWhen(() => BlueprintsCompat.Hooked);
+            r.Compat("Free Will", "freemapa.freewill", "Work priorities are left to Free Will for the colonists it manages.");
+            r.Compat("Free-ish Will", "stoneman.freewill", "Work priorities are left to Free-ish Will for the colonists it manages.");
+            r.Compat("Better Workbench Management", "falconne.BWM", "Works side by side. A default bill uses the store mode saved in the preset, not BWM's own default.");
+            r.Compat("Combat Extended", "CETeam.CombatExtended", "Fine: only vanilla schedule, work, policy and medical state is touched, never loadouts or ammo.");
+            r.Compat("Ideology", KitDetect.IdeologyId, "Bill styles (and Ideology's own style choices) are saved with the bill and restored.");
+            r.Compat("Anomaly", KitDetect.AnomalyId, "Medical defaults for entities and ghouls are part of the colony settings.");
+
+            // ---------------------------------------------------------------- custom pages (presets and the library are not plain numbers)
+            r.Page("buildingPresets", "Building presets", SmdPages.DrawBuildingPresets).WithOrder(15).InSection(SmdSections.Buildings);
+            r.Page("colonistPresets", "Colonist presets", SmdPages.DrawColonistPresets).WithOrder(35).InSection(SmdSections.Pawns);
+            r.Page("policies", "Policy set", SmdPages.DrawPolicies).WithOrder(45).InSection(SmdSections.Policies);
+            r.Page("colony", "Colony settings", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
+            // The profile / share-string UI is drawn by SmdPages.DrawLibrary (hook for the next wave: SmdPages.LibraryPage).
+            r.Page("library", "Library", SmdPages.DrawLibrary).WithOrder(65).InSection(SmdSections.Library);
+
+            // ---------------------------------------------------------------- per save data (removal-safe: inside the framework's component)
+            r.SaveData(SmdGameData.Expose, SmdGameData.Reset);
+        }
+
+        /// <summary>Settings that make things happen by themselves (the presets switch them together).</summary>
+        static readonly string[] AutoKeys =
+        {
+            "smd.autoApplyOnPlace", "smd.storageAutoApplyOnBuild", "smd.plantAutoApplyOnBuild",
+            "smd.zoneAutoApplyOnCreate", "smd.growingAutoApplyOnCreate", "smd.autoApplyToNewPawns",
+        };
+
+        protected override void OnDefsLoaded()
+        {
+            KitKnown.Declare(Kit, KitTags.ChangesBillsUi, KitTags.ChangesBills, KitTags.ChangesStorage, KitTags.ChangesWork, KitTags.ChangesPawnUi);
+        }
+
+        protected override IEnumerable<string> Diagnosis()
+        {
+            yield return "Bill limit: " + (BillCapCompat.Active ? "owned by No Max Bills" : BillCapPatched ? "own transpiler in place, now " + BillCap.Current() : "vanilla (transpiler not applied)");
+            yield return "Building spawn hook: " + (Patch_SpawnSetup.Applied ? "applied" : "NOT applied");
+        }
+
+        static string SafeStatus(Func<LibraryStatus, object> f)
+        {
+            try { return f(SmdLibraryApi.Status())?.ToString() ?? "?"; }
+            catch (Exception e) { return "unavailable (" + e.GetType().Name + ")"; }
+        }
+
+        static IEnumerable<string> LibraryDiagnosis()
+        {
+            var lines = new List<string>();
+            try
+            {
+                var s = SmdLibraryApi.Status();
+                lines.Add("Library: " + (s.readOnly ? "READ-ONLY (" + s.loadError + ")" : "writable") + ", profiles " + s.profiles);
+                if (s.lastMigration != null) lines.Add("Imported from 1.x this session: " + s.lastMigration);
+                var miss = SmdLibraryApi.MissingInLibrary();
+                if (!miss.IsEmpty) lines.Add("Presets that need missing mods: " + miss.Summary());
+            }
+            catch (Exception e) { lines.Add("Library status unavailable: " + e.GetType().Name); }
+            return lines;
+        }
+
+        /// <summary>Manually patch the two vanilla bill-UI methods via our transpiler. Any failure is logged and swallowed.</summary>
         private static void TryPatchBillCap(Harmony harmony)
         {
             try
@@ -73,476 +242,87 @@ namespace BetterWorkbenchDefaults
                 int ok = 0;
                 foreach (var target in Patch_BillStack_RaiseCap.TargetMethods())
                 {
-                    try
-                    {
-                        harmony.Patch(target, transpiler: transpiler);
-                        ok++;
-                    }
-                    catch (Exception e)
-                    {
-                        WBD_Log.Error("Failed to raise bill cap on " + target?.Name + ": " + e);
-                    }
+                    try { harmony.Patch(target, transpiler: transpiler); ok++; }
+                    catch (Exception e) { WBD_Log.Warn("Could not raise the bill limit on " + target?.Name + " (the limit stays 15 there): " + e.Message); }
                 }
                 BillCapPatched = ok > 0;
             }
             catch (Exception e)
             {
-                WBD_Log.Error("Failed to register the bill-cap transpiler: " + e);
+                WBD_Log.Warn("The bill-limit patch could not be registered (the limit stays 15): " + e.Message);
             }
         }
 
-        private static void TryPatch(Harmony harmony, Type patchClass)
+        /// <summary>Opens this mod's settings on a page ("page:colonistPresets", "section:pawns", "overview").</summary>
+        public static void OpenSettings(string pageId)
         {
-            try
-            {
-                harmony.CreateClassProcessor(patchClass).Patch();
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to apply patch " + patchClass.Name + ": " + e);
-            }
+            var k = K;
+            if (k == null) return;
+            if (string.IsNullOrEmpty(pageId)) k.OpenSettings(); else k.OpenSettings(pageId);
         }
 
-        public override string SettingsCategory() => "Set my Defaults";
-
-        private enum SettingsTab { Buildings, Pawns, Policies }
-        private SettingsTab _tab = SettingsTab.Buildings;
-        private Vector2 _scrollPos;
-        private float _viewHeight = 300f;
-
-        public override void DoSettingsWindowContents(Rect inRect)
-        {
-            Text.Font = GameFont.Small;
-
-            // Tab row (three tabs). Switching resets the scroll position and the cached content height; keeping
-            // the previous tab's values left the new tab scrolled past its end (an empty/broken panel).
-            var tabBefore = _tab;
-            float third = (inRect.width - 16f) / 3f;
-            if (DrawTabButton(new Rect(inRect.x, inRect.y, third, 30f), "WBD_TabBuildings".Translate(), _tab == SettingsTab.Buildings))
-                _tab = SettingsTab.Buildings;
-            if (DrawTabButton(new Rect(inRect.x + third + 8f, inRect.y, third, 30f), "WBD_TabPawns".Translate(), _tab == SettingsTab.Pawns))
-                _tab = SettingsTab.Pawns;
-            if (DrawTabButton(new Rect(inRect.x + 2f * (third + 8f), inRect.y, third, 30f), "WBD_TabPolicies".Translate(), _tab == SettingsTab.Policies))
-                _tab = SettingsTab.Policies;
-            if (_tab != tabBefore)
-            {
-                _scrollPos = Vector2.zero;
-                _viewHeight = 300f;
-            }
-
-            // Scrollable body holding the active tab's toggles + preset overview.
-            var body = new Rect(inRect.x, inRect.y + 38f, inRect.width, inRect.height - 38f);
-            var viewRect = new Rect(0f, 0f, body.width - 20f, _viewHeight);
-            Widgets.BeginScrollView(body, ref _scrollPos, viewRect);
-            var listing = new Listing_Standard { maxOneColumn = true };
-            listing.Begin(viewRect);
-            try
-            {
-                if (_tab == SettingsTab.Buildings)
-                    DrawBuildingTab(listing);
-                else if (_tab == SettingsTab.Pawns)
-                    DrawPawnTab(listing);
-                else
-                    DrawPolicyTab(listing);
-            }
-            catch (System.Exception e)
-            {
-                // A throw in the middle of a tab must not leave the scroll view/listing open: that corrupts the
-                // GUI group stack and breaks every later tab.
-                WBD_Log.Warn("Settings tab " + _tab + " failed to draw: " + e);
-            }
-            finally
-            {
-                _viewHeight = Mathf.Max(listing.CurHeight, 50f);
-                listing.End();
-                Widgets.EndScrollView();
-            }
-        }
-
-        private static bool DrawTabButton(Rect rect, string label, bool active)
-        {
-            if (active)
-                Widgets.DrawHighlight(rect);
-            return Widgets.ButtonText(rect, label);
-        }
-
-        // ---- Buildings tab ----
-
-        private void DrawBuildingTab(Listing_Standard list)
-        {
-            list.CheckboxLabeled("WBD_SettingAutoApply".Translate(), ref Settings.autoApplyOnPlace);
-            list.CheckboxLabeled("WBD_SettingShowTabButton".Translate(), ref Settings.showTabButton);
-            list.CheckboxLabeled("WBD_SettingShowGizmo".Translate(), ref Settings.showGizmo);
-            // 2.0 plain rows (the kit window replaces this tab in the next wave)
-            list.CheckboxLabeled("WBD_SettingStorageOnBuild".Translate(), ref Settings.storageAutoApplyOnBuild);
-            list.CheckboxLabeled("WBD_SettingPlantOnBuild".Translate(), ref Settings.plantAutoApplyOnBuild);
-            list.CheckboxLabeled("WBD_SettingZoneOnCreate".Translate(), ref Settings.zoneAutoApplyOnCreate);
-            list.CheckboxLabeled("WBD_SettingGrowingOnCreate".Translate(), ref Settings.growingAutoApplyOnCreate);
-            list.CheckboxLabeled("WBD_SettingBenchFamilies".Translate(), ref Settings.benchFamilies);
-            list.CheckboxLabeled("WBD_SettingFilterIntent".Translate(), ref Settings.filterIntent);
-            list.CheckboxLabeled("WBD_SettingMatchStockpile".Translate(), ref Settings.billMatchStockpileByName);
-            if (SmdLibraryStore.ReadOnly)
-            {
-                GUI.color = ColorLibrary.RedReadable;
-                list.Label("WBD_LibraryReadOnly".Translate());
-                GUI.color = Color.white;
-            }
-            list.GapLine();
-            list.Label("WBD_OverviewHeader".Translate());
-
-            var defNames = DefaultBillsDatabase.AllSavedDefNames();
-            var rows = defNames
-                .Select(dn => new { defName = dn, label = DefaultBillsDatabase.KeyLabel(dn), presets = DefaultBillsDatabase.GetStored(dn) })
-                .Where(r => r.presets != null && !r.presets.IsEmpty)
-                .OrderBy(r => r.label)
-                .ToList();
-            if (rows.Count == 0)
-            {
-                list.Label("WBD_OverviewEmpty".Translate());
-                return;
-            }
-
-            foreach (var row in rows)
-            {
-                var header = list.GetRect(28f);
-                var labelText = row.label;
-                Widgets.Label(new Rect(header.x, header.y + 3f, header.width - 96f, 24f), labelText.Truncate(header.width - 100f));
-                if (Widgets.ButtonText(new Rect(header.xMax - 90f, header.y + 1f, 90f, 26f), "WBD_DeleteAll".Translate()))
-                    DefaultBillsDatabase.ClearAll(row.defName);
-                Widgets.DrawLineHorizontal(header.x, header.yMax, header.width);
-
-                foreach (var preset in row.presets.presets.ToList())
-                {
-                    var name = preset.name;
-                    bool isDefault = row.presets.DefaultPreset?.name == name;
-                    var r = list.GetRect(28f);
-
-                    if (Widgets.RadioButton(r.x + 12f, r.y + 2f, isDefault))
-                        DefaultBillsDatabase.SetDefaultPreset(row.defName, name);
-                    var nameRect = new Rect(r.x + 46f, r.y + 4f, r.width - 46f - 156f, 24f);
-                    var shown = isDefault ? "WBD_PresetIsDefault".Translate(name).ToString() : name;
-                    var missing = SmdDefRefs.Missing(preset);
-                    if (!missing.IsEmpty)
-                    {
-                        shown += " [" + missing.Summary() + "]";
-                        TooltipHandler.TipRegion(nameRect, missing.Summary() + "\n" + string.Join("\n", missing.unknownDefs.Take(20)));
-                    }
-                    Widgets.Label(nameRect, shown.Truncate(nameRect.width));
-
-                    if (Widgets.ButtonText(new Rect(r.xMax - 150f, r.y + 2f, 72f, 24f), "WBD_Rename".Translate()))
-                        PromptRename(row.defName, name);
-                    if (Widgets.ButtonText(new Rect(r.xMax - 74f, r.y + 2f, 72f, 24f), "WBD_Delete".Translate()))
-                        DefaultBillsDatabase.RemovePreset(row.defName, name);
-                }
-
-                list.Gap(10f);
-            }
-        }
-
-        private static void PromptRename(string defName, string oldName)
-        {
-            Find.WindowStack.Add(new WBD_Dialog_NamePreset(
-                "WBD_RenameTitle".Translate(oldName),
-                oldName,
-                newName =>
-                {
-                    if (!DefaultBillsDatabase.RenamePreset(defName, oldName, newName))
-                        Messages.Message("WBD_RenameFailed".Translate(newName), MessageTypeDefOf.RejectInput, false);
-                }));
-        }
-
-        // ---- Pawns tab ----
-
-        private void DrawPawnTab(Listing_Standard list)
-        {
-            list.CheckboxLabeled("WBD_PawnAutoApply".Translate(), ref Settings.autoApplyToNewPawns);
-            list.CheckboxLabeled("WBD_PawnShowGizmo".Translate(), ref Settings.pawnShowGizmo);
-            list.CheckboxLabeled("WBD_PawnIncludeChildren".Translate(), ref Settings.pawnIncludeChildren);
-
-            list.GapLine();
-            list.Label("WBD_PawnAxesHeader".Translate());
-            list.CheckboxLabeled("WBD_AxisSchedule".Translate(), ref Settings.pawnApplySchedule);
-            list.CheckboxLabeled("WBD_AxisWork".Translate(), ref Settings.pawnApplyWork);
-            if (Settings.pawnApplyWork && FreeWillCompat.Active)
-            {
-                list.CheckboxLabeled("WBD_PawnSkipWorkFreeWill".Translate(), ref Settings.pawnSkipWorkUnderFreeWill);
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                list.Label("WBD_PawnFreeWillNote".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-            }
-            list.CheckboxLabeled("WBD_AxisApparel".Translate(), ref Settings.pawnApplyApparel);
-            list.CheckboxLabeled("WBD_AxisDrug".Translate(), ref Settings.pawnApplyDrug);
-            list.CheckboxLabeled("WBD_AxisFood".Translate(), ref Settings.pawnApplyFood);
-            list.CheckboxLabeled("WBD_AxisReading".Translate(), ref Settings.pawnApplyReading);
-            list.CheckboxLabeled("WBD_AxisHostility".Translate(), ref Settings.pawnApplyHostility);
-            list.CheckboxLabeled("WBD_AxisMedical".Translate(), ref Settings.pawnApplyMedical);
-
-            list.GapLine();
-            list.Label("WBD_PawnOverviewHeader".Translate());
-
-            var presets = PawnDefaultsStore.GetStored();
-            if (presets == null || presets.IsEmpty)
-            {
-                list.Label("WBD_PawnOverviewEmpty".Translate());
-                return;
-            }
-
-            foreach (var preset in presets.presets.ToList())
-            {
-                var name = preset.name;
-                bool isDefault = presets.DefaultPreset?.name == name;
-                var r = list.GetRect(28f);
-
-                if (Widgets.RadioButton(r.x + 6f, r.y + 2f, isDefault))
-                    PawnDefaultsStore.SetDefaultPreset(name);
-                var nameRect = new Rect(r.x + 40f, r.y + 4f, r.width - 40f - 156f, 24f);
-                var shown = isDefault ? "WBD_PresetIsDefault".Translate(name).ToString() : name;
-                Widgets.Label(nameRect, shown.Truncate(nameRect.width));
-
-                if (Widgets.ButtonText(new Rect(r.xMax - 150f, r.y + 2f, 72f, 24f), "WBD_Rename".Translate()))
-                    PromptRenamePawn(name);
-                if (Widgets.ButtonText(new Rect(r.xMax - 74f, r.y + 2f, 72f, 24f), "WBD_Delete".Translate()))
-                    PawnDefaultsStore.RemovePreset(name);
-            }
-        }
-
-        private static void PromptRenamePawn(string oldName)
-        {
-            Find.WindowStack.Add(new WBD_Dialog_NamePreset(
-                "WBD_RenameTitle".Translate(oldName),
-                oldName,
-                newName =>
-                {
-                    if (!PawnDefaultsStore.RenamePreset(oldName, newName))
-                        Messages.Message("WBD_RenameFailed".Translate(newName), MessageTypeDefOf.RejectInput, false);
-                }));
-        }
-
-        // ---- Policies tab ----
-
-        private void DrawPolicyTab(Listing_Standard list)
-        {
-            // --- Native >15 bills ---
-            list.Label("WBD_BillCapHeader".Translate());
-            if (BillCapCompat.Active)
-            {
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                list.Label("WBD_BillCapExternal".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-            }
-            else
-            {
-                list.CheckboxLabeled("WBD_SettingNativeBillCap".Translate(), ref Settings.nativeRaiseBillCap);
-            }
-
-            if (Settings.nativeRaiseBillCap || BillCapCompat.Active)
-            {
-                list.Label("WBD_SettingBillCapValue".Translate(Settings.maxBillsCap));
-                Settings.maxBillsCap = Mathf.RoundToInt(list.Slider(Settings.maxBillsCap, 15f, 250f));
-            }
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            list.Label("WBD_BillCapNote".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-
-            list.GapLine();
-
-            // --- Cross-save policy defaults ---
-            list.Label("WBD_PolicyDefaultsHeader".Translate());
-
-            if (!PolicyDefaultsController.GameReady)
-            {
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                list.Label("WBD_PolicyNoGame".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-            }
-            else
-            {
-                var btnRow = list.GetRect(30f);
-                float bw = (btnRow.width - 8f) / 2f;
-                if (Widgets.ButtonText(new Rect(btnRow.x, btnRow.y, bw, 28f), "WBD_SaveDefaultPolicies".Translate()))
-                {
-                    if (PolicyDefaultsStore.SaveCurrentColony())
-                        Messages.Message("WBD_PolicyCrossSaveSaved".Translate(), MessageTypeDefOf.TaskCompletion, false);
-                    else
-                        Messages.Message(DefaultBillsController.SaveFailedText(), MessageTypeDefOf.RejectInput, false);
-                }
-                bool hasSet = PolicyDefaultsStore.HasSet();
-                if (Widgets.ButtonText(new Rect(btnRow.x + bw + 8f, btnRow.y, bw, 28f), "WBD_ApplyDefaultPolicies".Translate()) && hasSet)
-                {
-                    if (PolicyDefaultsStore.ApplyToCurrentColony())
-                        Messages.Message("WBD_PolicyCrossSaveApplied".Translate(), MessageTypeDefOf.TaskCompletion, false);
-                    else
-                        Messages.Message(DefaultBillsController.SaveFailedText(), MessageTypeDefOf.RejectInput, false);
-                }
-            }
-
-            list.CheckboxLabeled("WBD_PolicyAutoApply".Translate(), ref Settings.policyAutoApplyOnNewGame);
-
-            // --- Colony settings across saves (2.0, M8) ---
-            list.GapLine();
-            list.Label("WBD_ColonyHeader".Translate());
-            list.CheckboxLabeled("WBD_ColonyApplyOnNewGame".Translate(), ref Settings.colonyApplyOnNewGame);
-            if (PolicyDefaultsController.GameReady)
-            {
-                var colRow = list.GetRect(30f);
-                float cw = (colRow.width - 8f) / 2f;
-                if (Widgets.ButtonText(new Rect(colRow.x, colRow.y, cw, 28f), "WBD_ColonySave".Translate()))
-                    Messages.Message(ColonySettingsStore.SaveCurrentGame() ? "WBD_ColonySaved".Translate().ToString() : DefaultBillsController.SaveFailedText(),
-                        MessageTypeDefOf.TaskCompletion, false);
-                if (Widgets.ButtonText(new Rect(colRow.x + cw + 8f, colRow.y, cw, 28f), "WBD_ColonyApply".Translate()) && ColonySettingsStore.Has())
-                    if (ColonySettingsStore.ApplyToCurrentGame())
-                        Messages.Message("WBD_ColonyApplied".Translate(), MessageTypeDefOf.TaskCompletion, false);
-            }
-            if (ColonySettingsStore.Has())
-            {
-                var clr = list.GetRect(28f);
-                if (Widgets.ButtonText(new Rect(clr.x, clr.y, 200f, 26f), "WBD_ColonyClear".Translate()))
-                    ColonySettingsStore.Clear();
-            }
-            else
-            {
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                list.Label("WBD_ColonyNoneSaved".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-            }
-
-            // Saved-set overview.
-            var savedSet = PolicyDefaultsStore.GetSet();
-            if (savedSet != null && !savedSet.IsEmpty)
-            {
-                list.Gap(4f);
-                list.Label("WBD_PolicySavedSetHeader".Translate());
-                foreach (var kind in PolicyDefaultsController.AllKinds)
-                {
-                    var saved = savedSet.ListFor(kind);
-                    if (saved == null || saved.Count == 0)
-                        continue;
-                    var def = savedSet.DefaultLabelFor(kind);
-                    var labels = saved.Select(t => t.label == def ? "★ " + t.label : t.label).ToList();
-                    list.Label("  " + PolicyDefaultsController.KindLabel(kind) + ": " + string.Join(", ", labels));
-                }
-                var clearRow = list.GetRect(28f);
-                if (Widgets.ButtonText(new Rect(clearRow.x, clearRow.y, 160f, 26f), "WBD_PolicyClearSaved".Translate()))
-                    PolicyDefaultsStore.ClearAll();
-            }
-
-            list.GapLine();
-
-            // --- Granular per-kind colony default (live databases) ---
-            list.Label("WBD_PolicyColonyDefaultsHeader".Translate());
-            if (!PolicyDefaultsController.GameReady)
-            {
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                list.Label("WBD_PolicyNoGame".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-                return;
-            }
-
-            foreach (var kind in PolicyDefaultsController.AllKinds)
-                DrawPolicyKindSection(list, kind);
-        }
-
-        private void DrawPolicyKindSection(Listing_Standard list, PolicyKind kind)
-        {
-            var header = list.GetRect(28f);
-            Widgets.Label(new Rect(header.x, header.y + 3f, header.width - 130f, 24f),
-                PolicyDefaultsController.KindLabel(kind));
-            if (Widgets.ButtonText(new Rect(header.xMax - 124f, header.y + 1f, 124f, 26f), "WBD_PolicyManage".Translate()))
-                PolicyDefaultsController.OpenManageDialog(kind);
-            Widgets.DrawLineHorizontal(header.x, header.yMax, header.width);
-
-            var currentDefault = PolicyDefaultsController.DefaultPolicy(kind);
-            foreach (var live in PolicyDefaultsController.LivePolicies(kind).ToList())
-            {
-                var name = PolicyDefaultsController.PolicyLabel(live) ?? "?";
-                bool isDefault = ReferenceEquals(live, currentDefault);
-                var r = list.GetRect(28f);
-                if (Widgets.RadioButton(r.x + 12f, r.y + 2f, isDefault) && !isDefault)
-                {
-                    if (PolicyDefaultsController.SetColonyDefault(kind, live))
-                        Messages.Message("WBD_PolicyDefaultSet".Translate(name), MessageTypeDefOf.TaskCompletion, false);
-                }
-                var nameRect = new Rect(r.x + 46f, r.y + 4f, r.width - 46f, 24f);
-                var shown = isDefault ? "WBD_PresetIsDefault".Translate(name).ToString() : name;
-                Widgets.Label(nameRect, shown.Truncate(nameRect.width));
-            }
-            list.Gap(10f);
-        }
-
-        /// <summary>Open mod settings with the Pawns tab pre-selected (used by the pawn "Manage" action).</summary>
-        public static void OpenSettingsPawnTab()
-        {
-            var mod = LoadedModManager.GetMod<WBD_Mod>();
-            if (mod == null)
-                return;
-            mod._tab = SettingsTab.Pawns;
-            Find.WindowStack.Add(new Dialog_ModSettings(mod));
-        }
+        /// <summary>Old entry point of the pawn "Manage" action.</summary>
+        public static void OpenSettingsPawnTab() => OpenSettings("page:colonistPresets");
     }
 
-    public class WBD_Settings : ModSettings
+    /// <summary>
+    /// The settings class (old name kept: it is written into the settings file). Since 2.0 every value is a framework registration;
+    /// the properties below keep the old field names so the rest of the code reads them unchanged. Old files are migrated by the
+    /// framework (every registration carries <c>Legacy("oldField")</c>, every area <c>LegacyEnabled("sectionX")</c>).
+    /// </summary>
+    public sealed class WBD_Settings : KitSettingsBase
     {
+        bool B(string key, bool def) { var k = Kit; return k != null ? k.GetBool(key) : def; }
+        void SetB(string key, bool v) => Kit?.Set(key, v);
+
         // Buildings
-        public bool autoApplyOnPlace = true;
-        public bool showTabButton = true;
-        public bool showGizmo = true;
+        public bool autoApplyOnPlace { get => B("smd.autoApplyOnPlace", true); set => SetB("smd.autoApplyOnPlace", value); }
+        public bool showTabButton { get => B("smd.showTabButton", true); set => SetB("smd.showTabButton", value); }
+        public bool showGizmo { get => B("smd.showGizmo", true); set => SetB("smd.showGizmo", value); }
 
         // Pawns
-        public bool autoApplyToNewPawns = true;
-        public bool pawnShowGizmo = true;
-        public bool pawnIncludeChildren = true;
-        public bool pawnSkipWorkUnderFreeWill = true;
-        public bool pawnApplySchedule = true;
-        public bool pawnApplyWork = true;
-        public bool pawnApplyApparel = true;
-        public bool pawnApplyDrug = true;
-        public bool pawnApplyFood = true;
-        public bool pawnApplyReading = true;
-        public bool pawnApplyHostility = true;
-        public bool pawnApplyMedical = true;
+        public bool autoApplyToNewPawns { get => B("smd.autoApplyToNewPawns", true); set => SetB("smd.autoApplyToNewPawns", value); }
+        public bool pawnShowGizmo { get => B("smd.pawnShowGizmo", true); set => SetB("smd.pawnShowGizmo", value); }
+        public bool pawnIncludeChildren { get => B("smd.pawnIncludeChildren", true); set => SetB("smd.pawnIncludeChildren", value); }
+        public bool pawnSkipWorkUnderFreeWill { get => B("smd.pawnSkipWorkUnderFreeWill", true); set => SetB("smd.pawnSkipWorkUnderFreeWill", value); }
+        public bool pawnApplySchedule { get => B("smd.pawnApplySchedule", true); set => SetB("smd.pawnApplySchedule", value); }
+        public bool pawnApplyWork { get => B("smd.pawnApplyWork", true); set => SetB("smd.pawnApplyWork", value); }
+        public bool pawnApplyApparel { get => B("smd.pawnApplyApparel", true); set => SetB("smd.pawnApplyApparel", value); }
+        public bool pawnApplyDrug { get => B("smd.pawnApplyDrug", true); set => SetB("smd.pawnApplyDrug", value); }
+        public bool pawnApplyFood { get => B("smd.pawnApplyFood", true); set => SetB("smd.pawnApplyFood", value); }
+        public bool pawnApplyReading { get => B("smd.pawnApplyReading", true); set => SetB("smd.pawnApplyReading", value); }
+        public bool pawnApplyHostility { get => B("smd.pawnApplyHostility", true); set => SetB("smd.pawnApplyHostility", value); }
+        public bool pawnApplyMedical { get => B("smd.pawnApplyMedical", true); set => SetB("smd.pawnApplyMedical", value); }
 
-        // Policies / bills
-        public bool nativeRaiseBillCap = false;   // master toggle for the self-contained bill-cap transpiler
-        public int maxBillsCap = 50;              // configurable cap (15-250); also the UI literal the transpiler writes
-        public bool policyAutoApplyOnNewGame = false; // optional: apply saved policy defaults once per new game
+        // Bills / policies
+        public bool nativeRaiseBillCap { get => B("smd.nativeRaiseBillCap", false); set => SetB("smd.nativeRaiseBillCap", value); }
+        public int maxBillsCap
+        {
+            get { var k = Kit; return k != null ? Mathf.Clamp(k.GetInt("smd.maxBillsCap"), BillStack.MaxCount, 250) : 50; }
+            set => Kit?.Set("smd.maxBillsCap", (float)Mathf.Clamp(value, BillStack.MaxCount, 250));
+        }
+        public bool policyAutoApplyOnNewGame { get => B("smd.policyAutoApplyOnNewGame", false); set => SetB("smd.policyAutoApplyOnNewGame", value); }
 
-        // ---- Feature areas (2.0). Each one switches a whole area off; saved data is kept. Read only through
-        // SmdSections.On(id), never directly, so the kit can take these over in one place. ----
-        public bool sectionBuildings = true;   // workbench bills + building storage/plant presets, gizmo, bills-tab button
-        public bool sectionZones = true;       // stockpile and growing zone presets (gizmo + auto-apply on new zones)
-        public bool sectionPawns = true;       // colonist presets (gizmo + auto-apply to new colonists)
-        public bool sectionPolicies = true;    // cross-save outfit/drug/food/reading policy set
-        public bool sectionColony = true;      // cross-save colony settings (medical defaults, auto home, auto rebuild, manual priorities)
-        public bool sectionLibrary = true;     // profiles, share strings, import/export
+        // Buildings / storage / zones
+        public bool storageAutoApplyOnBuild { get => B("smd.storageAutoApplyOnBuild", true); set => SetB("smd.storageAutoApplyOnBuild", value); }
+        public bool plantAutoApplyOnBuild { get => B("smd.plantAutoApplyOnBuild", true); set => SetB("smd.plantAutoApplyOnBuild", value); }
+        public bool zoneAutoApplyOnCreate { get => B("smd.zoneAutoApplyOnCreate", true); set => SetB("smd.zoneAutoApplyOnCreate", value); }
+        public bool growingAutoApplyOnCreate { get => B("smd.growingAutoApplyOnCreate", true); set => SetB("smd.growingAutoApplyOnCreate", value); }
+        public bool benchFamilies { get => B("smd.benchFamilies", true); set => SetB("smd.benchFamilies", value); }
+        public bool filterIntent { get => B("smd.filterIntent", true); set => SetB("smd.filterIntent", value); }
+        public bool billMatchStockpileByName { get => B("smd.billMatchStockpileByName", true); set => SetB("smd.billMatchStockpileByName", value); }
 
-        // ---- Buildings / storage / zones (2.0) ----
-        public bool storageAutoApplyOnBuild = true;  // shelves and other storage get their default filter when newly constructed
-        public bool plantAutoApplyOnBuild = true;    // hydroponics and other plant growers get their default plant when newly constructed
-        public bool zoneAutoApplyOnCreate = true;    // new stockpile / dumping zones get their default filter
-        public bool growingAutoApplyOnCreate = true; // new growing zones get their default plant (+ sow/cut toggles)
-        public bool benchFamilies = true;            // a building without its own preset uses the default of a closely related building
-        public bool filterIntent = true;             // filters remember categories + exceptions, so newly added items of a category are included
-        public bool billMatchStockpileByName = true; // "specific stockpile" (store in / count in) is restored when a stockpile of that name exists
+        // Colony
+        public bool colonyApplyOnNewGame { get => B("smd.colonyApplyOnNewGame", true); set => SetB("smd.colonyApplyOnNewGame", value); }
 
-        // ---- Colony (2.0) ----
-        public bool colonyApplyOnNewGame = true;     // apply the saved colony settings when a new game starts (only if any are saved)
+        // Compatibility
+        public bool compatNiceBillTab => B("smd.compatNiceBillTab", true);
+        public bool compatPrf => B("smd.compatPrf", true);
+        public bool compatBlueprints => B("smd.compatBlueprints", true);
 
         /// <summary>
-        /// The effective per-workbench bill cap. Returns the player's configured cap whenever the
-        /// built-in raiser is on OR an external "No Max Bills" mod is present (so the visible UI cap and
-        /// the number of bills we restore always agree); otherwise vanilla's 15.
+        /// The effective per-workbench bill cap: the configured cap whenever the built-in raiser is on OR an external "No Max Bills"
+        /// mod is present (so the visible UI cap and the number of bills we restore agree); otherwise vanilla's 15.
         /// </summary>
         public int EffectiveBillCap()
         {
@@ -565,49 +345,17 @@ namespace BetterWorkbenchDefaults
             if (pawnApplyMedical) a |= PawnAxis.Medical;
             return a;
         }
+    }
 
-        public override void ExposeData()
+    /// <summary>Soft integrations that several places call.</summary>
+    public static class SmdCompat
+    {
+        /// <summary>Nice Bill Tab caches its bill list: ask it to rebuild after bills changed from code (framework adapter).</summary>
+        public static void RefreshBillsTab()
         {
-            Scribe_Values.Look(ref autoApplyOnPlace, "autoApplyOnPlace", true);
-            Scribe_Values.Look(ref showTabButton, "showTabButton", true);
-            Scribe_Values.Look(ref showGizmo, "showGizmo", true);
-
-            Scribe_Values.Look(ref autoApplyToNewPawns, "autoApplyToNewPawns", true);
-            Scribe_Values.Look(ref pawnShowGizmo, "pawnShowGizmo", true);
-            Scribe_Values.Look(ref pawnIncludeChildren, "pawnIncludeChildren", true);
-            Scribe_Values.Look(ref pawnSkipWorkUnderFreeWill, "pawnSkipWorkUnderFreeWill", true);
-            Scribe_Values.Look(ref pawnApplySchedule, "pawnApplySchedule", true);
-            Scribe_Values.Look(ref pawnApplyWork, "pawnApplyWork", true);
-            Scribe_Values.Look(ref pawnApplyApparel, "pawnApplyApparel", true);
-            Scribe_Values.Look(ref pawnApplyDrug, "pawnApplyDrug", true);
-            Scribe_Values.Look(ref pawnApplyFood, "pawnApplyFood", true);
-            Scribe_Values.Look(ref pawnApplyReading, "pawnApplyReading", true);
-            Scribe_Values.Look(ref pawnApplyHostility, "pawnApplyHostility", true);
-            Scribe_Values.Look(ref pawnApplyMedical, "pawnApplyMedical", true);
-
-            Scribe_Values.Look(ref nativeRaiseBillCap, "nativeRaiseBillCap", false);
-            Scribe_Values.Look(ref maxBillsCap, "maxBillsCap", 50);
-            Scribe_Values.Look(ref policyAutoApplyOnNewGame, "policyAutoApplyOnNewGame", false);
-
-            Scribe_Values.Look(ref sectionBuildings, "sectionBuildings", true);
-            Scribe_Values.Look(ref sectionZones, "sectionZones", true);
-            Scribe_Values.Look(ref sectionPawns, "sectionPawns", true);
-            Scribe_Values.Look(ref sectionPolicies, "sectionPolicies", true);
-            Scribe_Values.Look(ref sectionColony, "sectionColony", true);
-            Scribe_Values.Look(ref sectionLibrary, "sectionLibrary", true);
-
-            Scribe_Values.Look(ref storageAutoApplyOnBuild, "storageAutoApplyOnBuild", true);
-            Scribe_Values.Look(ref plantAutoApplyOnBuild, "plantAutoApplyOnBuild", true);
-            Scribe_Values.Look(ref zoneAutoApplyOnCreate, "zoneAutoApplyOnCreate", true);
-            Scribe_Values.Look(ref growingAutoApplyOnCreate, "growingAutoApplyOnCreate", true);
-            Scribe_Values.Look(ref benchFamilies, "benchFamilies", true);
-            Scribe_Values.Look(ref filterIntent, "filterIntent", true);
-            Scribe_Values.Look(ref billMatchStockpileByName, "billMatchStockpileByName", true);
-
-            Scribe_Values.Look(ref colonyApplyOnNewGame, "colonyApplyOnNewGame", true);
-
-            if (Scribe.mode == LoadSaveMode.LoadingVars)
-                maxBillsCap = Mathf.Clamp(maxBillsCap, BillStack.MaxCount, 250);
+            var s = WBD_Mod.Settings;
+            if (s != null && !s.compatNiceBillTab) return;
+            KitNiceBillTab.RequestRefresh();
         }
     }
 

@@ -3,3 +3,4 @@ obj17/
 bin/
 .DS_Store
 *.pre-kit
+obj/

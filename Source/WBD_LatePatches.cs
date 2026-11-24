@@ -18,10 +18,10 @@ namespace BetterWorkbenchDefaults
             var harmony = new Harmony("juliusberger.workbenchdefaults.compat");
 
             try { PrfCompat.Apply(harmony); }
-            catch (Exception e) { WBD_Log.Error("Project RimFactory compatibility patch failed: " + e); }
+            catch (Exception e) { WBD_Log.Warn("Project RimFactory compatibility patch failed: " + e); }
 
             try { BlueprintsCompat.Apply(harmony); }
-            catch (Exception e) { WBD_Log.Error("Blueprints Forked compatibility patch failed: " + e); }
+            catch (Exception e) { WBD_Log.Warn("Blueprints Forked compatibility patch failed: " + e); }
         }
     }
 }

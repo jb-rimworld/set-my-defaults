@@ -19,7 +19,9 @@ namespace BetterWorkbenchDefaults
     /// </summary>
     public class WBD_PendingConfigs : MapComponent
     {
-        private List<PendingEntry> _entries = new List<PendingEntry>();
+        // Since 2.0 the entries live in SmdGameData (saved inside JB Framework's component); this component only reads the node of a
+        // save from before 2.0 and is never written again (Patch_Map_ExposeComponents).
+        private List<PendingEntry> _entries => SmdGameData.PendingFor(map);
 
         private const int TickInterval = 250;
         private const int RetryWindowTicks = 12000; // ~3.3 in-game hours of retrying missing bills
@@ -147,7 +149,7 @@ namespace BetterWorkbenchDefaults
                 {
                     stack.AddBill(bill);
                     template.ApplyMapBound(bill);
-                    NiceBillTabCompat.RequestRefresh();
+                    SmdCompat.RefreshBillsTab();
                 }
                 e.applied[i] = true;
             }
@@ -212,15 +214,18 @@ namespace BetterWorkbenchDefaults
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref _entries, "wbdPending", LookMode.Deep);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            if (Scribe.mode != LoadSaveMode.LoadingVars && Scribe.mode != LoadSaveMode.ResolvingCrossRefs && Scribe.mode != LoadSaveMode.PostLoadInit)
+                return;
+            Scribe_Collections.Look(ref _legacy, "wbdPending", LookMode.Deep);
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && _legacy != null)
             {
-                if (_entries == null)
-                    _entries = new List<PendingEntry>();
-                // Drop dead entries (e.g. the building's mod was removed mid-construction).
-                _entries.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
+                _legacy.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
+                SmdGameData.PendingFor(map).AddRange(_legacy);
+                _legacy = null;
             }
         }
+
+        private List<PendingEntry> _legacy;
     }
 
     public class PendingEntry : IExposable

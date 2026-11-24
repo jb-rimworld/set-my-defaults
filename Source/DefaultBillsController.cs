@@ -181,9 +181,7 @@ namespace BetterWorkbenchDefaults
 
         public static void OpenSettings()
         {
-            var mod = LoadedModManager.GetMod<WBD_Mod>();
-            if (mod != null)
-                Find.WindowStack.Add(new Dialog_ModSettings(mod));
+            WBD_Mod.OpenSettings("page:buildingPresets");
         }
 
         internal static string SaveFailedText() =>
