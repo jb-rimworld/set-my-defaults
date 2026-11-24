@@ -263,7 +263,11 @@ namespace BetterWorkbenchDefaults
             SmdGameData.startCard = SmdGameData.StartDone;
             SmdGameData.startChoice = choice ?? "";
             AppliedCount++;
-            if (joined || Current.Game == null) return true;
+            if (joined || Current.Game == null)
+            {
+                WBD_Log.Msg("First-start card done (" + (joined ? "joined an existing colony, nothing changed in it" : "no game") + ").");
+                return true;
+            }
             var comp = Current.Game.GetComponent<PawnDefaultsGameComponent>();
             try
             {
