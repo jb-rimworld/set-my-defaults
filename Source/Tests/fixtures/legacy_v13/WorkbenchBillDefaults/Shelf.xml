@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<workbenchBillDefaults>
+	<version>3</version>
+	<workbench>Shelf</workbench>
+	<defaultPreset>Default</defaultPreset>
+	<presets>
+		<li>
+			<name>Default</name>
+			<config>
+				<storage>
+					<priority>Important</priority>
+					<filter>
+						<allowedDefs>
+							<li>Steel</li>
+							<li>Plasteel</li>
+							<li>AlphaPoly_Plasteel</li>
+						</allowedDefs>
+						<allowedHitPointsPercents>0.5~1</allowedHitPointsPercents>
+						<allowedMentalBreakChance>0~0</allowedMentalBreakChance>
+						<allowedQualityLevels>Normal~Legendary</allowedQualityLevels>
+					</filter>
+				</storage>
+			</config>
+		</li>
+	</presets>
+</workbenchBillDefaults>

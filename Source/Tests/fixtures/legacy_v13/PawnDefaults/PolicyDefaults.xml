@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefaults>
+	<version>1</version>
+	<apparel>
+		<li>
+			<label>Anything</label>
+			<filter>
+				<allowedDefs>
+					<li>Apparel_Parka</li>
+				</allowedDefs>
+				<allowedHitPointsPercents>0~1</allowedHitPointsPercents>
+				<allowedMentalBreakChance>0~0</allowedMentalBreakChance>
+				<allowedQualityLevels>Awful~Legendary</allowedQualityLevels>
+			</filter>
+		</li>
+	</apparel>
+	<drug />
+	<food>
+		<li>
+			<kind>Food</kind>
+			<label>Lavish</label>
+		</li>
+	</food>
+	<reading />
+	<apparelDefault>Anything</apparelDefault>
+	<foodDefault>Lavish</foodDefault>
+</policyDefaults>

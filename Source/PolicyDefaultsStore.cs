@@ -1,5 +1,4 @@
-using System;
-using System.IO;
+using BetterWorkbenchDefaults.Lib;
 using Verse;
 
 namespace BetterWorkbenchDefaults
@@ -11,44 +10,41 @@ namespace BetterWorkbenchDefaults
     /// discipline (mode guards + ForceStop on error) and an edit-a-clone-then-commit pattern so a failed
     /// disk write never desyncs the cache from disk.
     ///
-    /// The file lives inside the existing <c>PawnDefaults</c> folder as <c>PolicyDefaults.xml</c> (policies
-    /// are pawn-adjacent; the store owns its own filename/version).
+    /// Since 2.0 the set lives in the cross-save library (section "policies"); the 1.x file
+    /// <c>PawnDefaults/PolicyDefaults.xml</c> is only read once, by the migration.
     /// </summary>
     public static class PolicyDefaultsStore
     {
+        private static int _rev = -1;
         private static PolicyDefaultsSet _cache;
-        private static bool _loaded;
-        private static string _folderPath;
 
-        private static string FolderPath
-        {
-            get
-            {
-                if (_folderPath == null)
-                {
-                    var configRoot = Directory.GetParent(GenFilePaths.ConfigFolderPath)?.FullName
-                                     ?? GenFilePaths.ConfigFolderPath;
-                    _folderPath = Path.Combine(configRoot, "PawnDefaults");
-                }
-                return _folderPath;
-            }
-        }
-
-        private static string FilePath => Path.Combine(FolderPath, "PolicyDefaults.xml");
+        public static StoredBlock GetStored() => SmdLibraryStore.Content.policies;
 
         // ---- queries ----
 
         public static PolicyDefaultsSet GetSet()
         {
-            if (_loaded)
+            int rev = SmdLibraryStore.Revision;
+            if (rev == _rev)
                 return _cache;
-            var loaded = LoadFromDisk(out bool definitive);
-            if (definitive)
+            var stored = GetStored();
+            if (stored == null)
             {
-                _cache = loaded;
-                _loaded = true;
+                _cache = null;
+                _rev = rev;
+                return null;
             }
-            return loaded;
+            var set = new PolicyDefaultsSet();
+            if (!SmdScribe.Read(stored.config, set.ExposeData))
+            {
+                if (SmdScribe.Busy)
+                    return null;
+                set = new PolicyDefaultsSet();
+            }
+            set.NormalizeDefault();
+            _cache = set.IsEmpty ? null : set;
+            _rev = rev;
+            return _cache;
         }
 
         public static bool HasSet()
@@ -89,119 +85,33 @@ namespace BetterWorkbenchDefaults
             return PolicyDefaultsController.ApplySetToColony(set);
         }
 
-        public static void ClearAll()
-        {
-            try
+        public static void ClearAll() =>
+            SmdLibraryStore.Mutate(lib =>
             {
-                if (File.Exists(FilePath))
-                    File.Delete(FilePath);
-                _cache = null;
-                _loaded = true;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to delete policy defaults file: " + e);
-            }
-        }
+                if (lib.content.policies == null)
+                    return false;
+                lib.content.policies = null;
+                return true;
+            });
 
-        /// <summary>Persist the set and update the cache. Returns false if the write failed.</summary>
+        /// <summary>Persist the set into the library. Returns false if the write failed.</summary>
         private static bool Commit(PolicyDefaultsSet set)
         {
-            set?.NormalizeDefault();
-            var toSave = (set != null && !set.IsEmpty) ? set : null;
-            if (!SaveToDisk(toSave))
+            set.NormalizeDefault();
+            var xml = SmdScribe.Write(set.ExposeData);
+            if (xml == null)
                 return false;
-            _cache = toSave;
-            _loaded = true;
-            return true;
-        }
-
-        // ---- disk ----
-
-        private static bool SaveToDisk(PolicyDefaultsSet set)
-        {
-            if (Scribe.mode != LoadSaveMode.Inactive)
+            var block = new StoredBlock
             {
-                WBD_Log.Warn("Could not save policy defaults right now (game is saving/loading). Try again in a moment.");
-                return false;
-            }
-            try
+                config = xml,
+                requiredMods = SmdDefRefs.RequiredMods(xml),
+                savedAt = System.DateTime.UtcNow.ToString("yyyy-MM-dd")
+            };
+            return SmdLibraryStore.Mutate(lib =>
             {
-                if (set == null || set.IsEmpty)
-                {
-                    if (File.Exists(FilePath))
-                        File.Delete(FilePath);
-                    return true;
-                }
-                Directory.CreateDirectory(FolderPath);
-                Scribe.saver.InitSaving(FilePath, "policyDefaults");
-                try
-                {
-                    var version = 1;
-                    Scribe_Values.Look(ref version, "version", 0);
-                    set.ExposeData();
-                }
-                finally
-                {
-                    Scribe.saver.FinalizeSaving();
-                }
+                lib.content.policies = block;
                 return true;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to save policy defaults: " + e);
-                Scribe.ForceStop();
-                return false;
-            }
-        }
-
-        private static PolicyDefaultsSet LoadFromDisk(out bool definitive)
-        {
-            definitive = true;
-            try
-            {
-                if (!File.Exists(FilePath))
-                    return null;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to resolve policy defaults path: " + e);
-                return null;
-            }
-
-            if (Scribe.mode != LoadSaveMode.Inactive)
-            {
-                WBD_Log.Warn("Could not load policy defaults right now (game is saving/loading).");
-                definitive = false;
-                return null;
-            }
-
-            var set = new PolicyDefaultsSet();
-            try
-            {
-                Scribe.loader.InitLoading(FilePath);
-                try
-                {
-                    var version = 0;
-                    Scribe_Values.Look(ref version, "version", 0);
-                    set.ExposeData();
-                }
-                finally
-                {
-                    Scribe.loader.FinalizeLoading();
-                }
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to load policy defaults: " + e);
-                Scribe.ForceStop();
-                return null;
-            }
-
-            if (!set.IsEmpty)
-                set.NormalizeDefault();
-
-            return set.IsEmpty ? null : set;
+            });
         }
     }
 }

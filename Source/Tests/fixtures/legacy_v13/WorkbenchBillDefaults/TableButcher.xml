@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<workbenchBillDefaults>
+	<version>2</version>
+	<workbench>TableButcher</workbench>
+	<bills>
+		<li>
+			<recipe>ButcherCorpseFlesh</recipe>
+			<repeatMode>Forever</repeatMode>
+			<repeatCount>1</repeatCount>
+			<allowedSkillRange>0~20</allowedSkillRange>
+			<qualityRange>Awful~Legendary</qualityRange>
+			<hpRange>0~1</hpRange>
+			<storeMode>BestStockpile</storeMode>
+		</li>
+	</bills>
+</workbenchBillDefaults>

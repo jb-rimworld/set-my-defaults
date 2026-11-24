@@ -1,135 +1,140 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using BetterWorkbenchDefaults.Lib;
 using Verse;
 
 namespace BetterWorkbenchDefaults
 {
     /// <summary>
-    /// Global, on-disk store of per-building-type presets, keyed by building defName. Each def
-    /// has a <see cref="WorkbenchPresets"/> set (one default + extra named setups). Files live in
-    /// a folder next to RimWorld's Config folder, so presets are shared across colonies and
-    /// survive save/quit. Lazy-loaded + cached; backward compatible with the original single
-    /// (unnamed) default format (migrated to one preset named "Default").
+    /// Building and zone presets, keyed by building defName (or "zone:stockpile", "zone:dumping", "zone:growing").
+    /// Since 2.0 the data lives in the cross-save library (<see cref="SmdLibraryStore"/>); this class keeps the 1.x
+    /// API and hands out LIVE templates (<see cref="WorkbenchPresets"/>) converted from the stored XML on demand.
+    ///
+    /// Nothing is pruned on load any more (fixes B4): a bill whose recipe belongs to a mod that is off right now is
+    /// simply not instantiated, while the stored preset keeps it. Rename, delete and set-default touch only the names,
+    /// never the stored content of other presets.
     /// </summary>
     public static class DefaultBillsDatabase
     {
-        private static readonly Dictionary<string, WorkbenchPresets> _cache =
-            new Dictionary<string, WorkbenchPresets>();
+        public const string ZoneStockpile = "zone:stockpile";
+        public const string ZoneDumping = "zone:dumping";
+        public const string ZoneGrowing = "zone:growing";
 
-        // Set of defNames that have a saved file (for the mod-settings overview).
-        private static HashSet<string> _known;
+        public static bool IsZoneKey(string key) => SmdContent.IsZoneKey(key);
 
-        private static string _folderPath;
-
-        private static string FolderPath
+        private struct Cached
         {
-            get
-            {
-                if (_folderPath == null)
-                {
-                    var configRoot = Directory.GetParent(GenFilePaths.ConfigFolderPath)?.FullName
-                                     ?? GenFilePaths.ConfigFolderPath;
-                    _folderPath = Path.Combine(configRoot, "WorkbenchBillDefaults");
-                }
-                return _folderPath;
-            }
+            public int revision;
+            public WorkbenchPresets presets;
         }
 
-        private static string FilePathFor(string defName) => Path.Combine(FolderPath, Sanitize(defName) + ".xml");
-
-        private static string Sanitize(string name)
-        {
-            foreach (var c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
-            return name;
-        }
-
-        private static void EnsureScanned()
-        {
-            if (_known != null)
-                return;
-            _known = new HashSet<string>();
-            try
-            {
-                if (Directory.Exists(FolderPath))
-                    foreach (var f in Directory.GetFiles(FolderPath, "*.xml"))
-                        _known.Add(Path.GetFileNameWithoutExtension(f));
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to scan defaults folder: " + e);
-            }
-        }
+        private static readonly Dictionary<string, Cached> _cache = new Dictionary<string, Cached>();
 
         // ---- queries ----
 
-        public static WorkbenchPresets GetPresets(string defName)
+        public static PresetSet GetStored(string key)
         {
-            if (defName == null)
+            if (key == null)
                 return null;
-            if (_cache.TryGetValue(defName, out var cached))
-                return cached;
-            var loaded = LoadFromDisk(defName, out bool definitive);
-            if (definitive)
-                _cache[defName] = loaded;
-            return loaded;
+            return SmdLibraryStore.Content.Buildings(key);
+        }
+
+        public static WorkbenchPresets GetPresets(string key)
+        {
+            if (key == null)
+                return null;
+            int rev = SmdLibraryStore.Revision;
+            if (_cache.TryGetValue(key, out var c) && c.revision == rev)
+                return c.presets;
+            var stored = GetStored(key);
+            if (stored == null || stored.IsEmpty)
+            {
+                _cache[key] = new Cached { revision = rev, presets = null };
+                return null;
+            }
+            var live = new WorkbenchPresets { defaultName = stored.DefaultPreset?.name };
+            foreach (var sp in stored.presets)
+            {
+                var snap = new ConfigSnapshot();
+                if (!SmdScribe.Read(sp.config, snap.ExposeData))
+                {
+                    if (SmdScribe.Busy)
+                        return null; // try again when the game is not saving/loading; do not cache
+                    snap = new ConfigSnapshot(); // unreadable: keep the name so the player can see and delete it
+                }
+                live.presets.Add(new WorkbenchPreset(sp.name, snap));
+            }
+            _cache[key] = new Cached { revision = rev, presets = live };
+            return live;
         }
 
         public static WorkbenchPresets GetPresets(ThingDef def) => GetPresets(def?.defName);
 
-        public static ConfigSnapshot GetDefaultConfig(ThingDef def) => GetPresets(def)?.DefaultConfig;
+        /// <summary>The default config of exactly this key (no family fallback).</summary>
+        public static ConfigSnapshot GetOwnDefaultConfig(string key) => GetPresets(key)?.DefaultConfig;
 
-        public static bool HasPresets(ThingDef def)
+        /// <summary>
+        /// The default config for a building: its own default preset, else (bench families on) the default of the
+        /// closest related building (<see cref="BenchFamilies"/>).
+        /// </summary>
+        public static ConfigSnapshot GetDefaultConfig(ThingDef def)
         {
-            var p = GetPresets(def);
-            return p != null && !p.IsEmpty;
+            if (def == null)
+                return null;
+            var own = GetOwnDefaultConfig(def.defName);
+            if (own != null && !own.IsEmpty)
+                return own;
+            var famKey = BenchFamilies.FallbackKeyFor(def);
+            return famKey != null ? GetOwnDefaultConfig(famKey) : own;
         }
 
-        public static List<string> AllSavedDefNames()
+        public static bool HasPresets(ThingDef def) => HasPresets(def?.defName);
+
+        public static bool HasPresets(string key)
         {
-            EnsureScanned();
-            return _known.ToList();
+            var s = GetStored(key);
+            return s != null && !s.IsEmpty;
         }
 
-        // ---- mutations (load -> modify -> save) ----
+        /// <summary>All keys with saved presets (building defNames and zone keys).</summary>
+        public static List<string> AllSavedDefNames() =>
+            SmdLibraryStore.Content.buildings.Where(b => !b.IsEmpty).Select(b => b.key).ToList();
 
-        // All mutators edit a CLONE and only swap it into the cache if the disk write succeeds
-        // (Commit does that), so a failed save never leaves the cache out of sync with disk.
+        // ---- mutations ----
 
-        public static bool SavePreset(ThingDef def, string name, ConfigSnapshot config, bool makeDefault)
+        public static bool SavePreset(ThingDef def, string name, ConfigSnapshot config, bool makeDefault) =>
+            def != null && SavePreset(def.defName, name, config, makeDefault);
+
+        public static bool SavePreset(string key, string name, ConfigSnapshot config, bool makeDefault)
         {
-            if (def == null || config == null || config.IsEmpty || name.NullOrEmpty())
+            if (key == null || config == null || config.IsEmpty || name.NullOrEmpty())
                 return false;
-            var working = GetPresets(def.defName)?.Clone() ?? new WorkbenchPresets();
-            working.AddOrReplace(name, config, makeDefault);
-            return Commit(def.defName, working);
+            var xml = SmdScribe.Write(config.ExposeData);
+            if (xml == null)
+                return false;
+            var stored = new StoredPreset
+            {
+                name = name.Trim(),
+                config = xml,
+                requiredMods = SmdDefRefs.RequiredMods(xml),
+                savedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
+            };
+            return SmdLibraryStore.Mutate(lib =>
+            {
+                lib.content.GetOrAddBuildings(key).AddOrReplace(stored, makeDefault);
+                return true;
+            });
         }
 
-        public static bool RemovePreset(string defName, string name)
-        {
-            var working = GetPresets(defName)?.Clone();
-            if (working == null || !working.Remove(name))
-                return false;
-            return Commit(defName, working);
-        }
+        public static bool RemovePreset(string key, string name) =>
+            SmdLibraryStore.Mutate(lib => lib.content.Buildings(key)?.Remove(name) ?? false);
 
-        public static bool SetDefaultPreset(string defName, string name)
-        {
-            var working = GetPresets(defName)?.Clone();
-            if (working == null || !working.SetDefault(name))
-                return false;
-            return Commit(defName, working);
-        }
+        public static bool SetDefaultPreset(string key, string name) =>
+            SmdLibraryStore.Mutate(lib => lib.content.Buildings(key)?.SetDefault(name) ?? false);
 
-        public static bool RenamePreset(string defName, string oldName, string newName)
-        {
-            var working = GetPresets(defName)?.Clone();
-            if (working == null || !working.Rename(oldName, newName))
-                return false;
-            return Commit(defName, working);
-        }
+        public static bool RenamePreset(string key, string oldName, string newName) =>
+            SmdLibraryStore.Mutate(lib => lib.content.Buildings(key)?.Rename(oldName, newName) ?? false);
 
         public static void ClearAll(ThingDef def)
         {
@@ -137,149 +142,24 @@ namespace BetterWorkbenchDefaults
                 ClearAll(def.defName);
         }
 
-        public static void ClearAll(string defName)
+        public static void ClearAll(string key)
         {
-            if (defName == null)
+            if (key == null)
                 return;
-            try
-            {
-                var path = FilePathFor(defName);
-                if (File.Exists(path))
-                    File.Delete(path);
-                // Update caches only after the delete actually succeeded.
-                _cache[defName] = null;
-                _known?.Remove(defName);
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to delete presets file for " + defName + ": " + e);
-            }
+            SmdLibraryStore.Mutate(lib => lib.content.buildings.RemoveAll(b => b.key == key) > 0);
         }
 
-        /// <summary>Persist a preset set and update caches. Returns false if the write failed.</summary>
-        private static bool Commit(string defName, WorkbenchPresets presets)
+        /// <summary>A readable label for a key ("Electric stove", "Stockpile zones", or the raw defName of a missing mod).</summary>
+        public static string KeyLabel(string key)
         {
-            presets?.NormalizeDefault();
-            var toSave = (presets != null && !presets.IsEmpty) ? presets : null;
-            if (!SaveToDisk(defName, toSave))
-                return false;
-            _cache[defName] = toSave;
-            if (_known != null)
+            switch (key)
             {
-                if (toSave != null)
-                    _known.Add(defName);
-                else
-                    _known.Remove(defName);
+                case ZoneStockpile: return "WBD_KeyZoneStockpile".Translate();
+                case ZoneDumping: return "WBD_KeyZoneDumping".Translate();
+                case ZoneGrowing: return "WBD_KeyZoneGrowing".Translate();
             }
-            return true;
-        }
-
-        // ---- disk ----
-
-        private static bool SaveToDisk(string defName, WorkbenchPresets presets)
-        {
-            if (Scribe.mode != LoadSaveMode.Inactive)
-            {
-                WBD_Log.Warn("Could not save presets right now (game is saving/loading). Try again in a moment.");
-                return false;
-            }
-            try
-            {
-                var path = FilePathFor(defName);
-                if (presets == null || presets.IsEmpty)
-                {
-                    if (File.Exists(path))
-                        File.Delete(path);
-                    return true;
-                }
-                Directory.CreateDirectory(FolderPath);
-                Scribe.saver.InitSaving(path, "workbenchBillDefaults");
-                try
-                {
-                    var version = 3;
-                    Scribe_Values.Look(ref version, "version", 0); // default 0 != 3 so it's written
-                    var workbench = defName;
-                    Scribe_Values.Look(ref workbench, "workbench");
-                    presets.ExposeData();
-                }
-                finally
-                {
-                    Scribe.saver.FinalizeSaving();
-                }
-                return true;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to save presets for " + defName + ": " + e);
-                Scribe.ForceStop();
-                return false;
-            }
-        }
-
-        private static WorkbenchPresets LoadFromDisk(string defName, out bool definitive)
-        {
-            definitive = true;
-            string path;
-            try
-            {
-                path = FilePathFor(defName);
-                if (!File.Exists(path))
-                    return null;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to resolve presets path for " + defName + ": " + e);
-                return null;
-            }
-
-            if (Scribe.mode != LoadSaveMode.Inactive)
-            {
-                WBD_Log.Warn("Could not load presets right now (game is saving/loading).");
-                definitive = false;
-                return null;
-            }
-
-            var presets = new WorkbenchPresets();
-            var legacy = new ConfigSnapshot(); // for migrating the original single-default format
-            try
-            {
-                Scribe.loader.InitLoading(path);
-                try
-                {
-                    var version = 0;
-                    Scribe_Values.Look(ref version, "version", 0);
-                    var workbench = "";
-                    Scribe_Values.Look(ref workbench, "workbench");
-                    presets.ExposeData();          // v3 (named presets)
-                    legacy.ExposeData();           // v2 (root bills/storage/splitter), absent in v3
-                }
-                finally
-                {
-                    Scribe.loader.FinalizeLoading();
-                }
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to load presets for " + defName + ": " + e);
-                Scribe.ForceStop();
-                return null;
-            }
-
-            // Migrate a legacy single-config file into one "Default" preset.
-            if (presets.IsEmpty && !legacy.IsEmpty)
-                presets = WorkbenchPresets.FromLegacy(legacy);
-
-            // Prune bills whose recipe no longer exists, then drop presets that became empty.
-            if (!presets.IsEmpty)
-            {
-                presets.presets.RemoveAll(p => p == null);
-                foreach (var preset in presets.presets)
-                    preset.config?.bills?.RemoveAll(t => t == null || !t.IsValid);
-                presets.presets.RemoveAll(p => p.config == null || p.config.IsEmpty);
-                presets.NormalizeDefault();
-            }
-
-            return presets.IsEmpty ? null : presets;
+            var def = DefDatabase<ThingDef>.GetNamedSilentFail(key);
+            return def != null ? def.LabelCap.ToString() : "WBD_MissingDef".Translate(key).ToString();
         }
     }
 }

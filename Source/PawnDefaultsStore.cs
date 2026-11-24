@@ -1,212 +1,97 @@
 using System;
-using System.IO;
+using BetterWorkbenchDefaults.Lib;
 using Verse;
 
 namespace BetterWorkbenchDefaults
 {
     /// <summary>
-    /// Global, on-disk store of pawn presets (one default + extra named setups). Unlike the
-    /// per-building-type <see cref="DefaultBillsDatabase"/>, pawns share a SINGLE global set, so this
-    /// is one side-file next to RimWorld's Config folder. Lazy-loaded + cached. Reuses the standalone
-    /// Scribe save/load discipline (mode guards + ForceStop on error) and the edit-a-clone-then-commit
-    /// pattern so a failed disk write never leaves the cache out of sync with disk.
+    /// The colonist presets (one default + extra named setups). Since 2.0 they live in the cross-save library
+    /// (section "pawns"); this class keeps the 1.x API and converts the stored XML into live
+    /// <see cref="PawnConfigSnapshot"/>s on demand (cached per library revision).
     /// </summary>
     public static class PawnDefaultsStore
     {
+        private static int _rev = -1;
         private static PawnPresets _cache;
-        private static bool _loaded;
-        private static string _folderPath;
 
-        private static string FolderPath
-        {
-            get
-            {
-                if (_folderPath == null)
-                {
-                    var configRoot = Directory.GetParent(GenFilePaths.ConfigFolderPath)?.FullName
-                                     ?? GenFilePaths.ConfigFolderPath;
-                    _folderPath = Path.Combine(configRoot, "PawnDefaults");
-                }
-                return _folderPath;
-            }
-        }
-
-        private static string FilePath => Path.Combine(FolderPath, "Pawns.xml");
-
-        // ---- queries ----
+        public static PresetSet GetStored() => SmdLibraryStore.Content.pawns;
 
         public static PawnPresets GetPresets()
         {
-            if (_loaded)
+            int rev = SmdLibraryStore.Revision;
+            if (rev == _rev)
                 return _cache;
-            var loaded = LoadFromDisk(out bool definitive);
-            if (definitive)
+            var stored = GetStored();
+            if (stored == null || stored.IsEmpty)
             {
-                _cache = loaded;
-                _loaded = true;
+                _cache = null;
+                _rev = rev;
+                return null;
             }
-            return loaded;
+            var live = new PawnPresets { defaultName = stored.DefaultPreset?.name };
+            foreach (var sp in stored.presets)
+            {
+                var snap = new PawnConfigSnapshot();
+                if (!SmdScribe.Read(sp.config, snap.ExposeData))
+                {
+                    if (SmdScribe.Busy)
+                        return null; // game saving/loading: try again later, do not cache
+                    snap = new PawnConfigSnapshot();
+                }
+                live.presets.Add(new PawnPreset(sp.name, snap));
+            }
+            _cache = live;
+            _rev = rev;
+            return live;
         }
 
         public static PawnConfigSnapshot GetDefaultConfig() => GetPresets()?.DefaultConfig;
 
         public static bool HasPresets()
         {
-            var p = GetPresets();
-            return p != null && !p.IsEmpty;
+            var s = GetStored();
+            return s != null && !s.IsEmpty;
         }
-
-        // ---- mutations (load -> clone -> modify -> commit) ----
 
         public static bool SavePreset(string name, PawnConfigSnapshot config, bool makeDefault)
         {
             if (config == null || config.IsEmpty || name.NullOrEmpty())
                 return false;
-            var working = GetPresets()?.Clone() ?? new PawnPresets();
-            working.AddOrReplace(name, config, makeDefault);
-            return Commit(working);
-        }
-
-        public static bool RemovePreset(string name)
-        {
-            var working = GetPresets()?.Clone();
-            if (working == null || !working.Remove(name))
+            var xml = SmdScribe.Write(config.ExposeData);
+            if (xml == null)
                 return false;
-            return Commit(working);
-        }
-
-        public static bool SetDefaultPreset(string name)
-        {
-            var working = GetPresets()?.Clone();
-            if (working == null || !working.SetDefault(name))
-                return false;
-            return Commit(working);
-        }
-
-        public static bool RenamePreset(string oldName, string newName)
-        {
-            var working = GetPresets()?.Clone();
-            if (working == null || !working.Rename(oldName, newName))
-                return false;
-            return Commit(working);
-        }
-
-        public static void ClearAll()
-        {
-            try
+            var stored = new StoredPreset
             {
-                if (File.Exists(FilePath))
-                    File.Delete(FilePath);
-                _cache = null;
-                _loaded = true;
-            }
-            catch (Exception e)
+                name = name.Trim(),
+                config = xml,
+                requiredMods = SmdDefRefs.RequiredMods(xml),
+                savedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
+            };
+            return SmdLibraryStore.Mutate(lib =>
             {
-                WBD_Log.Error("Failed to delete pawn presets file: " + e);
-            }
-        }
-
-        /// <summary>Persist the preset set and update the cache. Returns false if the write failed.</summary>
-        private static bool Commit(PawnPresets presets)
-        {
-            presets?.NormalizeDefault();
-            var toSave = (presets != null && !presets.IsEmpty) ? presets : null;
-            if (!SaveToDisk(toSave))
-                return false;
-            _cache = toSave;
-            _loaded = true;
-            return true;
-        }
-
-        // ---- disk ----
-
-        private static bool SaveToDisk(PawnPresets presets)
-        {
-            if (Scribe.mode != LoadSaveMode.Inactive)
-            {
-                WBD_Log.Warn("Could not save pawn presets right now (game is saving/loading). Try again in a moment.");
-                return false;
-            }
-            try
-            {
-                if (presets == null || presets.IsEmpty)
-                {
-                    if (File.Exists(FilePath))
-                        File.Delete(FilePath);
-                    return true;
-                }
-                Directory.CreateDirectory(FolderPath);
-                Scribe.saver.InitSaving(FilePath, "pawnDefaults");
-                try
-                {
-                    var version = 1;
-                    Scribe_Values.Look(ref version, "version", 0);
-                    presets.ExposeData();
-                }
-                finally
-                {
-                    Scribe.saver.FinalizeSaving();
-                }
+                if (lib.content.pawns == null)
+                    lib.content.pawns = new PresetSet { key = "pawns" };
+                lib.content.pawns.AddOrReplace(stored, makeDefault);
                 return true;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to save pawn presets: " + e);
-                Scribe.ForceStop();
-                return false;
-            }
+            });
         }
 
-        private static PawnPresets LoadFromDisk(out bool definitive)
-        {
-            definitive = true;
-            try
-            {
-                if (!File.Exists(FilePath))
-                    return null;
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to resolve pawn presets path: " + e);
-                return null;
-            }
+        public static bool RemovePreset(string name) =>
+            SmdLibraryStore.Mutate(lib => lib.content.pawns?.Remove(name) ?? false);
 
-            if (Scribe.mode != LoadSaveMode.Inactive)
-            {
-                WBD_Log.Warn("Could not load pawn presets right now (game is saving/loading).");
-                definitive = false;
-                return null;
-            }
+        public static bool SetDefaultPreset(string name) =>
+            SmdLibraryStore.Mutate(lib => lib.content.pawns?.SetDefault(name) ?? false);
 
-            var presets = new PawnPresets();
-            try
-            {
-                Scribe.loader.InitLoading(FilePath);
-                try
-                {
-                    var version = 0;
-                    Scribe_Values.Look(ref version, "version", 0);
-                    presets.ExposeData();
-                }
-                finally
-                {
-                    Scribe.loader.FinalizeLoading();
-                }
-            }
-            catch (Exception e)
-            {
-                WBD_Log.Error("Failed to load pawn presets: " + e);
-                Scribe.ForceStop();
-                return null;
-            }
+        public static bool RenamePreset(string oldName, string newName) =>
+            SmdLibraryStore.Mutate(lib => lib.content.pawns?.Rename(oldName, newName) ?? false);
 
-            if (!presets.IsEmpty)
+        public static void ClearAll() =>
+            SmdLibraryStore.Mutate(lib =>
             {
-                presets.presets.RemoveAll(p => p == null || p.config == null || p.config.IsEmpty);
-                presets.NormalizeDefault();
-            }
-
-            return presets.IsEmpty ? null : presets;
-        }
+                if (lib.content.pawns == null)
+                    return false;
+                lib.content.pawns = null;
+                return true;
+            });
     }
 }

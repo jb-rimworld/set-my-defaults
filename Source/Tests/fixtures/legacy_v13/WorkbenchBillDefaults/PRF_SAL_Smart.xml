@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<workbenchBillDefaults>
+	<bills>
+		<li>
+			<recipe>Make_ComponentIndustrial</recipe>
+			<repeatMode>TargetCount</repeatMode>
+			<repeatCount>1</repeatCount>
+			<targetCount>40</targetCount>
+			<allowedSkillRange>0~20</allowedSkillRange>
+			<qualityRange>Awful~Legendary</qualityRange>
+			<hpRange>0~1</hpRange>
+			<storeMode>BestStockpile</storeMode>
+		</li>
+	</bills>
+	<storage IsNull="True" />
+</workbenchBillDefaults>
