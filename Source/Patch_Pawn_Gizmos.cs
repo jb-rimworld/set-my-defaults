@@ -32,7 +32,7 @@ namespace BetterWorkbenchDefaults
                 yield return gizmo;
 
             var settings = WBD_Mod.Settings;
-            if (settings == null || !settings.pawnShowGizmo)
+            if (settings == null || !settings.pawnShowGizmo || !SmdSections.On(SmdSections.Pawns))
                 yield break;
             if (!PawnDefaultsController.IsTarget(__instance))
                 yield break;

@@ -17,7 +17,7 @@ namespace BetterWorkbenchDefaults
         {
             if (newFaction == null || newFaction != Faction.OfPlayerSilentFail)
                 return;
-            NewColonistDefaults.TryApply(__instance, fromHook: true);
+            NewColonistDefaults.TryApply(__instance, NewColonistDefaults.JoinSource.Faction);
         }
     }
 }

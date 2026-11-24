@@ -11,21 +11,34 @@ namespace BetterWorkbenchDefaults
     /// </summary>
     public static class NewColonistDefaults
     {
+        /// <summary>Where a call to <see cref="TryApply(Pawn, JoinSource)"/> comes from.</summary>
+        public enum JoinSource
+        {
+            /// <summary>Pawn.SpawnSetup without respawningAfterLoad (map gen, birth, arrival, but ALSO caravans coming home,
+            /// pods, caskets, gravship landings: only an unknown pawn counts as new here).</summary>
+            Spawn,
+            /// <summary>Pawn.SetFaction to the player (recruit, join, enslave): new unless the save already knew the pawn.</summary>
+            Faction,
+            /// <summary>The 250-tick retry scan: only pawns a hook already flagged as new.</summary>
+            Scan
+        }
+
+        /// <summary>Back-compat overload (1.x callers): hook = spawn, otherwise scan.</summary>
+        public static void TryApply(Pawn p, bool fromHook) => TryApply(p, fromHook ? JoinSource.Spawn : JoinSource.Scan);
+
         /// <summary>
-        /// Entry point. <paramref name="fromHook"/> is true when called from a spawn/faction hook
-        /// (a genuine "new pawn" signal) and false from the retry scan. The scan only re-processes
-        /// pawns a hook already flagged as new, so pre-existing colonists are never auto-defaulted.
+        /// Entry point. A pawn is "new" exactly once per save: the first time a hook sees it as a player pawn that the
+        /// known roster (<see cref="PawnDefaultsGameComponent"/>) does not contain. Pre-existing colonists are known
+        /// from the roster baseline, so they are never auto-defaulted, however often they leave and re-enter a map.
         /// </summary>
-        public static void TryApply(Pawn p, bool fromHook)
+        public static void TryApply(Pawn p, JoinSource source)
         {
             // Never touch trackers or read/write side-files while a game is loading/saving.
             if (Scribe.mode != LoadSaveMode.Inactive)
                 return;
-
-            var settings = WBD_Mod.Settings;
-            if (settings == null || !settings.autoApplyToNewPawns)
+            if (p == null || p.Dead || p.RaceProps == null || !p.RaceProps.Humanlike)
                 return;
-            if (!IsEligible(p))
+            if (p.Faction != Faction.OfPlayerSilentFail)
                 return;
 
             var comp = Current.Game?.GetComponent<PawnDefaultsGameComponent>();
@@ -33,6 +46,32 @@ namespace BetterWorkbenchDefaults
                 return;
 
             int id = p.thingIDNumber;
+            bool fromHook = source != JoinSource.Scan;
+
+            if (fromHook)
+            {
+                // Roster first, BEFORE any setting check: a pawn must become known even while auto-apply is off,
+                // otherwise switching it on later would treat every returning colonist as new (B1).
+                if (comp.IsKnown(id))
+                {
+                    if (!comp.IsSeen(id))
+                        return; // an existing colonist re-entering a map: never touched
+                }
+                else
+                {
+                    comp.MarkKnown(id);
+                    // Safety net for pawns the baseline scan could not see: joined the colony before the baseline.
+                    if (source == JoinSource.Spawn && comp.BaselineTaken && p.playerSettings != null
+                        && p.playerSettings.joinTick < comp.BaselineTick)
+                        return;
+                }
+            }
+
+            var settings = WBD_Mod.Settings;
+            if (settings == null || !settings.autoApplyToNewPawns || !SmdSections.On(SmdSections.Pawns))
+                return;
+            if (!IsEligible(p))
+                return;
 
             // The scan is retry-only: never let it discover a pawn no hook has flagged as new.
             if (!fromHook && !comp.IsSeen(id))

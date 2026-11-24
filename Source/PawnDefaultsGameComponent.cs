@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimWorld;
 using Verse;
 
 namespace BetterWorkbenchDefaults
@@ -26,13 +27,91 @@ namespace BetterWorkbenchDefaults
         private HashSet<int> appliedCore = new HashSet<int>();
         private HashSet<int> appliedWork = new HashSet<int>();
 
-        // True once the saved cross-save default policies have been auto-applied to THIS game (so the
-        // optional "apply once per new game" toggle never re-applies on every reload of the same colony).
+        // Legacy (1.x) flag of the tick-250 "apply policies once" path. 2.0 applies colony defaults only in
+        // StartedNewGame, so this is just carried along (written true) and never read for decisions.
         private bool policyDefaultsApplied;
+
+        // ---- Known roster (2.0, M1) ----
+        // Every player-faction humanlike this save has already met. A pawn in here is never treated as "new"
+        // again, so a caravan coming home, a transport pod landing, a cryptosleep casket opening or a gravship
+        // landing (all of which run SpawnSetup with respawningAfterLoad=false) never re-applies defaults.
+        private List<int> knownList = new List<int>();
+        private HashSet<int> known = new HashSet<int>();
+        // 0 = save from before 2.0 (or a new game still generating its map); 1 = roster baseline taken.
+        private int rosterVersion;
+        // Tick at which the baseline was taken. A pawn that joined the player faction before it (joinTick < this)
+        // is old, even if the baseline scan missed it.
+        private int baselineTick;
+        // True once the colony settings / policy set were applied to this game at its start (M8).
+        private bool colonyDefaultsApplied;
 
         public PawnDefaultsGameComponent(Game game) { }
 
         public bool IsSeen(int id) => seen.Contains(id);
+        public bool IsKnown(int id) => known.Contains(id);
+        public bool BaselineTaken => rosterVersion >= 1;
+        public int BaselineTick => baselineTick;
+        public bool ColonyDefaultsApplied => colonyDefaultsApplied;
+
+        public void MarkKnown(int id)
+        {
+            if (known.Add(id))
+                knownList.Add(id);
+        }
+
+        /// <summary>
+        /// Take the roster baseline: every player-faction humanlike that exists right now (maps, held in
+        /// caskets/containers, caravans and other world pawns, transporters, the travelling gravship) is known.
+        /// Runs once per save: on the first load with 2.0, or at the start of a new game.
+        /// </summary>
+        private void TakeBaseline(bool newGame)
+        {
+            if (rosterVersion >= 1)
+                return;
+            int added = 0;
+            if (!newGame)
+            {
+                try
+                {
+                    foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+                    {
+                        if (p != null && p.RaceProps != null && p.RaceProps.Humanlike && p.Faction == Faction.OfPlayerSilentFail
+                            && known.Add(p.thingIDNumber))
+                        {
+                            knownList.Add(p.thingIDNumber);
+                            added++;
+                        }
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    WBD_Log.Warn("Could not scan existing colonists for the known roster: " + e.Message);
+                }
+            }
+            baselineTick = newGame ? 0 : (Find.TickManager?.TicksGame ?? 0);
+            rosterVersion = 1;
+            if (added > 0)
+                WBD_Log.Msg("Known roster: " + added + " existing colonists recorded; they will never be auto-defaulted.");
+        }
+
+        public override void LoadedGame()
+        {
+            base.LoadedGame();
+            TakeBaseline(newGame: false);
+        }
+
+        public override void StartedNewGame()
+        {
+            base.StartedNewGame();
+            // Starting colonists were spawned during map generation, before this call, and were processed as new
+            // by the spawn hook (and are known since). Everything from here on is judged by the roster.
+            TakeBaseline(newGame: true);
+            if (!colonyDefaultsApplied)
+            {
+                colonyDefaultsApplied = true;
+                ColonyDefaults.ApplyAtNewGame(this);
+            }
+        }
         public bool CoreApplied(int id) => appliedCore.Contains(id);
         public bool WorkApplied(int id) => appliedWork.Contains(id);
 
@@ -69,16 +148,10 @@ namespace BetterWorkbenchDefaults
             if (settings == null)
                 return;
 
-            // Optional one-shot: apply the saved cross-save default policies to this colony exactly once.
-            if (!policyDefaultsApplied && settings.policyAutoApplyOnNewGame
-                && Scribe.mode == LoadSaveMode.Inactive
-                && PolicyDefaultsStore.HasSet())
-            {
-                if (PolicyDefaultsStore.ApplyToCurrentColony())
-                    policyDefaultsApplied = true;
-            }
+            // (2.0: the old "apply saved policies once" path that ran here on EVERY save is gone. Colony defaults
+            // are applied only in StartedNewGame, before the starting colonists settle. Fixes B6.)
 
-            if (!settings.autoApplyToNewPawns)
+            if (!settings.autoApplyToNewPawns || !SmdSections.On(SmdSections.Pawns))
                 return;
             if (!PawnDefaultsStore.HasPresets())
                 return;
@@ -94,7 +167,7 @@ namespace BetterWorkbenchDefaults
                 // Retry only: TryApply(fromHook:false) skips any pawn not already flagged seen,
                 // so the scan never applies defaults to pre-existing colonists.
                 for (int i = 0; i < pawns.Count; i++)
-                    NewColonistDefaults.TryApply(pawns[i], fromHook: false);
+                    NewColonistDefaults.TryApply(pawns[i], NewColonistDefaults.JoinSource.Scan);
             }
         }
 
@@ -105,6 +178,10 @@ namespace BetterWorkbenchDefaults
             Scribe_Collections.Look(ref appliedCoreList, "appliedCore", LookMode.Value);
             Scribe_Collections.Look(ref appliedWorkList, "appliedWork", LookMode.Value);
             Scribe_Values.Look(ref policyDefaultsApplied, "policyDefaultsApplied", false);
+            Scribe_Collections.Look(ref knownList, "known", LookMode.Value);
+            Scribe_Values.Look(ref rosterVersion, "rosterVersion", 0);
+            Scribe_Values.Look(ref baselineTick, "baselineTick", 0);
+            Scribe_Values.Look(ref colonyDefaultsApplied, "colonyDefaultsApplied", false);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
                 Rebuild();
         }
@@ -120,6 +197,8 @@ namespace BetterWorkbenchDefaults
             seenList = seenList ?? new List<int>();
             appliedCoreList = appliedCoreList ?? new List<int>();
             appliedWorkList = appliedWorkList ?? new List<int>();
+            knownList = knownList ?? new List<int>();
+            known = new HashSet<int>(knownList);
             seen = new HashSet<int>(seenList);
             appliedCore = new HashSet<int>(appliedCoreList);
             appliedWork = new HashSet<int>(appliedWorkList);

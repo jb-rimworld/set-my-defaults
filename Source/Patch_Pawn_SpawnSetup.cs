@@ -16,7 +16,7 @@ namespace BetterWorkbenchDefaults
         {
             if (respawningAfterLoad)
                 return;
-            NewColonistDefaults.TryApply(__instance, fromHook: true);
+            NewColonistDefaults.TryApply(__instance, NewColonistDefaults.JoinSource.Spawn);
         }
     }
 }
