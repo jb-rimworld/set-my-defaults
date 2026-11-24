@@ -82,7 +82,7 @@ namespace BetterWorkbenchDefaults
             bool makeDefault = !PawnDefaultsStore.HasPresets(); // first preset becomes the default
             if (!PawnDefaultsStore.SavePreset(name, config, makeDefault))
             {
-                Messages.Message("WBD_SaveBusy".Translate(), MessageTypeDefOf.RejectInput, false);
+                Messages.Message(DefaultBillsController.SaveFailedText(), MessageTypeDefOf.RejectInput, false);
                 return;
             }
             Messages.Message("WBD_PawnPresetSaved".Translate(name), MessageTypeDefOf.TaskCompletion, false);

@@ -173,14 +173,28 @@ namespace BetterWorkbenchDefaults
             list.CheckboxLabeled("WBD_SettingAutoApply".Translate(), ref Settings.autoApplyOnPlace);
             list.CheckboxLabeled("WBD_SettingShowTabButton".Translate(), ref Settings.showTabButton);
             list.CheckboxLabeled("WBD_SettingShowGizmo".Translate(), ref Settings.showGizmo);
+            // 2.0 plain rows (the kit window replaces this tab in the next wave)
+            list.CheckboxLabeled("WBD_SettingStorageOnBuild".Translate(), ref Settings.storageAutoApplyOnBuild);
+            list.CheckboxLabeled("WBD_SettingPlantOnBuild".Translate(), ref Settings.plantAutoApplyOnBuild);
+            list.CheckboxLabeled("WBD_SettingZoneOnCreate".Translate(), ref Settings.zoneAutoApplyOnCreate);
+            list.CheckboxLabeled("WBD_SettingGrowingOnCreate".Translate(), ref Settings.growingAutoApplyOnCreate);
+            list.CheckboxLabeled("WBD_SettingBenchFamilies".Translate(), ref Settings.benchFamilies);
+            list.CheckboxLabeled("WBD_SettingFilterIntent".Translate(), ref Settings.filterIntent);
+            list.CheckboxLabeled("WBD_SettingMatchStockpile".Translate(), ref Settings.billMatchStockpileByName);
+            if (SmdLibraryStore.ReadOnly)
+            {
+                GUI.color = ColorLibrary.RedReadable;
+                list.Label("WBD_LibraryReadOnly".Translate());
+                GUI.color = Color.white;
+            }
             list.GapLine();
             list.Label("WBD_OverviewHeader".Translate());
 
             var defNames = DefaultBillsDatabase.AllSavedDefNames();
             var rows = defNames
-                .Select(dn => new { defName = dn, def = DefDatabase<ThingDef>.GetNamedSilentFail(dn), presets = DefaultBillsDatabase.GetPresets(dn) })
+                .Select(dn => new { defName = dn, label = DefaultBillsDatabase.KeyLabel(dn), presets = DefaultBillsDatabase.GetStored(dn) })
                 .Where(r => r.presets != null && !r.presets.IsEmpty)
-                .OrderBy(r => (r.def != null ? r.def.label : r.defName))
+                .OrderBy(r => r.label)
                 .ToList();
             if (rows.Count == 0)
             {
@@ -191,9 +205,7 @@ namespace BetterWorkbenchDefaults
             foreach (var row in rows)
             {
                 var header = list.GetRect(28f);
-                var labelText = row.def != null
-                    ? row.def.LabelCap.ToString()
-                    : "WBD_MissingDef".Translate(row.defName).ToString();
+                var labelText = row.label;
                 Widgets.Label(new Rect(header.x, header.y + 3f, header.width - 96f, 24f), labelText.Truncate(header.width - 100f));
                 if (Widgets.ButtonText(new Rect(header.xMax - 90f, header.y + 1f, 90f, 26f), "WBD_DeleteAll".Translate()))
                     DefaultBillsDatabase.ClearAll(row.defName);
@@ -202,13 +214,19 @@ namespace BetterWorkbenchDefaults
                 foreach (var preset in row.presets.presets.ToList())
                 {
                     var name = preset.name;
-                    bool isDefault = row.presets.IsDefault(name);
+                    bool isDefault = row.presets.DefaultPreset?.name == name;
                     var r = list.GetRect(28f);
 
                     if (Widgets.RadioButton(r.x + 12f, r.y + 2f, isDefault))
                         DefaultBillsDatabase.SetDefaultPreset(row.defName, name);
                     var nameRect = new Rect(r.x + 46f, r.y + 4f, r.width - 46f - 156f, 24f);
                     var shown = isDefault ? "WBD_PresetIsDefault".Translate(name).ToString() : name;
+                    var missing = SmdDefRefs.Missing(preset);
+                    if (!missing.IsEmpty)
+                    {
+                        shown += " [" + missing.Summary() + "]";
+                        TooltipHandler.TipRegion(nameRect, missing.Summary() + "\n" + string.Join("\n", missing.unknownDefs.Take(20)));
+                    }
                     Widgets.Label(nameRect, shown.Truncate(nameRect.width));
 
                     if (Widgets.ButtonText(new Rect(r.xMax - 150f, r.y + 2f, 72f, 24f), "WBD_Rename".Translate()))
@@ -264,7 +282,7 @@ namespace BetterWorkbenchDefaults
             list.GapLine();
             list.Label("WBD_PawnOverviewHeader".Translate());
 
-            var presets = PawnDefaultsStore.GetPresets();
+            var presets = PawnDefaultsStore.GetStored();
             if (presets == null || presets.IsEmpty)
             {
                 list.Label("WBD_PawnOverviewEmpty".Translate());
@@ -274,7 +292,7 @@ namespace BetterWorkbenchDefaults
             foreach (var preset in presets.presets.ToList())
             {
                 var name = preset.name;
-                bool isDefault = presets.IsDefault(name);
+                bool isDefault = presets.DefaultPreset?.name == name;
                 var r = list.GetRect(28f);
 
                 if (Widgets.RadioButton(r.x + 6f, r.y + 2f, isDefault))
@@ -354,7 +372,7 @@ namespace BetterWorkbenchDefaults
                     if (PolicyDefaultsStore.SaveCurrentColony())
                         Messages.Message("WBD_PolicyCrossSaveSaved".Translate(), MessageTypeDefOf.TaskCompletion, false);
                     else
-                        Messages.Message("WBD_SaveBusy".Translate(), MessageTypeDefOf.RejectInput, false);
+                        Messages.Message(DefaultBillsController.SaveFailedText(), MessageTypeDefOf.RejectInput, false);
                 }
                 bool hasSet = PolicyDefaultsStore.HasSet();
                 if (Widgets.ButtonText(new Rect(btnRow.x + bw + 8f, btnRow.y, bw, 28f), "WBD_ApplyDefaultPolicies".Translate()) && hasSet)
@@ -362,11 +380,41 @@ namespace BetterWorkbenchDefaults
                     if (PolicyDefaultsStore.ApplyToCurrentColony())
                         Messages.Message("WBD_PolicyCrossSaveApplied".Translate(), MessageTypeDefOf.TaskCompletion, false);
                     else
-                        Messages.Message("WBD_SaveBusy".Translate(), MessageTypeDefOf.RejectInput, false);
+                        Messages.Message(DefaultBillsController.SaveFailedText(), MessageTypeDefOf.RejectInput, false);
                 }
             }
 
             list.CheckboxLabeled("WBD_PolicyAutoApply".Translate(), ref Settings.policyAutoApplyOnNewGame);
+
+            // --- Colony settings across saves (2.0, M8) ---
+            list.GapLine();
+            list.Label("WBD_ColonyHeader".Translate());
+            list.CheckboxLabeled("WBD_ColonyApplyOnNewGame".Translate(), ref Settings.colonyApplyOnNewGame);
+            if (PolicyDefaultsController.GameReady)
+            {
+                var colRow = list.GetRect(30f);
+                float cw = (colRow.width - 8f) / 2f;
+                if (Widgets.ButtonText(new Rect(colRow.x, colRow.y, cw, 28f), "WBD_ColonySave".Translate()))
+                    Messages.Message(ColonySettingsStore.SaveCurrentGame() ? "WBD_ColonySaved".Translate().ToString() : DefaultBillsController.SaveFailedText(),
+                        MessageTypeDefOf.TaskCompletion, false);
+                if (Widgets.ButtonText(new Rect(colRow.x + cw + 8f, colRow.y, cw, 28f), "WBD_ColonyApply".Translate()) && ColonySettingsStore.Has())
+                    if (ColonySettingsStore.ApplyToCurrentGame())
+                        Messages.Message("WBD_ColonyApplied".Translate(), MessageTypeDefOf.TaskCompletion, false);
+            }
+            if (ColonySettingsStore.Has())
+            {
+                var clr = list.GetRect(28f);
+                if (Widgets.ButtonText(new Rect(clr.x, clr.y, 200f, 26f), "WBD_ColonyClear".Translate()))
+                    ColonySettingsStore.Clear();
+            }
+            else
+            {
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.gray;
+                list.Label("WBD_ColonyNoneSaved".Translate());
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
 
             // Saved-set overview.
             var savedSet = PolicyDefaultsStore.GetSet();

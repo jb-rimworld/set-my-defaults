@@ -2,7 +2,7 @@
 <LanguageData>
   <!-- Gizmo / Knopf im Aufträge-Tab -->
   <WBD_Defaults>Vorgaben</WBD_Defaults>
-  <WBD_DefaultsTip>Die Standard-Einrichtung (Aufträge / Lager) für diesen Gebäudetyp speichern, anwenden oder verwalten.</WBD_DefaultsTip>
+  <WBD_DefaultsTip>Die Standard-Einrichtung (Aufträge, Lager, Pflanze) für diesen Gebäudetyp speichern, anwenden oder verwalten. Sind mehrere Gebäude ausgewählt, wirkt das Anwenden auf alle.</WBD_DefaultsTip>
 
   <!-- Menü in der Welt -->
   <WBD_SaveAsPreset>Aktuelle Einrichtung als Vorlage speichern…</WBD_SaveAsPreset>
@@ -111,4 +111,67 @@
   <WBD_PolicyKindDrug>Drogen-Richtlinien</WBD_PolicyKindDrug>
   <WBD_PolicyKindFood>Nahrungs-Richtlinien</WBD_PolicyKindFood>
   <WBD_PolicyKindReading>Lese-Richtlinien</WBD_PolicyKindReading>
+
+  <!-- ===================== 2.0 ===================== -->
+
+  <!-- Bereiche (werden in der nächsten Welle als Kit-Bereiche registriert) -->
+  <WBD_Section_buildings>Werkbänke und Gebäude</WBD_Section_buildings>
+  <WBD_Section_buildings_Desc>Aufträge, Lagerfilter und Pflanzen je Gebäudetyp, der Knopf „Vorgaben“, automatisch beim Neubau.</WBD_Section_buildings_Desc>
+  <WBD_Section_zones>Lager- und Anbauzonen</WBD_Section_zones>
+  <WBD_Section_zones_Desc>Vorlagen für Lager-, Müll- und Anbauzonen. Neu gezogene Zonen starten mit dem Standard.</WBD_Section_zones_Desc>
+  <WBD_Section_pawns>Kolonisten</WBD_Section_pawns>
+  <WBD_Section_pawns_Desc>Kolonisten-Vorlagen (Zeitplan, Arbeit, Richtlinien, Feindseligkeit, Medizin), einmal je neuem Kolonisten angewendet.</WBD_Section_pawns_Desc>
+  <WBD_Section_policies>Richtlinien</WBD_Section_policies>
+  <WBD_Section_policies_Desc>Kleidungs-, Drogen-, Essens- und Leserichtlinien, die von Spielstand zu Spielstand mitkommen.</WBD_Section_policies_Desc>
+  <WBD_Section_colony>Kolonie-Einstellungen</WBD_Section_colony>
+  <WBD_Section_colony_Desc>Medizinische Versorgung je Pawn-Art, automatischer Heimbereich, automatischer Wiederaufbau und manuelle Prioritäten, für jede neue Kolonie.</WBD_Section_colony_Desc>
+  <WBD_Section_library>Bibliothek und Teilen</WBD_Section_library>
+  <WBD_Section_library_Desc>Benannte Profile deiner Vorgaben und Teil-Codes, um sie an andere Spieler oder einen anderen Rechner zu geben.</WBD_Section_library_Desc>
+
+  <!-- Einstellungszeilen -->
+  <WBD_SettingStorageOnBuild>Neu gebaute Regale und Lager bekommen ihren Standardfilter</WBD_SettingStorageOnBuild>
+  <WBD_SettingPlantOnBuild>Neu gebaute Hydrokulturen und andere Pflanzbehälter bekommen ihre Standardpflanze</WBD_SettingPlantOnBuild>
+  <WBD_SettingZoneOnCreate>Neue Lager- und Müllzonen bekommen ihren Standardfilter</WBD_SettingZoneOnCreate>
+  <WBD_SettingGrowingOnCreate>Neue Anbauzonen bekommen ihre Standardpflanze</WBD_SettingGrowingOnCreate>
+  <WBD_SettingBenchFamilies>Werkbank-Familien: ein Gebäude ohne eigene Vorlage nutzt den Standard eines eng verwandten (alle Herde, alle Schmieden)</WBD_SettingBenchFamilies>
+  <WBD_SettingFilterIntent>Filter merken sich Kategorien, damit später von Mods ergänzte Gegenstände einer Kategorie mit drin sind</WBD_SettingFilterIntent>
+  <WBD_SettingMatchStockpile>„Bestimmtes Lager“ in Aufträgen wiederherstellen, wenn diese Kolonie ein Lager mit diesem Namen hat</WBD_SettingMatchStockpile>
+
+  <!-- Bibliothek -->
+  <WBD_LibraryReadOnly>Library.xml ließ sich nicht lesen, Vorlagen sind deshalb vorerst schreibgeschützt. Nichts wurde überschrieben. Die vorige Fassung liegt als Library.xml.bak im selben Ordner.</WBD_LibraryReadOnly>
+  <WBD_MissingNeedsMods>braucht {0}</WBD_MissingNeedsMods>
+  <WBD_MissingUnknownDefs>{0} Einträge, die dieses Spiel nicht kennt</WBD_MissingUnknownDefs>
+  <WBD_ExportedLibraryName>Meine Vorgaben</WBD_ExportedLibraryName>
+  <WBD_ShareInvalid>Das ist kein brauchbarer Set-my-Defaults-Code ({0}).</WBD_ShareInvalid>
+  <WBD_ShareEmpty>Der Code ist gültig, enthält aber nichts.</WBD_ShareEmpty>
+  <WBD_ProfileNotFound>Es gibt kein Profil namens „{0}“.</WBD_ProfileNotFound>
+  <WBD_ProfileApplied>Profil „{0}“ übernommen ({1} Einträge).</WBD_ProfileApplied>
+  <WBD_PreviewPresetsFor>{0} Vorlage(n) für {1}: {2}</WBD_PreviewPresetsFor>
+  <WBD_PreviewPawnPresets>{0} Kolonisten-Vorlage(n): {1}</WBD_PreviewPawnPresets>
+  <WBD_PreviewColonists>Kolonisten</WBD_PreviewColonists>
+  <WBD_PreviewPolicies>Richtliniensatz (Kleidung, Drogen, Essen, Lesen)</WBD_PreviewPolicies>
+  <WBD_PreviewColony>Kolonie-Einstellungen</WBD_PreviewColony>
+
+  <!-- Gebäude und Zonen -->
+  <WBD_ApplyToN>auf {0} anwenden</WBD_ApplyToN>
+  <WBD_ApplyFromRelated>Anwenden: {0} (von {1})</WBD_ApplyFromRelated>
+  <WBD_PresetAppliedN>Vorlage „{0}“ auf {1} angewendet.</WBD_PresetAppliedN>
+  <WBD_BillsSkippedMissing>{0} Auftrag/Aufträge übersprungen, das Rezept fehlt in diesem Spiel ({1}). Sie bleiben in der Vorlage.</WBD_BillsSkippedMissing>
+  <WBD_DefaultMark>(Standard)</WBD_DefaultMark>
+  <WBD_SetDefaultFor>Standard für {0} festlegen…</WBD_SetDefaultFor>
+  <WBD_KeyZoneStockpile>Lagerzonen</WBD_KeyZoneStockpile>
+  <WBD_KeyZoneDumping>Müllzonen</WBD_KeyZoneDumping>
+  <WBD_KeyZoneGrowing>Anbauzonen</WBD_KeyZoneGrowing>
+  <WBD_ZoneSaveAs>Als Vorlage für {0} speichern…</WBD_ZoneSaveAs>
+  <WBD_ZoneDefaultsTip>Filter oder Pflanze dieser Zone als Vorlage speichern oder eine Vorlage auf alle ausgewählten Zonen anwenden. Neu gezogene Zonen starten mit dem Standard.</WBD_ZoneDefaultsTip>
+
+  <!-- Kolonie-Einstellungen -->
+  <WBD_ColonyHeader>Kolonie-Einstellungen über Spielstände hinweg (Medizin je Pawn-Art, automatischer Heimbereich, automatischer Wiederaufbau, manuelle Prioritäten)</WBD_ColonyHeader>
+  <WBD_ColonyApplyOnNewGame>Gespeicherte Kolonie-Einstellungen beim Start eines neuen Spiels anwenden</WBD_ColonyApplyOnNewGame>
+  <WBD_ColonySave>Einstellungen dieser Kolonie speichern</WBD_ColonySave>
+  <WBD_ColonyApply>Auf diese Kolonie anwenden</WBD_ColonyApply>
+  <WBD_ColonyClear>Gespeicherte Kolonie-Einstellungen löschen</WBD_ColonyClear>
+  <WBD_ColonySaved>Einstellungen dieser Kolonie für jedes neue Spiel gespeichert.</WBD_ColonySaved>
+  <WBD_ColonyApplied>Gespeicherte Kolonie-Einstellungen auf diese Kolonie angewendet.</WBD_ColonyApplied>
+  <WBD_ColonyNoneSaved>Noch nichts gespeichert. Lade eine Kolonie und drücke „Einstellungen dieser Kolonie speichern“.</WBD_ColonyNoneSaved>
 </LanguageData>

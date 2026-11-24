@@ -2,7 +2,7 @@
 <LanguageData>
   <!-- gizmo / bills-tab button -->
   <WBD_Defaults>Defaults</WBD_Defaults>
-  <WBD_DefaultsTip>Save, apply or manage the default setups (bills / storage) for this type of building.</WBD_DefaultsTip>
+  <WBD_DefaultsTip>Save, apply or manage the default setups (bills, storage, plant) for this type of building. With several buildings selected, applying acts on all of them.</WBD_DefaultsTip>
 
   <!-- in-world menu -->
   <WBD_SaveAsPreset>Save current setup as preset…</WBD_SaveAsPreset>
@@ -111,4 +111,67 @@
   <WBD_PolicyKindDrug>Drug policies</WBD_PolicyKindDrug>
   <WBD_PolicyKindFood>Food policies</WBD_PolicyKindFood>
   <WBD_PolicyKindReading>Reading policies</WBD_PolicyKindReading>
+
+  <!-- ===================== 2.0 ===================== -->
+
+  <!-- feature areas (registered as kit sections in the next wave) -->
+  <WBD_Section_buildings>Workbenches and buildings</WBD_Section_buildings>
+  <WBD_Section_buildings_Desc>Bills, storage filters and plants per building type, the Defaults button, auto-apply on new construction.</WBD_Section_buildings_Desc>
+  <WBD_Section_zones>Stockpiles and growing zones</WBD_Section_zones>
+  <WBD_Section_zones_Desc>Presets for stockpile, dumping and growing zones. New zones you draw start with the default.</WBD_Section_zones_Desc>
+  <WBD_Section_pawns>Colonists</WBD_Section_pawns>
+  <WBD_Section_pawns_Desc>Colonist presets (schedule, work, policies, hostility, medical), applied once to each new colonist.</WBD_Section_pawns_Desc>
+  <WBD_Section_policies>Policies</WBD_Section_policies>
+  <WBD_Section_policies_Desc>Outfit, drug, food and reading policies that travel from save to save.</WBD_Section_policies_Desc>
+  <WBD_Section_colony>Colony settings</WBD_Section_colony>
+  <WBD_Section_colony_Desc>Medical care per pawn type, auto home area, auto rebuild and manual priorities, set for every new colony.</WBD_Section_colony_Desc>
+  <WBD_Section_library>Library and sharing</WBD_Section_library>
+  <WBD_Section_library_Desc>Named profiles of your defaults, and share strings to copy them to another player or computer.</WBD_Section_library_Desc>
+
+  <!-- settings rows -->
+  <WBD_SettingStorageOnBuild>Give newly built shelves and storage their default filter</WBD_SettingStorageOnBuild>
+  <WBD_SettingPlantOnBuild>Give newly built hydroponics and other plant growers their default plant</WBD_SettingPlantOnBuild>
+  <WBD_SettingZoneOnCreate>Give new stockpile and dumping zones their default filter</WBD_SettingZoneOnCreate>
+  <WBD_SettingGrowingOnCreate>Give new growing zones their default plant</WBD_SettingGrowingOnCreate>
+  <WBD_SettingBenchFamilies>Bench families: a building without its own preset uses the default of a closely related one (all stoves, all smithies)</WBD_SettingBenchFamilies>
+  <WBD_SettingFilterIntent>Filters remember categories, so items a mod adds to a category later are included</WBD_SettingFilterIntent>
+  <WBD_SettingMatchStockpile>Restore "specific stockpile" in bills when this colony has a stockpile of that name</WBD_SettingMatchStockpile>
+
+  <!-- library -->
+  <WBD_LibraryReadOnly>Library.xml could not be read, so presets are read-only for now. Nothing was overwritten. The previous version is Library.xml.bak in the same folder.</WBD_LibraryReadOnly>
+  <WBD_MissingNeedsMods>needs {0}</WBD_MissingNeedsMods>
+  <WBD_MissingUnknownDefs>{0} entries this game does not know</WBD_MissingUnknownDefs>
+  <WBD_ExportedLibraryName>My defaults</WBD_ExportedLibraryName>
+  <WBD_ShareInvalid>That is not a usable Set my Defaults string ({0}).</WBD_ShareInvalid>
+  <WBD_ShareEmpty>That string is valid but holds nothing.</WBD_ShareEmpty>
+  <WBD_ProfileNotFound>There is no profile named "{0}".</WBD_ProfileNotFound>
+  <WBD_ProfileApplied>Profile "{0}" applied ({1} entries).</WBD_ProfileApplied>
+  <WBD_PreviewPresetsFor>{0} preset(s) for {1}: {2}</WBD_PreviewPresetsFor>
+  <WBD_PreviewPawnPresets>{0} colonist preset(s): {1}</WBD_PreviewPawnPresets>
+  <WBD_PreviewColonists>Colonists</WBD_PreviewColonists>
+  <WBD_PreviewPolicies>Policy set (outfit, drug, food, reading)</WBD_PreviewPolicies>
+  <WBD_PreviewColony>Colony settings</WBD_PreviewColony>
+
+  <!-- buildings and zones -->
+  <WBD_ApplyToN>apply to {0}</WBD_ApplyToN>
+  <WBD_ApplyFromRelated>Apply: {0} (from {1})</WBD_ApplyFromRelated>
+  <WBD_PresetAppliedN>Applied preset "{0}" to {1}.</WBD_PresetAppliedN>
+  <WBD_BillsSkippedMissing>{0} bill(s) skipped, their recipe is not in this game ({1}). They stay in the preset.</WBD_BillsSkippedMissing>
+  <WBD_DefaultMark>(default)</WBD_DefaultMark>
+  <WBD_SetDefaultFor>Set default for {0}…</WBD_SetDefaultFor>
+  <WBD_KeyZoneStockpile>Stockpile zones</WBD_KeyZoneStockpile>
+  <WBD_KeyZoneDumping>Dumping zones</WBD_KeyZoneDumping>
+  <WBD_KeyZoneGrowing>Growing zones</WBD_KeyZoneGrowing>
+  <WBD_ZoneSaveAs>Save as preset for {0}…</WBD_ZoneSaveAs>
+  <WBD_ZoneDefaultsTip>Save this zone's filter or plant as a preset, or apply one to every selected zone. New zones you draw start with the default.</WBD_ZoneDefaultsTip>
+
+  <!-- colony settings -->
+  <WBD_ColonyHeader>Colony settings that travel across saves (medical care per pawn type, auto home area, auto rebuild, manual priorities)</WBD_ColonyHeader>
+  <WBD_ColonyApplyOnNewGame>Apply the saved colony settings when a new game starts</WBD_ColonyApplyOnNewGame>
+  <WBD_ColonySave>Save this colony's settings</WBD_ColonySave>
+  <WBD_ColonyApply>Apply to this colony</WBD_ColonyApply>
+  <WBD_ColonyClear>Clear saved colony settings</WBD_ColonyClear>
+  <WBD_ColonySaved>Saved this colony's settings for every new game.</WBD_ColonySaved>
+  <WBD_ColonyApplied>Applied the saved colony settings to this colony.</WBD_ColonyApplied>
+  <WBD_ColonyNoneSaved>Nothing saved yet. Load a colony and press "Save this colony's settings".</WBD_ColonyNoneSaved>
 </LanguageData>
