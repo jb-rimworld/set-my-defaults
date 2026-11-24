@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SettingsBlock>
+	<ModSettings Class="BetterWorkbenchDefaults.WBD_Settings">
+		<autoApplyOnPlace>False</autoApplyOnPlace>
+		<showTabButton>False</showTabButton>
+		<showGizmo>False</showGizmo>
+		<autoApplyToNewPawns>False</autoApplyToNewPawns>
+		<pawnShowGizmo>False</pawnShowGizmo>
+		<pawnIncludeChildren>False</pawnIncludeChildren>
+		<pawnSkipWorkUnderFreeWill>False</pawnSkipWorkUnderFreeWill>
+		<pawnApplySchedule>False</pawnApplySchedule>
+		<pawnApplyWork>False</pawnApplyWork>
+		<pawnApplyApparel>False</pawnApplyApparel>
+		<pawnApplyDrug>False</pawnApplyDrug>
+		<pawnApplyFood>False</pawnApplyFood>
+		<pawnApplyReading>False</pawnApplyReading>
+		<pawnApplyHostility>False</pawnApplyHostility>
+		<pawnApplyMedical>False</pawnApplyMedical>
+		<nativeRaiseBillCap>True</nativeRaiseBillCap>
+		<maxBillsCap>120</maxBillsCap>
+		<policyAutoApplyOnNewGame>True</policyAutoApplyOnNewGame>
+		<sectionBuildings>False</sectionBuildings>
+		<sectionZones>False</sectionZones>
+		<sectionPawns>False</sectionPawns>
+		<sectionPolicies>False</sectionPolicies>
+		<sectionColony>False</sectionColony>
+		<sectionLibrary>False</sectionLibrary>
+		<storageAutoApplyOnBuild>False</storageAutoApplyOnBuild>
+		<plantAutoApplyOnBuild>False</plantAutoApplyOnBuild>
+		<zoneAutoApplyOnCreate>False</zoneAutoApplyOnCreate>
+		<growingAutoApplyOnCreate>False</growingAutoApplyOnCreate>
+		<benchFamilies>False</benchFamilies>
+		<filterIntent>False</filterIntent>
+		<billMatchStockpileByName>False</billMatchStockpileByName>
+		<colonyApplyOnNewGame>False</colonyApplyOnNewGame>
+	</ModSettings>
+</SettingsBlock>

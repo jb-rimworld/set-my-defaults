@@ -170,8 +170,8 @@ namespace BetterWorkbenchDefaults
             });
 
             // ---------------------------------------------------------------- compatibility (G13c)
-            r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => KitNiceBillTab.Active);
-            r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Its bundled bill tab is supported the same way as Nice Bill Tab.").HealthyWhen(() => KitNiceBillTab.Active);
+            r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
+            r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Its bundled bill tab is supported the same way as Nice Bill Tab.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
             r.Compat("No Max Bills Redux", "justharry.nomaxbillsredux", "Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.");
             r.Compat("Project RimFactory Revived", "spdskatr.projectrimfactory", "Assemblers, storage machines and conveyor splitters get their defaults.").HealthyWhen(() => PrfCompat.PatchApplied);
             r.Compat("Blueprints Forked", "Defi.Blueprints.fork", "Blueprints remember bills and storage settings, even across saves.").HealthyWhen(() => BlueprintsCompat.Hooked);
@@ -355,8 +355,37 @@ namespace BetterWorkbenchDefaults
         {
             var s = WBD_Mod.Settings;
             if (s != null && !s.compatNiceBillTab) return;
-            KitNiceBillTab.RequestRefresh();
+            if (KitNiceBillTab.Active) { KitNiceBillTab.RequestRefresh(); return; }
+            // FW-REQUEST: KitNiceBillTab gates on the packageId being active. Nice Bill Tab has no 1.7 build; its 1.6 build runs on 1.7
+            // ("incompatible version"), and then ModsConfig/ModLister report it as NOT active although its code is loaded, so the
+            // adapter never refreshes. Fallback: find its refresh flag by type, as 1.x did (once, cached).
+            if (!nbtResolved)
+            {
+                nbtResolved = true;
+                try
+                {
+                    var f = AccessTools.Field(AccessTools.TypeByName("NiceBillTab.TabBillsDrawer"), "shouldRefreshFilter");
+                    if (f != null && f.IsStatic && f.FieldType == typeof(bool)) nbtFlag = f;
+                }
+                catch { nbtFlag = null; }
+            }
+            if (nbtFlag == null) return;
+            try { nbtFlag.SetValue(null, true); }
+            catch (Exception e) { WBD_Log.Warn("Nice Bill Tab refresh failed (bills appear after reopening the tab): " + e.Message); nbtFlag = null; }
         }
+
+        /// <summary>Nice Bill Tab's code is loaded (by the framework adapter or the type fallback).</summary>
+        public static bool NiceBillTabLoaded
+        {
+            get
+            {
+                if (KitNiceBillTab.Active) return true;
+                try { return AccessTools.TypeByName("NiceBillTab.TabBillsDrawer") != null; } catch { return false; }
+            }
+        }
+
+        static bool nbtResolved;
+        static System.Reflection.FieldInfo nbtFlag;
     }
 
     /// <summary>Tiny logging helper so every message is greppable and prefixed.</summary>
