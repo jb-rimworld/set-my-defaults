@@ -13,6 +13,8 @@ namespace BetterWorkbenchDefaults
     {
         public ThingFilter filter;
         public StoragePriority priority = StoragePriority.Normal;
+        // 2.0: what the filter MEANT (categories + exceptions), so new modded items of a category are included.
+        public FilterIntent intent;
 
         public StorageSettingsTemplate() { }
 
@@ -26,6 +28,7 @@ namespace BetterWorkbenchDefaults
             {
                 t.filter = new ThingFilter();
                 t.filter.CopyAllowancesFrom(settings.filter);
+                t.intent = FilterIntent.CaptureIfEnabled(settings.filter, ParentFilter(parent));
             }
             return t;
         }
@@ -37,13 +40,36 @@ namespace BetterWorkbenchDefaults
                 return;
             settings.Priority = priority;
             if (filter != null && settings.filter != null)
-                settings.filter.CopyAllowancesFrom(filter);
+                FilterIntent.ApplyStored(settings.filter, filter, intent, ParentFilter(parent));
+        }
+
+        /// <summary>Apply to a bare StorageSettings (a storage blueprint before it has a parent of its own).</summary>
+        public void ApplyTo(StorageSettings settings, ThingFilter parentFilter)
+        {
+            if (settings == null)
+                return;
+            settings.Priority = priority;
+            if (filter != null && settings.filter != null)
+                FilterIntent.ApplyStored(settings.filter, filter, intent, parentFilter);
+        }
+
+        private static ThingFilter ParentFilter(IStoreSettingsParent parent)
+        {
+            try
+            {
+                return parent?.GetParentStoreSettings()?.filter;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref priority, "priority", StoragePriority.Normal);
             Scribe_Deep.Look(ref filter, "filter");
+            Scribe_Deep.Look(ref intent, "intent");
         }
     }
 }

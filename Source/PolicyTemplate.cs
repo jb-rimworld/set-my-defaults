@@ -79,6 +79,7 @@ namespace BetterWorkbenchDefaults
         public ThingFilter filter;        // apparel/food: the filter; reading: the defFilter
         public ThingFilter effectFilter;  // reading only (special filters over BookEffects)
         public List<DrugEntryTemplate> drugEntries; // drug only
+        public FilterIntent filterIntent; // 2.0: categories + exceptions of `filter` (apparel/food/reading)
 
         public PolicyTemplate() { }
 
@@ -167,6 +168,7 @@ namespace BetterWorkbenchDefaults
             {
                 t.filter = new ThingFilter();
                 t.filter.CopyAllowancesFrom(src);
+                t.filterIntent = FilterIntent.CaptureIfEnabled(src, null);
             }
             if (effectSrc != null)
             {
@@ -246,7 +248,7 @@ namespace BetterWorkbenchDefaults
                         {
                             pol = db.MakeNewOutfit();
                             pol.label = label;
-                            CopyInto(pol.filter, filter);
+                            FilterIntent.ApplyStored(pol.filter, filter, filterIntent, null);
                         }
                         return pol;
                     }
@@ -258,7 +260,7 @@ namespace BetterWorkbenchDefaults
                         {
                             pol = db.MakeNewFoodRestriction();
                             pol.label = label;
-                            CopyInto(pol.filter, filter);
+                            FilterIntent.ApplyStored(pol.filter, filter, filterIntent, null);
                         }
                         return pol;
                     }
@@ -270,7 +272,7 @@ namespace BetterWorkbenchDefaults
                         {
                             pol = db.MakeNewReadingPolicy();
                             pol.label = label;
-                            CopyInto(pol.defFilter, filter);
+                            FilterIntent.ApplyStored(pol.defFilter, filter, filterIntent, null);
                             CopyInto(pol.effectFilter, effectFilter);
                         }
                         return pol;
@@ -325,6 +327,7 @@ namespace BetterWorkbenchDefaults
             Scribe_Deep.Look(ref filter, "filter");
             Scribe_Deep.Look(ref effectFilter, "effectFilter");
             Scribe_Collections.Look(ref drugEntries, "drugEntries", LookMode.Deep);
+            Scribe_Deep.Look(ref filterIntent, "filterIntent");
         }
     }
 }

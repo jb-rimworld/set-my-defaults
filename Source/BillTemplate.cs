@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -38,6 +39,18 @@ namespace BetterWorkbenchDefaults
         public bool nonMechsOnly;
         public ThingFilter ingredientFilter;
 
+        // ---- 2.0 (M5): everything vanilla copy/paste keeps ----
+        public string customName;          // player's rename of the bill (null = vanilla name)
+        public string styleDefName;        // Ideology: a specific ThingStyleDef (only used when globalStyle is false)
+        public bool globalStyle = true;    // Ideology: "use the ideoligion's style"
+        public int graphicIndexOverride = -1; // Ideology: a specific graphic variant (-1 = none)
+        public string storeGroupLabel;     // "Drop in: specific stockpile" by name; storeMode stays BestStockpile as fallback
+        public string includeGroupLabel;   // "Count in: specific stockpile" by name (null = count everywhere)
+        public FilterIntent ingredientIntent; // categories + exceptions of the ingredient filter (M9)
+
+        private static readonly AccessTools.FieldRef<Bill_Production, string> CustomNameRef =
+            AccessTools.FieldRefAccess<Bill_Production, string>("playerCustomName");
+
         public BillTemplate() { }
 
         /// <summary>Build a template from a live bill (sanitising non-portable settings).</summary>
@@ -65,18 +78,35 @@ namespace BetterWorkbenchDefaults
                 nonMechsOnly = b.NonMechsOnly
             };
 
-            // Storage mode: drop a "specific stockpile" target down to "best stockpile",
-            // because that exact stockpile won't exist in another colony.
+            // Storage mode: a "specific stockpile" target is stored as "best stockpile" plus the stockpile's NAME.
+            // In a colony that has a stockpile of that name the target is restored, everywhere else it stays "best".
             var mode = b.GetStoreMode();
             if (mode == BillStoreModeDefOf.SpecificStockpile)
+            {
+                t.storeGroupLabel = GroupLabel(b.GetSlotGroup());
                 mode = BillStoreModeDefOf.BestStockpile;
+            }
             t.storeModeDefName = mode?.defName;
+            t.includeGroupLabel = GroupLabel(b.GetIncludeSlotGroup());
 
             if (b.ingredientFilter != null)
             {
                 t.ingredientFilter = new ThingFilter();
                 t.ingredientFilter.CopyAllowancesFrom(b.ingredientFilter);
+                t.ingredientIntent = FilterIntent.CaptureIfEnabled(b.ingredientFilter, b.recipe?.fixedIngredientFilter);
             }
+
+            try
+            {
+                t.customName = CustomNameRef(b);
+            }
+            catch
+            {
+                t.customName = null;
+            }
+            t.styleDefName = b.style?.defName;
+            t.globalStyle = b.globalStyle;
+            t.graphicIndexOverride = b.graphicIndexOverride ?? -1;
 
             return t;
         }
@@ -138,7 +168,26 @@ namespace BetterWorkbenchDefaults
                 bill.SetStoreMode(mode);
 
             if (ingredientFilter != null && bill.ingredientFilter != null)
-                bill.ingredientFilter.CopyAllowancesFrom(ingredientFilter);
+                FilterIntent.ApplyStored(bill.ingredientFilter, ingredientFilter, ingredientIntent, recipe.fixedIngredientFilter);
+
+            if (!customName.NullOrEmpty())
+                bill.RenamableLabel = customName;
+
+            // Ideology styles: only when Ideology is active and the style still exists.
+            if (ModsConfig.IdeologyActive)
+            {
+                bill.globalStyle = globalStyle;
+                if (!globalStyle && styleDefName != null)
+                {
+                    var style = DefDatabase<ThingStyleDef>.GetNamedSilentFail(styleDefName);
+                    if (style != null)
+                        bill.style = style;
+                    else
+                        bill.globalStyle = true;
+                }
+                if (graphicIndexOverride >= 0)
+                    bill.graphicIndexOverride = graphicIndexOverride;
+            }
 
             // "Allowed workers" category (a fresh bill already defaults to "anyone").
             if (slavesOnly)
@@ -149,6 +198,69 @@ namespace BetterWorkbenchDefaults
                 bill.SetAnyNonMechRestriction();
 
             return bill;
+        }
+
+        /// <summary>
+        /// The parts that need the bill's map: "drop in" and "count in" a specific stockpile, matched by name. Call after
+        /// the bill was added to a bill stack. A name that does not exist in this colony leaves the vanilla defaults.
+        /// </summary>
+        public void ApplyMapBound(Bill_Production bill)
+        {
+            if (bill == null || !(WBD_Mod.Settings?.billMatchStockpileByName ?? true))
+                return;
+            Map map;
+            try
+            {
+                map = bill.billStack?.billGiver?.Map;
+            }
+            catch
+            {
+                return;
+            }
+            if (map == null)
+                return;
+            if (storeGroupLabel != null)
+            {
+                var g = FindGroup(map, storeGroupLabel);
+                if (g != null)
+                    bill.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, g);
+            }
+            if (includeGroupLabel != null)
+            {
+                var g = FindGroup(map, includeGroupLabel);
+                if (g != null)
+                    bill.SetIncludeGroup(g);
+            }
+        }
+
+        private static string GroupLabel(ISlotGroup g)
+        {
+            if (g == null)
+                return null;
+            try
+            {
+                return SlotGroup.GetGroupLabel(g);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>The stockpile / storage group of this name on the map, as the vanilla bill dialog offers them.</summary>
+        private static ISlotGroup FindGroup(Map map, string label)
+        {
+            var groups = map.haulDestinationManager?.AllGroupsListInPriorityOrder;
+            if (groups == null)
+                return null;
+            for (int i = 0; i < groups.Count; i++)
+            {
+                var sg = groups[i];
+                ISlotGroup candidate = sg.StorageGroup != null ? (ISlotGroup)sg.StorageGroup : sg;
+                if (GroupLabel(candidate) == label)
+                    return candidate;
+            }
+            return null;
         }
 
         public void ExposeData()
@@ -173,6 +285,13 @@ namespace BetterWorkbenchDefaults
             Scribe_Values.Look(ref nonMechsOnly, "nonMechsOnly", false);
             Scribe_Values.Look(ref storeModeDefName, "storeMode");
             Scribe_Deep.Look(ref ingredientFilter, "ingredientFilter");
+            Scribe_Values.Look(ref customName, "customName");
+            Scribe_Values.Look(ref styleDefName, "style");
+            Scribe_Values.Look(ref globalStyle, "globalStyle", true);
+            Scribe_Values.Look(ref graphicIndexOverride, "graphicIndexOverride", -1);
+            Scribe_Values.Look(ref storeGroupLabel, "storeGroupLabel");
+            Scribe_Values.Look(ref includeGroupLabel, "includeGroupLabel");
+            Scribe_Deep.Look(ref ingredientIntent, "ingredientIntent");
         }
 
         /// <summary>Capture every production bill currently on a workbench.</summary>
