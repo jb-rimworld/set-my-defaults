@@ -64,6 +64,7 @@ namespace BetterWorkbenchDefaults
         public override void LoadedGame()
         {
             base.LoadedGame();
+            SmdGameData.MergePendingLegacy(Current.Game);
             TakeBaseline(newGame: false);
         }
 
@@ -126,8 +127,10 @@ namespace BetterWorkbenchDefaults
             Scribe_Values.Look(ref version, "rosterVersion", 0);
             Scribe_Values.Look(ref baseline, "baselineTick", 0);
             Scribe_Values.Look(ref colony, "colonyDefaultsApplied", false);
-            SmdGameData.MergeLegacyRoster(seenL, coreL, workL, knownL, version, baseline, colony, policy);
-            WBD_Log.Msg("Read the colonist roster of a save from before 2.0 (" + (knownL?.Count ?? 0) + " known, " + (coreL?.Count ?? 0) + " defaulted). It is saved the new way from now on.");
+            // FW-REQUEST (11): JB Framework's game component does not exist in a save from before 2.0; vanilla creates it right AFTER
+            // the saved components were read (Game.ExposeSmallComponents → FillComponents) and its constructor resets every mod's
+            // SaveData. Merging here would be wiped, so the old roster is parked and merged in LoadedGame (after that reset).
+            SmdGameData.ParkLegacyRoster(Current.Game, seenL, coreL, workL, knownL, version, baseline, colony, policy);
         }
     }
 }

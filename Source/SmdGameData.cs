@@ -112,6 +112,29 @@ namespace BetterWorkbenchDefaults
                     kv.Value?.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
         }
 
+        // ---- old roster read from a save from before 2.0, waiting for LoadedGame (FW-REQUEST 11) ----
+        sealed class ParkedRoster { public Game game; public List<int> seen, core, work, known; public int version, baseline; public bool colony, policy; }
+        static ParkedRoster parked;
+
+        /// <summary>Keeps an old save's roster until <see cref="MergePendingLegacy"/> (the framework resets SaveData in between).</summary>
+        internal static void ParkLegacyRoster(Game game, List<int> seenL, List<int> coreL, List<int> workL, List<int> knownL, int version, int baseline, bool colonyApplied, bool policyApplied)
+        {
+            parked = new ParkedRoster { game = game, seen = seenL, core = coreL, work = workL, known = knownL, version = version, baseline = baseline, colony = colonyApplied, policy = policyApplied };
+        }
+
+        /// <summary>LoadedGame: merges a parked old roster of THIS game (once). Returns true when one was merged.</summary>
+        internal static bool MergePendingLegacy(Game game)
+        {
+            var p = parked;
+            parked = null;
+            if (p == null || p.game != game)
+                return false;
+            MergeLegacyRoster(p.seen, p.core, p.work, p.known, p.version, p.baseline, p.colony, p.policy);
+            WBD_Log.Msg("Carried over the colonist roster of a save from before 2.0 (" + (p.known?.Count ?? 0) + " known, " + (p.core?.Count ?? 0) + " defaulted, "
+                + (p.work?.Count ?? 0) + " with work priorities). It is saved the new way from now on.");
+            return true;
+        }
+
         /// <summary>Old (1.x / 2.0 wave 2) component data read from a save: merged, never replacing what is already known.</summary>
         internal static void MergeLegacyRoster(List<int> seenL, List<int> coreL, List<int> workL, List<int> knownL, int version, int baseline, bool colonyApplied, bool policyApplied)
         {
