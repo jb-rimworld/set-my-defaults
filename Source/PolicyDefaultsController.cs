@@ -130,6 +130,45 @@ namespace BetterWorkbenchDefaults
             return false;
         }
 
+        /// <summary>
+        /// Move <paramref name="p"/> to the colony's current default <paramref name="kind"/> policy if it is still on
+        /// <paramref name="oldDefault"/> (the default before a policy set was applied). Pawns whose policies are
+        /// switched off (mutants) are skipped. Returns true when the pawn was moved.
+        /// </summary>
+        public static bool ReassignIfOnOldDefault(Pawn p, PolicyKind kind, object oldDefault)
+        {
+            var now = DefaultPolicy(kind);
+            if (p == null || oldDefault == null || now == null || ReferenceEquals(now, oldDefault))
+                return false;
+            try
+            {
+                switch (kind)
+                {
+                    case PolicyKind.Apparel:
+                        if (p.outfits?.CurrentApparelPolicy == null || !ReferenceEquals(p.outfits.CurrentApparelPolicy, oldDefault)) return false;
+                        p.outfits.CurrentApparelPolicy = (ApparelPolicy)now;
+                        return true;
+                    case PolicyKind.Drug:
+                        if (p.drugs?.CurrentPolicy == null || !ReferenceEquals(p.drugs.CurrentPolicy, oldDefault)) return false;
+                        p.drugs.CurrentPolicy = (DrugPolicy)now;
+                        return true;
+                    case PolicyKind.Food:
+                        if (p.foodRestriction?.CurrentFoodPolicy == null || !ReferenceEquals(p.foodRestriction.CurrentFoodPolicy, oldDefault)) return false;
+                        p.foodRestriction.CurrentFoodPolicy = (FoodPolicy)now;
+                        return true;
+                    case PolicyKind.Reading:
+                        if (p.reading?.CurrentPolicy == null || !ReferenceEquals(p.reading.CurrentPolicy, oldDefault)) return false;
+                        p.reading.CurrentPolicy = (ReadingPolicy)now;
+                        return true;
+                }
+            }
+            catch (Exception e)
+            {
+                WBD_Log.Warn("Could not move " + p.LabelShort + " to the new default " + kind + " policy: " + e.Message);
+            }
+            return false;
+        }
+
         // ---- live-database helpers (used by the settings UI) ----
 
         public static IEnumerable<object> LivePolicies(PolicyKind kind)
