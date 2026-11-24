@@ -7,7 +7,7 @@
 - Settings are kept per colony; new colonies start from your defaults. Your old settings are carried over.
 - All presets now live in one library outside your saves. Presets from older versions are imported once; the old files are not changed.
 - Presets that need a mod you removed are kept, say which mod they need, and the rest of the preset still applies.
-- Colonists you already have are never re-defaulted, also after a caravan, transport pods, a cryptosleep casket or a gravship trip.
+- Colonists you already have are never re-defaulted, also after a caravan, transport pods or a cryptosleep casket.
 - Applying a preset works on every selected building or zone of the same kind at once.
 - Raising the bill limit takes effect immediately, no restart.
 - Bills keep their custom name, style and "drop in / count in" stockpile.
