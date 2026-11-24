@@ -156,18 +156,24 @@ namespace BetterWorkbenchDefaults
         /// <summary>Save the running game's play settings as the cross-save colony settings.</summary>
         public static bool SaveCurrentGame()
         {
-            if (Current.Game == null)
+            var block = CaptureCurrentGameBlock();
+            if (block == null)
                 return false;
-            var t = ColonySettingsTemplate.Capture(Find.PlaySettings);
-            var xml = SmdScribe.Write(t.ExposeData);
-            if (xml == null)
-                return false;
-            var block = new StoredBlock { config = xml, savedAt = DateTime.UtcNow.ToString("yyyy-MM-dd") };
             return SmdLibraryStore.Mutate(lib =>
             {
                 lib.content.colony = block;
                 return true;
             });
+        }
+
+        /// <summary>The running game's play settings as a stored block (for profiles). Null without a game.</summary>
+        public static StoredBlock CaptureCurrentGameBlock()
+        {
+            if (Current.Game == null)
+                return null;
+            var t = ColonySettingsTemplate.Capture(Find.PlaySettings);
+            var xml = SmdScribe.Write(t.ExposeData);
+            return xml == null ? null : new StoredBlock { config = xml, savedAt = DateTime.UtcNow.ToString("yyyy-MM-dd") };
         }
 
         public static void Clear() =>

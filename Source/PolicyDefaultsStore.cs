@@ -94,19 +94,35 @@ namespace BetterWorkbenchDefaults
                 return true;
             });
 
-        /// <summary>Persist the set into the library. Returns false if the write failed.</summary>
-        private static bool Commit(PolicyDefaultsSet set)
+        /// <summary>The running colony's four policy databases as a stored block (for profiles). Null without a game.</summary>
+        public static StoredBlock CaptureCurrentColonyBlock()
+        {
+            if (Current.Game == null || Scribe.mode != LoadSaveMode.Inactive)
+                return null;
+            var set = PolicyDefaultsController.CaptureCurrentColony();
+            return set == null || set.IsEmpty ? null : ToBlock(set);
+        }
+
+        private static StoredBlock ToBlock(PolicyDefaultsSet set)
         {
             set.NormalizeDefault();
             var xml = SmdScribe.Write(set.ExposeData);
             if (xml == null)
-                return false;
-            var block = new StoredBlock
+                return null;
+            return new StoredBlock
             {
                 config = xml,
                 requiredMods = SmdDefRefs.RequiredMods(xml),
                 savedAt = System.DateTime.UtcNow.ToString("yyyy-MM-dd")
             };
+        }
+
+        /// <summary>Persist the set into the library. Returns false if the write failed.</summary>
+        private static bool Commit(PolicyDefaultsSet set)
+        {
+            var block = ToBlock(set);
+            if (block == null)
+                return false;
             return SmdLibraryStore.Mutate(lib =>
             {
                 lib.content.policies = block;
