@@ -28,6 +28,16 @@ namespace BetterWorkbenchDefaults
         internal static bool colonyDefaultsApplied;
         /// <summary>Carried along from 1.x (the old tick-250 policy path); never read for decisions.</summary>
         internal static bool policyDefaultsApplied;
+        /// <summary>The policy set was applied at this game's start ("apply the saved policies to new games").</summary>
+        internal static bool policiesAppliedAtStart;
+
+        // ---- first-start card (M7) ----
+        /// <summary>0 = no card for this save (old save, or the card belongs to another state); 1 = new colony, card due;
+        /// 2 = the mod joined this existing save, card due; 3 = done (choice applied once).</summary>
+        internal static int startCard;
+        /// <summary>What the card applied: "" = my defaults, else the profile name; null before the card was done.</summary>
+        internal static string startChoice;
+        public const int StartNone = 0, StartNewColony = 1, StartJoined = 2, StartDone = 3;
 
         // ---- pending blueprint configs, per map (uniqueID) ----
         internal static Dictionary<int, List<PendingEntry>> pending = new Dictionary<int, List<PendingEntry>>();
@@ -53,6 +63,9 @@ namespace BetterWorkbenchDefaults
             baselineTick = 0;
             colonyDefaultsApplied = false;
             policyDefaultsApplied = false;
+            policiesAppliedAtStart = false;
+            startCard = StartNone;
+            startChoice = null;
             pending = new Dictionary<int, List<PendingEntry>>();
         }
 
@@ -71,6 +84,9 @@ namespace BetterWorkbenchDefaults
             Scribe_Values.Look(ref baselineTick, "baselineTick", 0);
             Scribe_Values.Look(ref colonyDefaultsApplied, "colonyDefaultsApplied", false);
             Scribe_Values.Look(ref policyDefaultsApplied, "policyDefaultsApplied", false);
+            Scribe_Values.Look(ref policiesAppliedAtStart, "policiesAppliedAtStart", false);
+            Scribe_Values.Look(ref startCard, "startCard", StartNone);
+            Scribe_Values.Look(ref startChoice, "startChoice");
 
             List<PendingMap> maps = null;
             if (Scribe.mode == LoadSaveMode.Saving)

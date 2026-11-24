@@ -154,10 +154,20 @@ namespace BetterWorkbenchDefaults
         public static bool Has() => GetStored() != null;
 
         /// <summary>Readable lines of the saved colony settings (settings page).</summary>
-        public static System.Collections.Generic.List<string> SummaryLines()
+        public static System.Collections.Generic.List<string> SummaryLines() => SummaryLines(Get());
+
+        /// <summary>Readable lines of any colony settings block (a profile's, an import's).</summary>
+        public static System.Collections.Generic.List<string> SummaryLines(StoredBlock block)
+        {
+            if (block?.config == null) return new System.Collections.Generic.List<string>();
+            var t = new ColonySettingsTemplate();
+            return SmdScribe.Read(block.config, t.ExposeData) ? SummaryLines(t) : new System.Collections.Generic.List<string>();
+        }
+
+        /// <summary>Readable lines of a colony settings template.</summary>
+        public static System.Collections.Generic.List<string> SummaryLines(ColonySettingsTemplate t)
         {
             var l = new System.Collections.Generic.List<string>();
-            var t = Get();
             if (t == null) return l;
             string yn(bool b) => (b ? "Yes" : "No").Translate().ToString();
             void care(string group, MedicalCareCategory c) => l.Add("WBD_ColSumCare".Translate(("WBD_CareGroup_" + group).Translate(), c.GetLabel()));
@@ -255,11 +265,7 @@ namespace BetterWorkbenchDefaults
 
             // Which starting colonists got the colonist preset (its medical/policy axes win over the colony defaults).
             var preset = PawnDefaultsStore.GetDefaultConfig();
-            var byPreset = new HashSet<int>();
-            if (comp != null && preset != null && s.autoApplyToNewPawns && SmdSections.On(SmdSections.Pawns))
-                foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
-                    if (p != null && comp.CoreApplied(p.thingIDNumber))
-                        byPreset.Add(p.thingIDNumber);
+            var byPreset = PresetPawns(comp, preset, s);
 
             if (s.colonyApplyOnNewGame && SmdSections.On(SmdSections.Colony) && ColonySettingsStore.Has())
             {
@@ -270,27 +276,67 @@ namespace BetterWorkbenchDefaults
 
             if (s.policyAutoApplyOnNewGame && SmdSections.On(SmdSections.Policies) && PolicyDefaultsStore.HasSet())
             {
-                var oldDefaults = new Dictionary<PolicyKind, object>();
+                if (ApplyPoliciesToColony(comp))
+                    SmdGameData.policiesAppliedAtStart = true;
+            }
+        }
+
+        /// <summary>Starting colonists that got the colonist preset (its medical/policy axes win over colony defaults).</summary>
+        static HashSet<int> PresetPawns(PawnDefaultsGameComponent comp, PawnConfigSnapshot preset, WBD_Settings s)
+        {
+            var byPreset = new HashSet<int>();
+            if (comp != null && preset != null && s.autoApplyToNewPawns && SmdSections.On(SmdSections.Pawns))
+                foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+                    if (p != null && comp.CoreApplied(p.thingIDNumber))
+                        byPreset.Add(p.thingIDNumber);
+            return byPreset;
+        }
+
+        /// <summary>
+        /// The library's colony settings into the running (new) colony, as at a new game's start. Used by the first-start card after
+        /// a profile was chosen. False when nothing is saved or the area is off.
+        /// </summary>
+        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp)
+        {
+            var s = WBD_Mod.Settings;
+            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Colony) || !ColonySettingsStore.Has())
+                return false;
+            var preset = PawnDefaultsStore.GetDefaultConfig();
+            var keep = (preset?.misc != null && s.pawnApplyMedical) ? PresetPawns(comp, preset, s) : null;
+            return ColonySettingsStore.ApplyToCurrentGame(keep);
+        }
+
+        /// <summary>
+        /// The library's policy set into the running (new) colony: policies are created, the colony default is set, and pawns still on
+        /// the old default policy move to the new one (kinds the colonist preset sets are skipped). False when nothing was applied.
+        /// </summary>
+        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp)
+        {
+            var s = WBD_Mod.Settings;
+            if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Policies) || !PolicyDefaultsStore.HasSet())
+                return false;
+            var preset = PawnDefaultsStore.GetDefaultConfig();
+            var byPreset = PresetPawns(comp, preset, s);
+            var oldDefaults = new Dictionary<PolicyKind, object>();
+            foreach (var kind in PolicyDefaultsController.AllKinds)
+                oldDefaults[kind] = PolicyDefaultsController.DefaultPolicy(kind);
+            if (!PolicyDefaultsStore.ApplyToCurrentColony())
+                return false;
+            int moved = 0;
+            foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+            {
+                if (p == null || p.Faction != Faction.OfPlayerSilentFail || p.RaceProps == null || !p.RaceProps.Humanlike)
+                    continue;
                 foreach (var kind in PolicyDefaultsController.AllKinds)
-                    oldDefaults[kind] = PolicyDefaultsController.DefaultPolicy(kind);
-                if (PolicyDefaultsStore.ApplyToCurrentColony())
                 {
-                    int moved = 0;
-                    foreach (var p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
-                    {
-                        if (p == null || p.Faction != Faction.OfPlayerSilentFail || p.RaceProps == null || !p.RaceProps.Humanlike)
-                            continue;
-                        foreach (var kind in PolicyDefaultsController.AllKinds)
-                        {
-                            if (byPreset.Contains(p.thingIDNumber) && PresetSetsPolicy(preset, kind, s))
-                                continue;
-                            if (PolicyDefaultsController.ReassignIfOnOldDefault(p, kind, oldDefaults[kind]))
-                                moved++;
-                        }
-                    }
-                    WBD_Log.Msg("Saved policies applied to the new game (" + moved + " starting-pawn policy assignments updated).");
+                    if (byPreset.Contains(p.thingIDNumber) && PresetSetsPolicy(preset, kind, s))
+                        continue;
+                    if (PolicyDefaultsController.ReassignIfOnOldDefault(p, kind, oldDefaults[kind]))
+                        moved++;
                 }
             }
+            WBD_Log.Msg("Saved policies applied to the colony (" + moved + " policy assignments of starting colonists updated).");
+            return true;
         }
 
         private static bool PresetSetsPolicy(PawnConfigSnapshot preset, PolicyKind kind, WBD_Settings s)

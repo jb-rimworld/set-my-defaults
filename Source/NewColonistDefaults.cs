@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -160,6 +161,47 @@ namespace BetterWorkbenchDefaults
                     comp.MarkWork(id);
                 }
             }
+        }
+
+        /// <summary>
+        /// First-start card: after a profile changed the default colonist preset, the starting colonists get the new default once
+        /// (they were defaulted with the old one seconds before, while the map was generated). Same rules as for a new colonist
+        /// (axes, children, Free Will). Returns how many colonists were changed.
+        /// </summary>
+        public static int ApplyDefaultToStartingColonists()
+        {
+            var comp = Current.Game?.GetComponent<PawnDefaultsGameComponent>();
+            var settings = WBD_Mod.Settings;
+            if (comp == null || settings == null || !settings.autoApplyToNewPawns || !SmdSections.On(SmdSections.Pawns))
+                return 0;
+            var config = PawnDefaultsStore.GetDefaultConfig();
+            if (config == null || config.IsEmpty)
+                return 0;
+            int n = 0;
+            foreach (var p in PawnsFinder.AllMaps_FreeColonists.ToList())
+            {
+                if (!IsEligible(p) || (!settings.pawnIncludeChildren && !IsAdult(p)))
+                    continue;
+                try
+                {
+                    var axes = settings.EnabledPawnAxes();
+                    bool work = (axes & PawnAxis.Work) != 0 && p.workSettings != null && WorkPrioritiesTemplate.CanWork(p)
+                        && !(settings.pawnSkipWorkUnderFreeWill && FreeWillCompat.ManagesWork(p));
+                    if (!work)
+                        axes &= ~PawnAxis.Work;
+                    if (axes == PawnAxis.None || p.timetable == null)
+                        continue;
+                    config.ApplyTo(p, axes);
+                    comp.MarkKnown(p.thingIDNumber); comp.MarkSeen(p.thingIDNumber); comp.MarkCore(p.thingIDNumber);
+                    if (work) comp.MarkWork(p.thingIDNumber);
+                    n++;
+                }
+                catch (Exception e)
+                {
+                    WBD_Log.Warn("Could not apply the colonist preset to " + (p?.LabelShortCap.ToString() ?? "?") + ": " + e.Message);
+                }
+            }
+            return n;
         }
 
         /// <summary>Age gate for the "exclude children" option (true once the pawn is an adult).</summary>

@@ -73,6 +73,8 @@ namespace BetterWorkbenchDefaults
             // Starting colonists were spawned during map generation, before this call, and were processed as new
             // by the spawn hook (and are known since). Everything from here on is judged by the roster.
             TakeBaseline(newGame: true);
+            if (SmdGameData.startCard == SmdGameData.StartNone)
+                SmdGameData.startCard = SmdGameData.StartNewColony; // the first-start card offers profiles once
             if (!SmdGameData.colonyDefaultsApplied)
             {
                 SmdGameData.colonyDefaultsApplied = true;
