@@ -459,6 +459,9 @@ namespace BetterWorkbenchDefaults.Suites
                         U.Shot("smd_card_" + tag + (joined ? "_joined" : "_new"));
                         foreach (var y in U.Frames(2)) yield return y;
                         t.Check(card.IsOpen && !SmdUi.Errors.ContainsKey("card") && InsideScreen(card.windowRect), tag + " welcome card " + (joined ? "(joined)" : "(new colony)") + " drawn, inside " + R(card.windowRect));
+                        // the three "what happens by itself" choices are fully in view (not below the fold), and the start choices keep room
+                        t.Check(card.ModesRect.height > 0 && card.ModesRect.yMax <= card.ContentRect.yMax - 60f && (joined || card.BodyRect.height >= 90f),
+                            tag + " welcome card: the mode choices are in view " + R(card.ModesRect) + " of " + R(card.ContentRect) + (joined ? "" : ", start choices get " + card.BodyRect.height.ToString("0") + " px"));
                         SmdGameData.startCard = SmdGameData.StartDone; // closing must not apply anything here
                         card.Close(false);
                         SmdGameData.startCard = state;

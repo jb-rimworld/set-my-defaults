@@ -391,6 +391,9 @@ namespace BetterWorkbenchDefaults.Suites
                 b.includeEquipped = true; b.includeTainted = true; b.hpRange = new FloatRange(0.2f, 0.9f);
                 b.SetStoreMode(BillStoreModeDefOf.SpecificStockpile, store.slotGroup);
                 b.SetIncludeGroup(count.slotGroup);
+                // Ideology: a specific (not the ideoligion's) style is saved and restored
+                var style = ModsConfig.IdeologyActive ? DefDatabase<ThingStyleDef>.AllDefsListForReading.FirstOrDefault() : null;
+                if (style != null) { b.globalStyle = false; b.style = style; }
                 DefaultBillsController.SaveAsPreset(bench, preset);
                 bench2 = T.Spawn(t, key);
                 yield return 1;
@@ -403,6 +406,8 @@ namespace BetterWorkbenchDefaults.Suites
                 t.Check(c.suspended && c.includeEquipped && c.includeTainted && Math.Abs(c.hpRange.min - 0.2f) < 0.01f, "suspended, count equipped/tainted, hit points");
                 t.Check(c.GetStoreMode() == BillStoreModeDefOf.SpecificStockpile && c.GetSlotGroup() == store.slotGroup, "drop in: " + (c.GetSlotGroup()?.GetType().Name ?? "none") + " (" + c.GetStoreMode()?.defName + ")");
                 t.Check(c.GetIncludeSlotGroup() == count.slotGroup, "count in: the stockpile of that name");
+                if (style != null) t.Check(!c.globalStyle && c.style == style, "Ideology: the bill's own style came back (" + c.style?.defName + ", global " + c.globalStyle + ")");
+                else t.Note("Ideology not active: bill style not checked");
 
                 // without the stockpiles: vanilla fallbacks, no error
                 store.Delete(); count.Delete(); store = null; count = null;
@@ -737,14 +742,22 @@ namespace BetterWorkbenchDefaults.Suites
                 }
             }
             t.Check(total == 0 || same == total, "migrated configs equal their source (" + same + "/" + total + ")");
-            // the live templates read without red errors
-            foreach (var set in lib.content.buildings)
-                foreach (var p in set.presets)
-                {
-                    var snap = new ConfigSnapshot();
-                    SmdScribe.Read(p.config, snap.ExposeData);
-                }
-            t.Check(true, "every migrated preset was read back through the 1.x reader (red errors: see the run report)");
+            // the live templates read without red errors (counted while reading, not just left to the run report)
+            int reds = 0, read = 0, readOk = 0;
+            UnityEngine.Application.LogCallback onLog = (msg, stack, type) => { if (type == UnityEngine.LogType.Error || type == UnityEngine.LogType.Exception) reds++; };
+            UnityEngine.Application.logMessageReceivedThreaded += onLog;
+            try
+            {
+                foreach (var set in lib.content.buildings)
+                    foreach (var p in set.presets)
+                    {
+                        var snap = new ConfigSnapshot();
+                        read++;
+                        if (SmdScribe.Read(p.config, snap.ExposeData)) readOk++;
+                    }
+            }
+            finally { UnityEngine.Application.logMessageReceivedThreaded -= onLog; }
+            t.Check(read > 0 && readOk == read && reds == 0, "every migrated preset reads back through the 1.x reader (" + readOk + "/" + read + ", red errors while reading: " + reds + ")");
             var r2 = LegacyMigration.ImportAll(dir, lib, false);
             t.Check(r2.buildingPresets == 0 && r2.pawnPresets == 0 && r2.skippedExisting > 0, "a second import adds nothing (" + r2 + ")");
             yield return 1;
@@ -884,7 +897,7 @@ namespace BetterWorkbenchDefaults.Suites
                 st.Section(SmdSections.Pawns, false);
                 t.Check(!PawnGizmo(), "colonists off: no Defaults button on colonists");
                 st.Restore();
-                t.Check(!t.Mod.Current.SectionOn("nonexistent") || true, "restored");
+                t.Check(t.Mod.Current.SectionOn(SmdSections.Pawns) && PawnGizmo(), "restored: the Colonists area is on again and its button is back");
             }
             finally
             {
