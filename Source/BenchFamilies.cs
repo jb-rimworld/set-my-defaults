@@ -29,7 +29,7 @@ namespace BetterWorkbenchDefaults
                 return 0f;
             if (a == b)
                 return 1f;
-            if (a.designatorDropdown != null && a.designatorDropdown == b.designatorDropdown)
+            if (a.designatorDropdown != null && a.designatorDropdown == b.designatorDropdown && SameStorageParent(a, b))
                 return 1f;
             var ra = a.AllRecipes;
             var rb = b.AllRecipes;
@@ -45,6 +45,24 @@ namespace BetterWorkbenchDefaults
                 union.Add(r);
             }
             return union.Count == 0 ? 0f : (float)shared / union.Count;
+        }
+
+        /// <summary>
+        /// Storage buildings are only family if they accept the same things (a shelf preset must not land on a
+        /// book-only case in the same dropdown). Buildings without fixed storage settings always pass.
+        /// </summary>
+        private static bool SameStorageParent(ThingDef a, ThingDef b)
+        {
+            var fa = a.building?.fixedStorageSettings?.filter;
+            var fb = b.building?.fixedStorageSettings?.filter;
+            if (fa == null && fb == null)
+                return true;
+            if (fa == null || fb == null || fa.AllowedDefCount != fb.AllowedDefCount)
+                return false;
+            foreach (var d in fa.AllowedThingDefs)
+                if (!fb.Allows(d))
+                    return false;
+            return true;
         }
 
         /// <summary>Score of a saved key against a building: by def when loaded, else by the stored recipe names.</summary>
@@ -72,10 +90,24 @@ namespace BetterWorkbenchDefaults
         /// The saved key whose default preset a building without own presets should use, or null.
         /// Highest score wins; ties are broken by key name so the choice is stable.
         /// </summary>
+        private static readonly Dictionary<ThingDef, KeyValuePair<int, string>> _fallbackCache =
+            new Dictionary<ThingDef, KeyValuePair<int, string>>();
+
         public static string FallbackKeyFor(ThingDef def)
         {
             if (!Enabled || def == null)
                 return null;
+            // cached per library revision and recipe count (PRF assemblers change their recipe list at runtime)
+            int stamp = SmdLibraryStore.Revision * 4099 + (def.AllRecipes?.Count ?? 0);
+            if (_fallbackCache.TryGetValue(def, out var hit) && hit.Key == stamp)
+                return hit.Value;
+            var found = FindFallback(def);
+            _fallbackCache[def] = new KeyValuePair<int, string>(stamp, found);
+            return found;
+        }
+
+        private static string FindFallback(ThingDef def)
+        {
             string best = null;
             float bestScore = 0f;
             foreach (var key in DefaultBillsDatabase.AllSavedDefNames())
