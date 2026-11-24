@@ -180,6 +180,36 @@ namespace BetterWorkbenchDefaults
             });
         }
 
+        /// <summary>Copy of a profile under a free name ("Tribal start (2)"). Returns the new name, or null.</summary>
+        public static string DuplicateProfile(string name)
+        {
+            string made = null;
+            SmdLibraryStore.Mutate(lib =>
+            {
+                var p = lib.Profile(name);
+                if (p == null)
+                    return false;
+                var copy = p.Clone();
+                copy.name = lib.UniqueProfileName(name);
+                copy.createdAt = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                lib.profiles.Add(copy);
+                made = copy.name;
+                return true;
+            });
+            return SmdLibraryStore.Library.Profile(made) != null ? made : null;
+        }
+
+        /// <summary>Removes one area's content from the live library (the "Delete" of a policy set or colony settings entry).</summary>
+        public static bool ClearPart(ProfileParts part) =>
+            SmdLibraryStore.Mutate(lib =>
+            {
+                bool changed = false;
+                if ((part & ProfileParts.Policies) != 0 && lib.content.policies != null) { lib.content.policies = null; changed = true; }
+                if ((part & ProfileParts.Colony) != 0 && lib.content.colony != null) { lib.content.colony = null; changed = true; }
+                if ((part & ProfileParts.Pawns) != 0 && lib.content.pawns != null) { lib.content.pawns = null; changed = true; }
+                return changed;
+            });
+
         public static bool DeleteProfile(string name) =>
             SmdLibraryStore.Mutate(lib => lib.profiles.RemoveAll(p => p.name == name) > 0);
 
@@ -249,7 +279,15 @@ namespace BetterWorkbenchDefaults
         /// and with <paramref name="applyToCurrentGame"/> its colony settings and policy set are applied to the running
         /// game right away (new games get them anyway through the new-game settings).
         /// </summary>
-        public static ApplyResult ApplyProfile(string name, ProfileParts parts, bool applyToCurrentGame)
+        public static ApplyResult ApplyProfile(string name, ProfileParts parts, bool applyToCurrentGame) =>
+            ApplyProfile(name, parts, applyToCurrentGame, false);
+
+        /// <summary>
+        /// Like <see cref="ApplyProfile(string, ProfileParts, bool)"/>; with <paramref name="takeDefaults"/> the profile's defaults also
+        /// become the library's defaults (what the profile UI and the first-start card do: from now on new buildings, zones and
+        /// colonists get the profile's presets). Presets of the library that the profile does not name are kept.
+        /// </summary>
+        public static ApplyResult ApplyProfile(string name, ProfileParts parts, bool applyToCurrentGame, bool takeDefaults)
         {
             var res = new ApplyResult();
             var p = SmdLibraryStore.Library.Profile(name);
@@ -261,7 +299,7 @@ namespace BetterWorkbenchDefaults
             int merged = 0;
             bool saved = SmdLibraryStore.Mutate(lib =>
             {
-                merged = lib.content.MergeFrom(p.content, parts);
+                merged = lib.content.MergeFrom(p.content, parts, takeDefaults);
                 return merged > 0;
             });
             res.merged = merged;

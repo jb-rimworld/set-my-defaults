@@ -363,7 +363,13 @@ namespace BetterWorkbenchDefaults.Lib
         /// are added, existing defaults are kept unless the key had no presets before (then the incoming default wins).
         /// Policy set and colony block are replaced when the incoming content carries them. Returns the count merged.
         /// </summary>
-        public int MergeFrom(SmdContent other, ProfileParts parts)
+        public int MergeFrom(SmdContent other, ProfileParts parts) => MergeFrom(other, parts, false);
+
+        /// <summary>
+        /// Like <see cref="MergeFrom(SmdContent, ProfileParts)"/>; with <paramref name="takeDefaults"/> the incoming defaults also become
+        /// the defaults here (applying a profile: its presets are what new buildings and colonists get from now on). Other presets stay.
+        /// </summary>
+        public int MergeFrom(SmdContent other, ProfileParts parts, bool takeDefaults)
         {
             int n = 0;
             foreach (var inc in other.Subset(parts).buildings)
@@ -380,6 +386,8 @@ namespace BetterWorkbenchDefaults.Lib
                     mine.AddOrReplace(p.Clone(), makeDefault: false);
                     n++;
                 }
+                if (takeDefaults && inc.DefaultPreset != null)
+                    mine.SetDefault(inc.DefaultPreset.name);
             }
             if ((parts & ProfileParts.Pawns) != 0 && other.pawns != null && !other.pawns.IsEmpty)
             {
@@ -392,6 +400,8 @@ namespace BetterWorkbenchDefaults.Lib
                 {
                     foreach (var p in other.pawns.presets)
                         pawns.AddOrReplace(p.Clone(), makeDefault: false);
+                    if (takeDefaults && other.pawns.DefaultPreset != null)
+                        pawns.SetDefault(other.pawns.DefaultPreset.name);
                 }
                 n += other.pawns.presets.Count;
             }
