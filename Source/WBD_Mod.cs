@@ -59,11 +59,11 @@ namespace BetterWorkbenchDefaults
         protected override void Register(KitRegistry r)
         {
             // ---------------------------------------------------------------- areas (G13a: off = hidden, no new effects; saved presets stay)
-            r.Section(SmdSections.Buildings, "Workbenches and shelves",
+            r.Section(SmdSections.Buildings, "Buildings",
                     "Default bills for workbenches, default filters for shelves and other storage, default plants for hydroponics. The Defaults button on buildings and in the Bills tab.")
                 .WithOrder(10).LegacyEnabled("sectionBuildings")
                 .WithDiagnosis(() => new[] { "Building preset sets: " + SafeStatus(s => s.buildingSets) + ", presets: " + SafeStatus(s => s.buildingPresets) });
-            r.Section(SmdSections.Zones, "Stockpiles and growing zones",
+            r.Section(SmdSections.Zones, "Zones",
                     "Default filters for new stockpile and dumping zones, default plant for new growing zones. The Defaults button on zones.")
                 .WithOrder(20).LegacyEnabled("sectionZones")
                 .WithDiagnosis(() => new[] { "Zone presets: " + SafeStatus(s => s.zonePresets) });
@@ -79,7 +79,7 @@ namespace BetterWorkbenchDefaults
                     "Medical care defaults per group, auto home area, auto rebuild and manual work priorities, saved once and applied to new games.")
                 .WithOrder(50).LegacyEnabled("sectionColony")
                 .WithDiagnosis(() => new[] { "Colony settings saved: " + SafeStatus(s => s.hasColony) });
-            r.Section(SmdSections.Library, "Library and profiles",
+            r.Section(SmdSections.Library, "Library",
                     "The cross-save library file that holds every preset, named profiles and share strings for importing and exporting.")
                 .WithOrder(60).LegacyEnabled("sectionLibrary")
                 .WithDiagnosis(LibraryDiagnosis);
@@ -186,9 +186,9 @@ namespace BetterWorkbenchDefaults
             r.Page("buildingPresets", "Building presets", SmdPages.DrawBuildingPresets).WithOrder(15).InSection(SmdSections.Buildings);
             r.Page("colonistPresets", "Colonist presets", SmdPages.DrawColonistPresets).WithOrder(35).InSection(SmdSections.Pawns);
             r.Page("policies", "Policy set", SmdPages.DrawPolicies).WithOrder(45).InSection(SmdSections.Policies);
-            r.Page("colony", "Colony settings", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
+            r.Page("colony", "Colony defaults", SmdPages.DrawColony).WithOrder(55).InSection(SmdSections.Colony);
             // The profile / share-string UI is drawn by SmdPages.DrawLibrary (hook for the next wave: SmdPages.LibraryPage).
-            r.Page("library", "Library", SmdPages.DrawLibrary).WithOrder(65).InSection(SmdSections.Library);
+            r.Page("library", "Library file", SmdPages.DrawLibrary).WithOrder(65).InSection(SmdSections.Library);
 
             // ---------------------------------------------------------------- per save data (removal-safe: inside the framework's component)
             r.SaveData(SmdGameData.Expose, SmdGameData.Reset);

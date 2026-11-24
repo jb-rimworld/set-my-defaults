@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-  <SMD.Section.buildings>Werkbänke und Regale</SMD.Section.buildings>
+  <SMD.Section.buildings>Gebäude</SMD.Section.buildings>
   <SMD.Section.buildings.Desc>Standard-Aufträge für Werkbänke, Standard-Filter für Regale und andere Lager, Standard-Pflanzen für Hydrokultur. Der Knopf „Vorgaben“ an Gebäuden und im Aufträge-Tab.</SMD.Section.buildings.Desc>
-  <SMD.Section.zones>Lager- und Anbauzonen</SMD.Section.zones>
+  <SMD.Section.zones>Zonen</SMD.Section.zones>
   <SMD.Section.zones.Desc>Standard-Filter für neue Lager- und Abladezonen, Standard-Pflanze für neue Anbauzonen. Der Knopf „Vorgaben“ an Zonen.</SMD.Section.zones.Desc>
   <SMD.Section.pawns>Kolonisten</SMD.Section.pawns>
   <SMD.Section.pawns.Desc>Kolonisten-Vorlagen (Zeitplan, Arbeit, Richtlinien, Feindverhalten, medizinische Versorgung) und die einmalige Anwendung der Standardvorlage auf jede neue Person. Der Knopf „Vorgaben“ an Kolonisten.</SMD.Section.pawns.Desc>
@@ -10,7 +10,7 @@
   <SMD.Section.policies.Desc>Ein gespeichertes Paket aus Kleidungs-, Drogen-, Essens- und Leserichtlinien, das du in jeder Kolonie anwenden kannst, auf Wunsch auch in jedem neuen Spiel.</SMD.Section.policies.Desc>
   <SMD.Section.colony>Kolonie-Einstellungen</SMD.Section.colony>
   <SMD.Section.colony.Desc>Medizinische Versorgung je Gruppe, automatisches Heimgebiet, automatischer Wiederaufbau und manuelle Arbeitsprioritäten, einmal gespeichert und in neuen Spielen gesetzt.</SMD.Section.colony.Desc>
-  <SMD.Section.library>Bibliothek und Profile</SMD.Section.library>
+  <SMD.Section.library>Bibliothek</SMD.Section.library>
   <SMD.Section.library.Desc>Die spielstandübergreifende Bibliotheksdatei mit allen Vorlagen, benannten Profilen und Teilen-Texten zum Importieren und Exportieren.</SMD.Section.library.Desc>
   <SMD.SettingCat.Automatic>Automatisch</SMD.SettingCat.Automatic>
   <SMD.Setting.smd.autoApplyOnPlace>Standard-Aufträge auf neuen Werkbänken</SMD.Setting.smd.autoApplyOnPlace>
@@ -89,8 +89,8 @@
   <SMD.Page.buildingPresets>Gebäude-Vorlagen</SMD.Page.buildingPresets>
   <SMD.Page.colonistPresets>Kolonisten-Vorlagen</SMD.Page.colonistPresets>
   <SMD.Page.policies>Richtlinien-Paket</SMD.Page.policies>
-  <SMD.Page.colony>Kolonie-Einstellungen</SMD.Page.colony>
-  <SMD.Page.library>Bibliothek</SMD.Page.library>
+  <SMD.Page.colony>Kolonie-Vorgaben</SMD.Page.colony>
+  <SMD.Page.library>Bibliotheksdatei</SMD.Page.library>
   <SMD.Compat.NiceBillTab.What>Der Knopf „Vorgaben“ sitzt als Symbol in dessen Auftragsfenster; angewendete Aufträge erscheinen sofort.</SMD.Compat.NiceBillTab.What>
   <SMD.Compat.NiceInventoryTab.What>Der mitgelieferte Auftrags-Tab wird genauso unterstützt wie Nice Bill Tab.</SMD.Compat.NiceInventoryTab.What>
   <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens so viele Aufträge wieder her und patcht selbst nichts.</SMD.Compat.NoMaxBillsRedux.What>

@@ -42,19 +42,11 @@ namespace BetterWorkbenchDefaults
 
         static void Note(Listing_Standard list, string text)
         {
-            Text.Font = GameFont.Tiny;
+            Text.Font = GameFont.Small;
             GUI.color = Color.gray;
             list.Label(text);
             GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-        }
-
-        static void Header(Listing_Standard list, string text)
-        {
-            Text.Font = GameFont.Medium;
-            list.Label(text);
-            Text.Font = GameFont.Small;
-            list.Gap(2f);
+            list.Gap(4f);
         }
 
         static void ReadOnlyBanner(Listing_Standard list)
@@ -101,7 +93,6 @@ namespace BetterWorkbenchDefaults
         // ------------------------------------------------------------------------------------------------ building presets
         public static void DrawBuildingPresets(Rect area) => Scrolled(area, sBuildings, list =>
         {
-            Header(list, "WBD_PageBuildingPresets".Translate());
             Note(list, "WBD_PageBuildingPresetsHelp".Translate());
             ReadOnlyBanner(list);
             var rows = DefaultBillsDatabase.AllSavedDefNames()
@@ -155,7 +146,6 @@ namespace BetterWorkbenchDefaults
         // ------------------------------------------------------------------------------------------------ colonist presets
         public static void DrawColonistPresets(Rect area) => Scrolled(area, sColonists, list =>
         {
-            Header(list, "WBD_PageColonistPresets".Translate());
             Note(list, "WBD_PageColonistPresetsHelp".Translate());
             if (FreeWillCompat.Active) Note(list, "WBD_PawnFreeWillNote".Translate());
             ReadOnlyBanner(list);
@@ -178,7 +168,6 @@ namespace BetterWorkbenchDefaults
         // ------------------------------------------------------------------------------------------------ policy set
         public static void DrawPolicies(Rect area) => Scrolled(area, sPolicies, list =>
         {
-            Header(list, "WBD_PolicyDefaultsHeader".Translate());
             Note(list, "WBD_PagePoliciesHelp".Translate());
             ReadOnlyBanner(list);
             if (!PolicyDefaultsController.GameReady)
@@ -254,7 +243,6 @@ namespace BetterWorkbenchDefaults
         // ------------------------------------------------------------------------------------------------ colony settings
         public static void DrawColony(Rect area) => Scrolled(area, sColony, list =>
         {
-            Header(list, "WBD_ColonyHeader".Translate());
             Note(list, "WBD_PageColonyHelp".Translate());
             ReadOnlyBanner(list);
             if (PolicyDefaultsController.GameReady)
@@ -291,7 +279,6 @@ namespace BetterWorkbenchDefaults
             if (LibraryPage != null) { LibraryPage(area); return; }
             Scrolled(area, sLibrary, list =>
             {
-                Header(list, "WBD_PageLibrary".Translate());
                 Note(list, "WBD_PageLibraryHelp".Translate());
                 var s = SmdLibraryApi.Status();
                 if (s.readOnly)
