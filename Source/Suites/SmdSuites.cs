@@ -864,14 +864,12 @@ namespace BetterWorkbenchDefaults.Suites
                 yield return 120;
                 // Nice Bill Tab clears the flag when it draws its tab; in an offscreen test run the inspect pane may not be drawn.
                 t.Note("after 120 ticks the flag is " + ((bool)flag.GetValue(null) ? "still set (tab not drawn in this run)" : "cleared: Nice Bill Tab rebuilt its list"));
-                // FW-REQUEST (16, after the freeze): no public way to flip a compat switch from a test; the suite calls the internal
-                // setter the Compatibility page uses (test code only, never shipped).
-                var setCompat = AccessTools.Method(typeof(KitMod), "SetCompat");
-                t.Check(setCompat != null && (bool)setCompat.Invoke(t.Mod, new object[] { SmdCompat.NiceBillTabId, false }) && !t.Mod.CompatOn(SmdCompat.NiceBillTabId), "integration switched off");
+                // the harness flips the switch the Compatibility page shows (TestContext.SetCompat, framework pass 3)
+                t.Check(t.SetCompat(SmdCompat.NiceBillTabId, false) && !t.Mod.CompatOn(SmdCompat.NiceBillTabId), "integration switched off");
                 flag.SetValue(null, false);
                 DefaultBillsController.ApplyPreset(bench, "TableButcher", "SMD test nbt");
                 t.Check(!(bool)flag.GetValue(null), "integration switched off on the Compatibility page: no refresh request");
-                setCompat?.Invoke(t.Mod, new object[] { SmdCompat.NiceBillTabId, true });
+                t.SetCompat(SmdCompat.NiceBillTabId, true);
             }
             finally
             {

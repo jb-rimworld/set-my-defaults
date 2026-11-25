@@ -235,8 +235,8 @@ namespace BetterWorkbenchDefaults
             }
         }
 
-        // the instance exists only between a load and the framework dropping it (next frame); never saved
-        [KitTransient("legacy reader: dropped by JB Framework right after a load, never written")]
+        // the instance exists only between a load and the framework dropping it (next frame); never saved, and kit.saveload skips
+        // registered legacy components since framework pass 3 (no [KitTransient] needed)
         private List<PendingEntry> _legacy;
     }
 
