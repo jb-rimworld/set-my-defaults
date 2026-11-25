@@ -113,6 +113,10 @@ namespace BetterWorkbenchDefaults
         }
 
         /// <summary>One button of a <see cref="Buttons"/> row.</summary>
+        /// <summary>Drops the keyboard focus before a text field's value is changed from code (vanilla QuickSearchWidget does the same).
+        /// Outside OnGUI (tests) it does nothing.</summary>
+        public static void Unfocus() { try { UI.UnfocusCurrentControl(); } catch { } }
+
         public sealed class Btn
         {
             public string label, tip; public Action act; public bool active = true; public bool accent;

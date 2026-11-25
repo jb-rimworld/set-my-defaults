@@ -134,9 +134,16 @@ namespace BetterWorkbenchDefaults.Lib
         static void MoveOver(string tmp, string path)
         {
 #if RW16
-            // net472 has no File.Move overwrite; File.Replace is the same single rename on Mono (needs an existing target)
-            if (File.Exists(path)) File.Replace(tmp, path, null);
-            else File.Move(tmp, path);
+            // net472 has no File.Move overwrite; File.Replace is the same single rename on Mono (needs an existing target).
+            // Never run on a 1.6 game: if this Mono's File.Replace refuses (read-only target, a file system without the call),
+            // copy over the target instead (CopyOver clears a read-only flag, as File.Move does on 1.7) and drop the temp file.
+            if (!File.Exists(path)) { File.Move(tmp, path); return; }
+            try { File.Replace(tmp, path, null); }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is PlatformNotSupportedException || e is NotSupportedException)
+            {
+                CopyOver(tmp, path);
+                try { File.Delete(tmp); } catch { }
+            }
 #else
             File.Move(tmp, path, true);
 #endif

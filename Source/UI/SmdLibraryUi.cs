@@ -359,6 +359,7 @@ namespace BetterWorkbenchDefaults
             if (ok)
             {
                 Messages.Message("WBD_ProfSaved".Translate(name), MessageTypeDefOf.TaskCompletion, false);
+                SmdUi.Unfocus();   // the name field is cleared from code (see SetImportText)
                 NewProfileName = "";
             }
             else
@@ -440,7 +441,7 @@ namespace BetterWorkbenchDefaults
             }) + 6f;
             y += SmdUi.Para(0f, y, w, "WBD_SharePasteHint".Translate(), SmdUi.DimGrey, GameFont.Tiny) + 2f;
             string t = Widgets.TextField(new Rect(0f, y, w, 30f), ImportText ?? "");
-            if (t != ImportText) SetImportText(t);
+            if (t != ImportText) ApplyImportText(t);   // typing: the field keeps its focus
             y += 38f;
             Decode();
             if (string.IsNullOrWhiteSpace(ImportText)) return y;
@@ -483,7 +484,15 @@ namespace BetterWorkbenchDefaults
             return y;
         }
 
+        /// <summary>Sets the share text from code (Paste, Clear, after an import). The text field loses its focus first: Unity's
+        /// IMGUI (RimWorld 1.6) keeps a focused field's own copy of the text and could bring the old text back.</summary>
         public static void SetImportText(string text)
+        {
+            SmdUi.Unfocus();
+            ApplyImportText(text);
+        }
+
+        static void ApplyImportText(string text)
         {
             ImportText = (text ?? "").Trim();
             Decode();
