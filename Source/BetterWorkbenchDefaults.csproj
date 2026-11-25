@@ -4,6 +4,11 @@
   <PropertyGroup>
     <AssemblyName>BetterWorkbenchDefaults</AssemblyName>
     <RootNamespace>BetterWorkbenchDefaults</RootNamespace>
+    <!-- the missing-framework guard (JBFramework build/JBGuard.props; LoadFolders.xml loads it only without the framework).
+         Loss line: what a colony saved without the mod loses. Presets live in the library outside saves and are not lost. -->
+    <JBGuard>true</JBGuard>
+    <JBGuardLoss>the bill and shelf settings waiting for buildings not yet built (your presets stay safe)</JBGuardLoss>
+    <JBGuardLossDe>die Auftrags- und Regaleinstellungen, die auf noch nicht fertige Gebäude warten (deine Vorlagen bleiben erhalten)</JBGuardLossDe>
   </PropertyGroup>
   <Import Project="$(MSBuildProjectDirectory)/../../JBFramework/build/JBMod.props" />
   <ItemGroup>
