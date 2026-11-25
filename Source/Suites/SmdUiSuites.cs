@@ -37,24 +37,6 @@ namespace BetterWorkbenchDefaults.Suites
             return e.ToString(SaveOptions.DisableFormatting);
         }
 
-        /// <summary>Waits until <paramref name="frames"/> more frames were drawn (ticks run many per frame at top speed).</summary>
-        public static IEnumerable<int> Frames(int frames)
-        {
-            int until = Time.frameCount + frames, guard = 0;
-            while (Time.frameCount < until && guard++ < 4000) yield return 1;
-        }
-
-        public static string ShotDir => Environment.GetEnvironmentVariable("JB_UI_SHOTS") is string v && v.Length > 1 ? v : null;
-
-        public static int Shots;
-        public static void Shot(string name)
-        {
-            var dir = ShotDir;
-            if (dir == null) return;
-            try { Messages.Clear(); Directory.CreateDirectory(dir); ScreenCapture.CaptureScreenshot(Path.Combine(dir, name + ".png")); Shots++; }
-            catch (Exception e) { Log.Warning("[JBTEST] screenshot failed: " + e.Message); }
-        }
-
         public static T NoPause<T>(T w) where T : Window { w.forcePause = false; w.absorbInputAroundWindow = false; return w; }
 
         /// <summary>A bench preset (one bill) saved under <paramref name="key"/>; the bench is removed again.</summary>
@@ -253,7 +235,6 @@ namespace BetterWorkbenchDefaults.Suites
             while (SmdGameData.startCard != SmdGameData.StartDone && Time.realtimeSinceStartup < until) yield return 1;
             t.Check(SmdGameData.startCard == SmdGameData.StartDone && SmdGameData.startChoice == "", "the new colony's card opened by itself and was resolved with \"my defaults\" (" + SmdGameData.startCard + ", \"" + SmdGameData.startChoice + "\")");
             t.Check(SmdStartCard.AppliedCount == 1, "applied once so far (" + SmdStartCard.AppliedCount + ")");
-            t.Check(!SmdStartCard.Due(), "not due any more");
 
             var backup = U.Backup();
             var ps = Find.PlaySettings;
@@ -262,12 +243,10 @@ namespace BetterWorkbenchDefaults.Suites
             var oldPawn = colonists.Select(p => (p, p.playerSettings.hostilityResponse, p.playerSettings.medCare)).ToList();
             var st = new T.Settings(t.Mod).Section(SmdSections.Library, true).Section(SmdSections.Colony, true).Section(SmdSections.Pawns, true)
                 .Set("smd.autoApplyToNewPawns", true).Set("smd.pawnApplyHostility", true);
-            bool sup = SmdStartCard.Suppressed;
             const string key = "TableButcher", bench = "SMD start bench", prof = "SMD Start";
-            Dialog_SmdStartCard card = null;
+            Window card = null;
             try
             {
-                SmdStartCard.Suppressed = true;
                 // the profile: a bench default, a colonist preset that flees, colony settings with auto rebuild flipped
                 t.Check(U.BenchPreset(t, key, bench, "ButcherCorpseFlesh"), "bench preset");
                 var model = colonists[0];
@@ -285,24 +264,22 @@ namespace BetterWorkbenchDefaults.Suites
                 // 2. the card on a new colony, profile chosen
                 SmdGameData.startCard = SmdGameData.StartNewColony; SmdGameData.startChoice = null;
                 int applied0 = SmdStartCard.AppliedCount;
-                card = U.NoPause(SmdStartCard.OpenNow(false));
-                foreach (var y in U.Frames(3)) yield return y;
-                t.Check(card.IsOpen && card.Choice == "", "the card opens with \"Use my defaults\" chosen");
-                card.Choice = prof;
-                foreach (var y in U.Frames(2)) yield return y;
-                card.Close(false);
-                foreach (var y in U.Frames(2)) yield return y;
+                SmdStartCard.Begin();
+                card = t.OpenWelcomeCard();
+                foreach (var y in t.Frames(3)) yield return y;
+                t.Check(card != null && card.IsOpen && SmdStartCard.Choice == "", "the framework's welcome card opens with \"Use my defaults\" chosen");
+                SmdStartCard.Choice = prof;
+                foreach (var y in t.Frames(2)) yield return y;
+                card?.Close(false);
+                foreach (var y in t.Frames(2)) yield return y;
                 t.Check(SmdStartCard.AppliedCount == applied0 + 1 && SmdGameData.startCard == SmdGameData.StartDone && SmdGameData.startChoice == prof, "closing applied the choice once (" + SmdGameData.startChoice + ")");
                 t.Check(DefaultBillsDatabase.GetStored(key)?.DefaultPreset?.name == bench, "the profile's bench preset is the default");
                 t.Check(ps.autoRebuild == !before.autoRebuild, "the profile's colony settings were applied to this colony");
                 t.Check(colonists.All(p => p.playerSettings.hostilityResponse == HostilityResponseMode.Ignore), "the starting colonists got the profile's colonist preset");
 
-                // 3. exactly once: closing again, Apply again, Due
-                card.Finish();
-                t.Check(!SmdStartCard.Apply(prof, true, false) && SmdStartCard.AppliedCount == applied0 + 1, "a second Finish / Apply does nothing");
-                SmdStartCard.Suppressed = false;
-                t.Check(!SmdStartCard.Due(), "no card is due after it was done");
-                SmdStartCard.Suppressed = true;
+                // 3. exactly once: closing again, Apply again
+                SmdStartCard.Closed(false);
+                t.Check(!SmdStartCard.Apply(prof, true, false) && SmdStartCard.AppliedCount == applied0 + 1, "a second close / Apply does nothing");
                 foreach (var p in colonists) p.playerSettings.hostilityResponse = HostilityResponseMode.Flee;
                 ps.autoRebuild = before.autoRebuild;
 
@@ -325,10 +302,7 @@ namespace BetterWorkbenchDefaults.Suites
                     catch { Scribe.ForceStop(); throw; }
                     File.Delete(tmp);
                     t.Check(SmdGameData.startCard == SmdGameData.StartDone && SmdGameData.startChoice == prof && SmdGameData.KnownCount == known, "after the load the card is done and the roster intact");
-                    SmdStartCard.Suppressed = false;
-                    bool due = SmdStartCard.Due();
-                    SmdStartCard.Suppressed = true;
-                    t.Check(!due, "after the load no card is due");
+                    t.Check(!SmdStartCard.Apply(prof, false, false), "after the load the choice cannot apply again");
                     t.Check(colonists.All(p => p.playerSettings.hostilityResponse == HostilityResponseMode.Flee) && ps.autoRebuild == before.autoRebuild, "nothing was applied again by the load");
                 }
                 try { File.Delete(path); } catch { }
@@ -336,10 +310,10 @@ namespace BetterWorkbenchDefaults.Suites
                 // 5. joined an existing save: only the modes, nothing applied to the colony
                 SmdGameData.startCard = SmdGameData.StartJoined; SmdGameData.startChoice = null;
                 string lib0 = U.Xml(SmdLibraryStore.Content);
-                card = U.NoPause(SmdStartCard.OpenNow(true));
-                foreach (var y in U.Frames(3)) yield return y;
-                card.Close(false);
-                foreach (var y in U.Frames(2)) yield return y;
+                card = t.OpenWelcomeCard();
+                foreach (var y in t.Frames(3)) yield return y;
+                card?.Close(false);
+                foreach (var y in t.Frames(2)) yield return y;
                 t.Check(SmdGameData.startCard == SmdGameData.StartDone && SmdGameData.startChoice == "" && U.Xml(SmdLibraryStore.Content) == lib0 && ps.autoRebuild == before.autoRebuild,
                     "the joined card is done and changed nothing");
                 t.Check(!SmdUi.Errors.ContainsKey("card"), "the card drew without error" + (SmdUi.Errors.TryGetValue("card", out var err) ? ": " + err : ""));
@@ -347,7 +321,6 @@ namespace BetterWorkbenchDefaults.Suites
             finally
             {
                 if (card != null && card.IsOpen) card.Close(false);
-                SmdStartCard.Suppressed = sup;
                 SmdGameData.startCard = SmdGameData.StartDone;
                 U.Restore(backup);
                 ps.autoRebuild = before.autoRebuild; ps.defaultCareForColonist = before.defaultCareForColonist;
@@ -371,14 +344,12 @@ namespace BetterWorkbenchDefaults.Suites
         public override IEnumerable<int> Run(TestContext t)
         {
             var backup = U.Backup();
-            float scale0 = Prefs.UIScale;
-            bool sup = SmdStartCard.Suppressed;
             var st = new T.Settings(t.Mod).Section(SmdSections.Library, true);
             var made = new List<Zone>();
             var open = new List<Window>();
+            IDisposable screen = null;
             try
             {
-                SmdStartCard.Suppressed = true;
                 // ---- a realistic library
                 U.BenchPreset(t, "ElectricStove", "Kitchen (simple meals)", "CookMealSimple", "CookMealFine", "Make_Pemmican");
                 U.BenchPreset(t, "ElectricStove", "Feast before the raid", "CookMealLavish");
@@ -402,14 +373,15 @@ namespace BetterWorkbenchDefaults.Suites
                 t.Check(SmdLibraryApi.Status().buildingPresets >= 5 && SmdLibraryApi.ListProfiles().Count >= 3, "library filled (" + SmdLibraryApi.Status().buildingPresets + " building presets, " + SmdLibraryApi.ListProfiles().Count + " profiles)");
 
                 Messages.Clear();
-                foreach (var y in U.Frames(2)) yield return y;
+                foreach (var y in t.Frames(2)) yield return y;
                 var k = t.Mod;
                 var sizes = new[] { (1.5f, 1280, 720), (1f, 1920, 1080), (0.75f, 2560, 1440) };
                 foreach (var (scale, w, h) in sizes)
                 {
                     string tag = w + "x" + h;
-                    Prefs.UIScale = scale;
-                    foreach (var y in U.Frames(4)) yield return y;
+                    screen?.Dispose();
+                    screen = t.ScreenHeight(h);
+                    foreach (var y in t.Frames(4)) yield return y;
                     t.Check(Math.Abs(UI.screenWidth - w) <= 1 && Math.Abs(UI.screenHeight - h) <= 1, tag + ": the game lays out for " + UI.screenWidth + "x" + UI.screenHeight);
 
                     // settings window pages
@@ -420,15 +392,15 @@ namespace BetterWorkbenchDefaults.Suites
                         var dlg = Find.WindowStack.WindowOfType<Dialog_ModSettings>();
                         if (dlg != null) { U.NoPause(dlg); open.Add(dlg); }
                         SmdUi.Draws.TryGetValue(page, out int d0);
-                        foreach (var y in U.Frames(4)) yield return y;
-                        U.Shot("smd_settings_" + tag + "_" + page);
-                        foreach (var y in U.Frames(2)) yield return y;
+                        foreach (var y in t.Frames(4)) yield return y;
+                        t.Shot("smd_settings_" + tag + "_" + page);
+                        foreach (var y in t.Frames(2)) yield return y;
                         SmdUi.Draws.TryGetValue(page, out int d1);
                         t.Check(dlg != null && d1 > d0 && !SmdUi.Errors.ContainsKey(page), tag + " settings window, " + page + ": drawn " + (d1 - d0) + " frames"
                             + (SmdUi.Errors.TryGetValue(page, out var e) ? ", ERROR " + e : ""));
                         if (dlg != null) t.Check(InsideScreen(dlg.windowRect), tag + " settings window inside the screen " + R(dlg.windowRect));
                         dlg?.Close(false);
-                        foreach (var y in U.Frames(1)) yield return y;
+                        foreach (var y in t.Frames(1)) yield return y;
                     }
 
                     // the in-game library window, every tab
@@ -439,9 +411,9 @@ namespace BetterWorkbenchDefaults.Suites
                         SmdLibraryUi.SetImportText(tab == SmdLibraryUi.PageShare ? share : "");
                         win.Tab = tab;
                         SmdUi.Draws.TryGetValue(tab, out int d0);
-                        foreach (var y in U.Frames(4)) yield return y;
-                        U.Shot("smd_window_" + tag + "_" + tab);
-                        foreach (var y in U.Frames(2)) yield return y;
+                        foreach (var y in t.Frames(4)) yield return y;
+                        t.Shot("smd_window_" + tag + "_" + tab);
+                        foreach (var y in t.Frames(2)) yield return y;
                         SmdUi.Draws.TryGetValue(tab, out int d1);
                         t.Check(win.IsOpen && d1 > d0 && !SmdUi.Errors.ContainsKey(tab) && !SmdUi.Errors.ContainsKey("window"), tag + " library window, " + tab + ": drawn");
                         t.Check(InsideScreen(win.windowRect), tag + " library window inside the screen " + R(win.windowRect));
@@ -453,29 +425,30 @@ namespace BetterWorkbenchDefaults.Suites
                     foreach (bool joined in new[] { false, true })
                     {
                         int state = SmdGameData.startCard;
-                        var card = U.NoPause(SmdStartCard.OpenNow(joined)); open.Add(card);
-                        card.Choice = joined ? "" : "Tribal start";
-                        foreach (var y in U.Frames(4)) yield return y;
-                        U.Shot("smd_card_" + tag + (joined ? "_joined" : "_new"));
-                        foreach (var y in U.Frames(2)) yield return y;
-                        t.Check(card.IsOpen && !SmdUi.Errors.ContainsKey("card") && InsideScreen(card.windowRect), tag + " welcome card " + (joined ? "(joined)" : "(new colony)") + " drawn, inside " + R(card.windowRect));
-                        // the three "what happens by itself" choices are fully in view (not below the fold), and the start choices keep room
-                        t.Check(card.ModesRect.height > 0 && card.ModesRect.yMax <= card.ContentRect.yMax - 60f && (joined || card.BodyRect.height >= 90f),
-                            tag + " welcome card: the mode choices are in view " + R(card.ModesRect) + " of " + R(card.ContentRect) + (joined ? "" : ", start choices get " + card.BodyRect.height.ToString("0") + " px"));
+                        SmdGameData.startCard = joined ? SmdGameData.StartJoined : SmdGameData.StartNewColony;
+                        SmdStartCard.Begin();
+                        SmdStartCard.Choice = joined ? "" : "Tribal start";
+                        SmdUi.Draws.TryGetValue("card", out int c0);
+                        var card = t.OpenWelcomeCard(); if (card != null) open.Add(card);
+                        foreach (var y in t.Frames(4)) yield return y;
+                        t.Shot("smd_card_" + tag + (joined ? "_joined" : "_new"));
+                        foreach (var y in t.Frames(2)) yield return y;
+                        SmdUi.Draws.TryGetValue("card", out int c1);
+                        t.Check(card != null && card.IsOpen && c1 > c0 && !SmdUi.Errors.ContainsKey("card") && InsideScreen(card.windowRect),
+                            tag + " welcome card " + (joined ? "(joined)" : "(new colony)") + " with this mod's part drawn, inside " + (card != null ? R(card.windowRect) : "-"));
                         SmdGameData.startCard = SmdGameData.StartDone; // closing must not apply anything here
-                        card.Close(false);
+                        card?.Close(false);
                         SmdGameData.startCard = state;
-                        foreach (var y in U.Frames(1)) yield return y;
+                        foreach (var y in t.Frames(1)) yield return y;
                     }
                 }
+                screen?.Dispose(); screen = null;
                 t.Check(SmdUi.Errors.Count == 0, "no page threw (" + string.Join("; ", SmdUi.Errors.Select(x => x.Key + ": " + x.Value)) + ")");
-                if (U.ShotDir != null) t.Note(U.Shots + " screenshots");
             }
             finally
             {
                 foreach (var w in open) if (w.IsOpen) w.Close(false);
-                Prefs.UIScale = scale0;
-                SmdStartCard.Suppressed = sup;
+                screen?.Dispose();
                 SmdLibraryUi.SetImportText("");
                 SmdLibraryUi.Expanded.Clear();
                 foreach (var z in made) z.Delete();

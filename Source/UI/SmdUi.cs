@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JBFramework;
 using UnityEngine;
 using Verse;
 
@@ -12,9 +13,8 @@ namespace BetterWorkbenchDefaults
     /// </summary>
     internal static class SmdUi
     {
-        /// <summary>The mod's accent (same as KitInfo.Theme.Accent). FW-REQUEST: KitStyle.Accent outside the framework window is
-        /// Hearth &amp; Harbor amber (KitMod.Drawing is internal); a public KitStyle.AccentOf(KitMod) would let us drop this copy.</summary>
-        public static readonly Color Accent = new Color(0.47f, 0.72f, 0.45f);
+        /// <summary>The mod's accent (KitInfo.Theme.Accent, read from the framework), also in this mod's own windows.</summary>
+        public static Color Accent { get { var k = WBD_Mod.K; return k != null ? KitStyle.AccentOf(k) : new Color(0.47f, 0.72f, 0.45f); } }
         public static Color AccentSoft => new Color(Accent.r, Accent.g, Accent.b, 0.16f);
         public static readonly Color Grey = new Color(0.72f, 0.72f, 0.72f);
         public static readonly Color DimGrey = new Color(0.56f, 0.56f, 0.56f);

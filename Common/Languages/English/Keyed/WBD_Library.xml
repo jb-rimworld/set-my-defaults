@@ -107,9 +107,6 @@
   <WBD_ShareImport>Import as profile</WBD_ShareImport>
   <WBD_ShareImportNote>Importing only stores a profile. Your defaults change when you apply it.</WBD_ShareImportNote>
   <WBD_ShareImported>Imported as profile "{0}". Apply it on Profiles.</WBD_ShareImported>
-  <WBD_CardTitle>Set my Defaults: how should this colony start?</WBD_CardTitle>
-  <WBD_CardTitleJoined>Set my Defaults joined this colony</WBD_CardTitleJoined>
-  <WBD_CardPitch>Your saved bills, shelves, zones, colonists and policies carry over to new colonies. Pick what this one starts with.</WBD_CardPitch>
   <WBD_CardPitchJoined>Nothing in this colony was changed. Choose how much happens by itself from now on.</WBD_CardPitchJoined>
   <WBD_CardStartWith>Start this colony with</WBD_CardStartWith>
   <WBD_CardMine>Use my defaults</WBD_CardMine>
@@ -118,14 +115,6 @@
   <WBD_CardNoProfiles>Profiles ("Tribal start", "Mechanitor run") appear here once you save one: Defaults button, Library and profiles.</WBD_CardNoProfiles>
   <WBD_CardAlsoPolicies>Also bring my saved policies into this colony</WBD_CardAlsoPolicies>
   <WBD_CardAlsoPoliciesTip>Creates your saved outfit, drug, food and reading policies and moves the starting colonists to their defaults.</WBD_CardAlsoPoliciesTip>
-  <WBD_CardModes>What happens by itself</WBD_CardModes>
-  <WBD_CardHint>Everything here can be changed later with the Defaults button (Library and profiles) or in Mod settings. Closing this card keeps your choices.</WBD_CardHint>
-  <WBD_CardUseForAll>Use these choices for all new colonies</WBD_CardUseForAll>
-  <WBD_CardUseForAllTip>Saves "What happens by itself" as the template for new games.</WBD_CardUseForAllTip>
-  <WBD_CardNeverAgain>Don't show welcome cards again</WBD_CardNeverAgain>
-  <WBD_CardNeverAgainTip>For every JB mod: new colonies then use your defaults without asking. Switch the cards back on in Mod settings, JB Framework.</WBD_CardNeverAgainTip>
-  <WBD_CardOpenLibrary>Open library</WBD_CardOpenLibrary>
-  <WBD_CardStart>Start</WBD_CardStart>
   <WBD_CardApplied>Profile "{0}" applied to this colony:</WBD_CardApplied>
   <WBD_CardAppliedPawns>colonist preset for the starting colonists ({0})</WBD_CardAppliedPawns>
   <WBD_PvCount_Bills_One>1 bill preset</WBD_PvCount_Bills_One>
@@ -139,10 +128,18 @@
   <WBD_BackupProfileMade>Your previous versions are kept as the profile "{0}".</WBD_BackupProfileMade>
   <WBD_SaveFailedReason>Could not save the library ({0}). Nothing was changed; your presets are as before.</WBD_SaveFailedReason>
   <WBD_CardReplaceConfirm>Start with "{0}"?\n\nThe profile replaces these presets in your library with its own versions: {1}\n\nYour current versions are kept as the profile "{2}", so you can get them back at any time.</WBD_CardReplaceConfirm>
+  <WBD_CardApplyProfile>Apply the profile</WBD_CardApplyProfile>
+  <WBD_CardUseMineInstead>Use my defaults instead</WBD_CardUseMineInstead>
   <WBD_CardWillReplace>Replaces {0} of your presets with its own versions (yours are kept as the profile "{1}").</WBD_CardWillReplace>
   <WBD_CardLibraryNotSaved>Your library could not be updated ({0}): this colony uses the profile, but new buildings and colonists get the presets your library had.</WBD_CardLibraryNotSaved>
   <WBD_LibraryUsingBackup>Until then this game uses the previous version (Library.xml.bak), so new buildings and colonists still get your defaults.</WBD_LibraryUsingBackup>
   <WBD_LibraryReadOnlyWhy>Reason: {0}</WBD_LibraryReadOnlyWhy>
+  <WBD_FileErrUnreadable>Library.xml cannot be read</WBD_FileErrUnreadable>
+  <WBD_FileErrChangedUnreadable>Library.xml was changed outside this game and cannot be read</WBD_FileErrChangedUnreadable>
+  <WBD_FileErrFolderNotCreatable>the library folder cannot be created</WBD_FileErrFolderNotCreatable>
+  <WBD_FileErrFolderNotWritable>the library folder is not writable</WBD_FileErrFolderNotWritable>
+  <WBD_FileErrLocked>another game is writing the library right now; try again in a moment</WBD_FileErrLocked>
+  <WBD_FileErrWriteFailed>writing Library.xml failed</WBD_FileErrWriteFailed>
   <WBD_LibRestoreBackup>Restore the backup</WBD_LibRestoreBackup>
   <WBD_LibRestoreBackupTip>Puts Library.xml.bak back as Library.xml. The current file is not deleted: it is kept as Library.broken-&lt;date&gt;.xml in the same folder.</WBD_LibRestoreBackupTip>
   <WBD_LibRestoreDone>The backup was restored; your presets can be changed again.</WBD_LibRestoreDone>

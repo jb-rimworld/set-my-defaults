@@ -100,7 +100,7 @@ namespace BetterWorkbenchDefaults.Suites
         public override IEnumerable<int> Run(TestContext t)
         {
             var map = t.Map;
-            var comp = Current.Game.GetComponent<PawnDefaultsGameComponent>();
+            var comp = SmdRoster.Current;
             t.Check(comp != null && comp.BaselineTaken, "the roster baseline is taken in a new game");
             var colonists = map.mapPawns.FreeColonists.ToList();
             t.Check(colonists.Count >= 2 && colonists.All(p => comp.IsKnown(p.thingIDNumber)), "every starting colonist is known (" + colonists.Count + ", known " + SmdGameData.KnownCount + ")");
@@ -449,7 +449,7 @@ namespace BetterWorkbenchDefaults.Suites
         {
             var ps = Find.PlaySettings;
             var before = (ps.defaultCareForColonist, ps.autoRebuild, ps.useWorkPriorities);
-            var comp = Current.Game.GetComponent<PawnDefaultsGameComponent>();
+            var comp = SmdRoster.Current;
             var st = new T.Settings(t.Mod).Section(SmdSections.Colony, true).Set("smd.colonyApplyOnNewGame", true);
             try
             {
@@ -466,8 +466,8 @@ namespace BetterWorkbenchDefaults.Suites
 
                 // the hook runs once per game: starting it again changes nothing
                 ps.defaultCareForColonist = MedicalCareCategory.Best; ps.autoRebuild = false;
-                comp.StartedNewGame();
-                t.Check(ps.defaultCareForColonist == MedicalCareCategory.Best && !ps.autoRebuild, "a second StartedNewGame does not apply again (flag in the save)");
+                SmdRoster.GameStarted();
+                t.Check(ps.defaultCareForColonist == MedicalCareCategory.Best && !ps.autoRebuild, "a second new-game hook does not apply again (flag in the save)");
                 yield return 1;
             }
             finally
@@ -743,21 +743,16 @@ namespace BetterWorkbenchDefaults.Suites
             }
             t.Check(total == 0 || same == total, "migrated configs equal their source (" + same + "/" + total + ")");
             // the live templates read without red errors (counted while reading, not just left to the run report)
-            int reds = 0, read = 0, readOk = 0;
-            UnityEngine.Application.LogCallback onLog = (msg, stack, type) => { if (type == UnityEngine.LogType.Error || type == UnityEngine.LogType.Exception) reds++; };
-            UnityEngine.Application.logMessageReceivedThreaded += onLog;
-            try
-            {
-                foreach (var set in lib.content.buildings)
-                    foreach (var p in set.presets)
-                    {
-                        var snap = new ConfigSnapshot();
-                        read++;
-                        if (SmdScribe.Read(p.config, snap.ExposeData)) readOk++;
-                    }
-            }
-            finally { UnityEngine.Application.logMessageReceivedThreaded -= onLog; }
-            t.Check(read > 0 && readOk == read && reds == 0, "every migrated preset reads back through the 1.x reader (" + readOk + "/" + read + ", red errors while reading: " + reds + ")");
+            int read = 0, readOk = 0, mark = t.Mark();
+            foreach (var set in lib.content.buildings)
+                foreach (var p in set.presets)
+                {
+                    var snap = new ConfigSnapshot();
+                    read++;
+                    if (SmdScribe.Read(p.config, snap.ExposeData)) readOk++;
+                }
+            t.Check(read > 0 && readOk == read, "every migrated preset reads back through the 1.x reader (" + readOk + "/" + read + ")");
+            t.CheckNoRedErrors(mark, "reading every migrated preset");
             var r2 = LegacyMigration.ImportAll(dir, lib, false);
             t.Check(r2.buildingPresets == 0 && r2.pawnPresets == 0 && r2.skippedExisting > 0, "a second import adds nothing (" + r2 + ")");
             yield return 1;
@@ -825,7 +820,8 @@ namespace BetterWorkbenchDefaults.Suites
         {
             foreach (var id in KitNiceBillTab.PackageIds)
                 t.Note(id + ": ModsConfig.IsActive " + ModsConfig.IsActive(id) + ", ModLister " + (ModLister.GetActiveModWithIdentifier(id, true) != null) + ", KitDetect " + KitDetect.IsActive(id));
-            t.Check(SmdCompat.NiceBillTabLoaded, "Nice Bill Tab code is loaded (framework adapter: " + KitNiceBillTab.Active + "; active ids: " + string.Join(", ", KitNiceBillTab.PackageIds.Where(KitDetect.IsActive)) + ")");
+            t.Check(KitNiceBillTab.Active, "Nice Bill Tab code is loaded (framework adapter; active ids: " + string.Join(", ", KitNiceBillTab.PackageIds.Where(KitDetect.IsActive)) + ")");
+            t.Check(t.Mod.CompatOn(SmdCompat.NiceBillTabId), "the integration is on (Compatibility page switch, on while Nice Bill Tab is present)");
             var flag = AccessTools.Field(AccessTools.TypeByName("NiceBillTab.TabBillsDrawer"), "shouldRefreshFilter");
             t.Check(flag != null, "its refresh flag exists");
             if (flag == null) yield break;
@@ -850,11 +846,14 @@ namespace BetterWorkbenchDefaults.Suites
                 yield return 120;
                 // Nice Bill Tab clears the flag when it draws its tab; in an offscreen test run the inspect pane may not be drawn.
                 t.Note("after 120 ticks the flag is " + ((bool)flag.GetValue(null) ? "still set (tab not drawn in this run)" : "cleared: Nice Bill Tab rebuilt its list"));
-                var st = new T.Settings(t.Mod).Set("smd.compatNiceBillTab", false);
+                // FW-REQUEST (16, after the freeze): no public way to flip a compat switch from a test; the suite calls the internal
+                // setter the Compatibility page uses (test code only, never shipped).
+                var setCompat = AccessTools.Method(typeof(KitMod), "SetCompat");
+                t.Check(setCompat != null && (bool)setCompat.Invoke(t.Mod, new object[] { SmdCompat.NiceBillTabId, false }) && !t.Mod.CompatOn(SmdCompat.NiceBillTabId), "integration switched off");
                 flag.SetValue(null, false);
                 DefaultBillsController.ApplyPreset(bench, "TableButcher", "SMD test nbt");
                 t.Check(!(bool)flag.GetValue(null), "integration switched off on the Compatibility page: no refresh request");
-                st.Restore();
+                setCompat?.Invoke(t.Mod, new object[] { SmdCompat.NiceBillTabId, true });
             }
             finally
             {
@@ -920,6 +919,20 @@ namespace BetterWorkbenchDefaults.Suites
         {
             int known = SmdGameData.KnownCount, version = SmdGameData.rosterVersion, baseline = SmdGameData.baselineTick;
             bool colony = SmdGameData.colonyDefaultsApplied;
+            // a queued blueprint config (Blueprints Forked) lives in the framework's per-map data
+            var model = T.Spawn(t, "TableButcher");
+            T.AddBill(model, "ButcherCorpseFlesh");
+            var snap = ConfigSnapshot.Capture(model);
+            T.Kill(model);
+            var bdef = T.Def("TableButcher");
+            IntVec3 cell = IntVec3.Invalid;
+            if (TestCells.TryFindFreeRect(t.Map, 5, 4, out var rect))
+            {
+                cell = rect.CenterCell;
+                GenConstruct.PlaceBlueprintForBuild(bdef, cell, t.Map, Rot4.North, Faction.OfPlayer, GenStuff.DefaultStuffFor(bdef));
+                SmdPending.Register(t.Map, cell, bdef, snap);
+            }
+            t.Check(cell.IsValid && SmdMapData.Peek(t.Map)?.Count == 1, "a blueprint config is queued on the map");
             string name = "jb_smd_savedata";
             GameDataSaveLoader.SaveGame(name);
             yield return 5;
@@ -929,7 +942,7 @@ namespace BetterWorkbenchDefaults.Suites
             t.Check(!text.Contains("BetterWorkbenchDefaults.PawnDefaultsGameComponent") && !text.Contains("BetterWorkbenchDefaults.WBD_PendingConfigs"), "no class of this mod in the save (removal-safe)");
             t.Check(!text.Contains("Class=\"BetterWorkbenchDefaults."), "no Class attribute naming this mod anywhere in the save");
             t.Check(text.Contains("<rosterVersion>1</rosterVersion>") && text.Contains("<known>"), "the roster is saved inside the framework's node");
-            t.Check(Current.Game.components.Count(c => c is PawnDefaultsGameComponent) == 1 && t.Map.components.Count(c => c is WBD_PendingConfigs) == 1, "exactly one of each of our components is back in the running game after saving");
+            t.Check(!Current.Game.components.Any(c => c is PawnDefaultsGameComponent) && !t.Map.components.Any(c => c is WBD_PendingConfigs), "no component of this mod in the running game (the old ones are legacy only)");
             // read the node back the way a load does
             SmdGameData.Reset();
             t.Check(SmdGameData.KnownCount == 0, "reset clears the data (as before a load)");
@@ -947,6 +960,41 @@ namespace BetterWorkbenchDefaults.Suites
             }
             t.Check(SmdGameData.KnownCount == known && SmdGameData.rosterVersion == version && SmdGameData.baselineTick == baseline && SmdGameData.colonyDefaultsApplied == colony,
                 "known " + SmdGameData.KnownCount + "/" + known + ", version, baseline and colony flag came back");
+            var mapNode = doc.Descendants("li").FirstOrDefault(e => (string)e.Element("id") == "juliusberger.workbenchbilldefaults" && e.Parent?.Parent?.Attribute("Class")?.Value == typeof(FrameworkMap).FullName);
+            t.Check(mapNode?.Element("data")?.Element("pending")?.Elements("li").Count() == 1, "the queued config is in the framework's map node of the save");
+
+            // an early 2.0 save kept the pending configs in the game node (keyed by map): read once, moved to the map's data
+            if (cell.IsValid && node != null)
+            {
+                SmdMapData.Reset(t.Map);
+                string ctmp = Path.Combine(GenFilePaths.SaveDataFolderPath, "smd_cfg.xml");
+                Scribe.saver.InitSaving(ctmp, "root");
+                try { Scribe_Deep.Look(ref snap, "config"); } finally { Scribe.saver.FinalizeSaving(); }
+                var cfg = XDocument.Load(ctmp).Root.Element("config");
+                var legacy = new XElement("root", new XElement("rosterVersion", 1), new XElement("pending", new XElement("li", new XElement("map", t.Map.uniqueID),
+                    new XElement("entries", new XElement("li", new XElement("cell", cell.ToString()), new XElement("def", "TableButcher"), cfg)))));
+                File.WriteAllText(ctmp, legacy.ToString());
+                SmdGameData.Reset();
+                Scribe.loader.InitLoading(ctmp);
+                try { SmdGameData.Expose(); Scribe.loader.FinalizeLoading(); }
+                catch { Scribe.ForceStop(); throw; }
+                File.Delete(ctmp);
+                SmdGameData.MoveLegacyPending();
+                var moved = SmdMapData.Peek(t.Map);
+                t.Check(moved != null && moved.Count == 1 && moved[0].cell == cell && moved[0].def == bdef && !moved[0].snapshot.IsEmpty,
+                    "a pending config from the game node of an early 2.0 save moved to its map (" + (moved?.Count ?? 0) + ")");
+                foreach (var th in cell.GetThingList(t.Map).Where(th => th is Blueprint).ToList()) th.Destroy();
+                SmdMapData.Reset(t.Map);
+                // put this game's own data back (the legacy read replaced it)
+                SmdGameData.Reset();
+                string tmp2 = Path.Combine(GenFilePaths.SaveDataFolderPath, "smd_node.xml");
+                File.WriteAllText(tmp2, "<root>" + string.Concat(node.Nodes()) + "</root>");
+                Scribe.loader.InitLoading(tmp2);
+                try { SmdGameData.Expose(); Scribe.loader.FinalizeLoading(); }
+                catch { Scribe.ForceStop(); throw; }
+                File.Delete(tmp2);
+                t.Check(SmdGameData.KnownCount == known && SmdGameData.baselineTick == baseline, "this game's roster is back after the legacy test");
+            }
             try { File.Delete(path); } catch { }
         }
     }

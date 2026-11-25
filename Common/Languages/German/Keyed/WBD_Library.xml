@@ -107,9 +107,6 @@
   <WBD_ShareImport>Als Profil importieren</WBD_ShareImport>
   <WBD_ShareImportNote>Importieren speichert nur ein Profil. Deine Vorgaben ändern sich erst, wenn du es anwendest.</WBD_ShareImportNote>
   <WBD_ShareImported>Als Profil „{0}“ importiert. Unter Profile kannst du es anwenden.</WBD_ShareImported>
-  <WBD_CardTitle>Set my Defaults: Womit startet diese Kolonie?</WBD_CardTitle>
-  <WBD_CardTitleJoined>Set my Defaults ist dieser Kolonie beigetreten</WBD_CardTitleJoined>
-  <WBD_CardPitch>Deine gespeicherten Aufträge, Regale, Zonen, Kolonisten und Richtlinien gehen in neue Kolonien mit. Wähle, womit diese startet.</WBD_CardPitch>
   <WBD_CardPitchJoined>In dieser Kolonie wurde nichts geändert. Wähle, wie viel ab jetzt von selbst passiert.</WBD_CardPitchJoined>
   <WBD_CardStartWith>Diese Kolonie startet mit</WBD_CardStartWith>
   <WBD_CardMine>Meine Vorgaben</WBD_CardMine>
@@ -118,14 +115,6 @@
   <WBD_CardNoProfiles>Profile („Stammesstart“, „Mechanitor-Run“) erscheinen hier, sobald du eines speicherst: Vorgaben-Knopf, Bibliothek und Profile.</WBD_CardNoProfiles>
   <WBD_CardAlsoPolicies>Auch meine gespeicherten Richtlinien in diese Kolonie übernehmen</WBD_CardAlsoPolicies>
   <WBD_CardAlsoPoliciesTip>Legt deine gespeicherten Kleidungs-, Drogen-, Essens- und Leserichtlinien an und setzt die Startkolonisten auf deren Standard.</WBD_CardAlsoPoliciesTip>
-  <WBD_CardModes>Was von selbst passiert</WBD_CardModes>
-  <WBD_CardHint>Alles hier lässt sich später über den Vorgaben-Knopf (Bibliothek und Profile) oder in den Mod-Einstellungen ändern. Schließen der Karte behält deine Auswahl.</WBD_CardHint>
-  <WBD_CardUseForAll>Diese Auswahl für alle neuen Kolonien nutzen</WBD_CardUseForAll>
-  <WBD_CardUseForAllTip>Speichert „Was von selbst passiert“ als Vorlage für neue Spiele.</WBD_CardUseForAllTip>
-  <WBD_CardNeverAgain>Willkommenskarten nicht mehr zeigen</WBD_CardNeverAgain>
-  <WBD_CardNeverAgainTip>Für alle JB-Mods: Neue Kolonien nutzen dann ohne Nachfrage deine Vorgaben. Wieder einschalten in den Mod-Einstellungen, JB Framework.</WBD_CardNeverAgainTip>
-  <WBD_CardOpenLibrary>Bibliothek öffnen</WBD_CardOpenLibrary>
-  <WBD_CardStart>Los geht's</WBD_CardStart>
   <WBD_CardApplied>Profil „{0}“ auf diese Kolonie angewendet:</WBD_CardApplied>
   <WBD_CardAppliedPawns>Kolonisten-Vorlage für die Startkolonisten ({0})</WBD_CardAppliedPawns>
   <WBD_PvCount_Bills_One>1 Auftrags-Vorlage</WBD_PvCount_Bills_One>
@@ -139,10 +128,18 @@
   <WBD_BackupProfileMade>Deine bisherigen Fassungen liegen im Profil „{0}“.</WBD_BackupProfileMade>
   <WBD_SaveFailedReason>Die Bibliothek ließ sich nicht speichern ({0}). Nichts wurde geändert; deine Vorlagen sind wie vorher.</WBD_SaveFailedReason>
   <WBD_CardReplaceConfirm>Mit „{0}“ starten?\n\nDas Profil ersetzt diese Vorlagen in deiner Bibliothek durch seine eigenen Fassungen: {1}\n\nDeine bisherigen Fassungen bleiben im Profil „{2}“ erhalten, du bekommst sie jederzeit zurück.</WBD_CardReplaceConfirm>
+  <WBD_CardApplyProfile>Profil anwenden</WBD_CardApplyProfile>
+  <WBD_CardUseMineInstead>Lieber meine Vorgaben</WBD_CardUseMineInstead>
   <WBD_CardWillReplace>Ersetzt {0} deiner Vorlagen durch seine eigenen Fassungen (deine bleiben im Profil „{1}“).</WBD_CardWillReplace>
   <WBD_CardLibraryNotSaved>Deine Bibliothek ließ sich nicht aktualisieren ({0}): Diese Kolonie nutzt das Profil, neue Gebäude und Kolonisten bekommen aber die Vorlagen, die deine Bibliothek hatte.</WBD_CardLibraryNotSaved>
   <WBD_LibraryUsingBackup>Bis dahin nutzt dieses Spiel die vorige Fassung (Library.xml.bak), neue Gebäude und Kolonisten bekommen also weiter deine Vorgaben.</WBD_LibraryUsingBackup>
   <WBD_LibraryReadOnlyWhy>Grund: {0}</WBD_LibraryReadOnlyWhy>
+  <WBD_FileErrUnreadable>Library.xml lässt sich nicht lesen</WBD_FileErrUnreadable>
+  <WBD_FileErrChangedUnreadable>Library.xml wurde außerhalb dieses Spiels geändert und lässt sich nicht lesen</WBD_FileErrChangedUnreadable>
+  <WBD_FileErrFolderNotCreatable>der Bibliotheksordner lässt sich nicht anlegen</WBD_FileErrFolderNotCreatable>
+  <WBD_FileErrFolderNotWritable>in den Bibliotheksordner kann nicht geschrieben werden</WBD_FileErrFolderNotWritable>
+  <WBD_FileErrLocked>ein anderes Spiel schreibt gerade die Bibliothek; versuch es gleich noch einmal</WBD_FileErrLocked>
+  <WBD_FileErrWriteFailed>Library.xml ließ sich nicht schreiben</WBD_FileErrWriteFailed>
   <WBD_LibRestoreBackup>Sicherung zurückholen</WBD_LibRestoreBackup>
   <WBD_LibRestoreBackupTip>Macht Library.xml.bak wieder zu Library.xml. Die jetzige Datei wird nicht gelöscht, sondern als Library.broken-&lt;Datum&gt;.xml im selben Ordner aufbewahrt.</WBD_LibRestoreBackupTip>
   <WBD_LibRestoreDone>Die Sicherung ist zurückgeholt; deine Vorlagen lassen sich wieder ändern.</WBD_LibRestoreDone>

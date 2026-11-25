@@ -44,7 +44,9 @@ namespace BetterWorkbenchDefaults
 
         public override void DoWindowContents(Rect inRect)
         {
-            SmdUi.Probe("window", () => Draw(inRect));
+            // draw as this mod (its accent for the framework's KitStyle helpers used by the pages)
+            using (KitStyle.Using(WBD_Mod.K))
+                SmdUi.Probe("window", () => Draw(inRect));
         }
 
         void Draw(Rect inRect)

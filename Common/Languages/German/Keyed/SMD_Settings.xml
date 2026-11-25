@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
+  <SMD.FirstStartPitch>Richte etwas einmal ein, speichere es als Vorgabe, und neue Werkbänke, Regale, Zonen und Kolonisten bekommen es von selbst, in jeder Kolonie.</SMD.FirstStartPitch>
   <SMD.Section.buildings>Gebäude</SMD.Section.buildings>
   <SMD.Section.buildings.Desc>Standard-Aufträge für Werkbänke, Standard-Filter für Regale und andere Lager, Standard-Pflanzen für Hydrokultur. Der Knopf „Vorgaben“ an Gebäuden und im Aufträge-Tab.</SMD.Section.buildings.Desc>
   <SMD.Section.zones>Zonen</SMD.Section.zones>
@@ -69,33 +70,26 @@
   <SMD.Setting.smd.colonyApplyOnNewGame.Desc>Beginnt eine neue Kolonie, werden die gespeicherte medizinische Versorgung, das automatische Heimgebiet, der automatische Wiederaufbau und die manuellen Prioritäten gesetzt (nur wenn du welche gespeichert hast).</SMD.Setting.smd.colonyApplyOnNewGame.Desc>
   <SMD.SettingCat.Billlimit>Auftragsgrenze</SMD.SettingCat.Billlimit>
   <SMD.Setting.smd.nativeRaiseBillCap>Mehr als 15 Aufträge erlauben</SMD.Setting.smd.nativeRaiseBillCap>
-  <SMD.Setting.smd.nativeRaiseBillCap.Desc>Hebt die Grenze von 15 Aufträgen je Werkbank ohne weitere Mod auf. Ungenutzt, solange No Max Bills installiert ist.</SMD.Setting.smd.nativeRaiseBillCap.Desc>
+  <SMD.Setting.smd.nativeRaiseBillCap.Desc>Hebt die Grenze von 15 Aufträgen je Werkbank ohne weitere Mod auf. Ungenutzt, solange No Max Bills installiert ist und funktioniert.</SMD.Setting.smd.nativeRaiseBillCap.Desc>
   <SMD.Setting.smd.maxBillsCap>Aufträge je Werkbank</SMD.Setting.smd.maxBillsCap>
   <SMD.Setting.smd.maxBillsCap.Desc>Die Grenze, solange mehr als 15 Aufträge erlaubt sind (gilt auch beim Wiederherstellen unter No Max Bills). Viele Aufträge kosten Leistung.</SMD.Setting.smd.maxBillsCap.Desc>
   <SMD.SettingCat.Filters>Filter</SMD.SettingCat.Filters>
   <SMD.Setting.smd.filterIntent>Kategorien in Filtern merken</SMD.Setting.smd.filterIntent>
   <SMD.Setting.smd.filterIntent.Desc>Gespeicherte Filter merken sich ganze Kategorien, sodass Dinge, die eine Mod später zu einer Kategorie hinzufügt, mit erfasst werden. Aus = genaue Listen wie in 1.x.</SMD.Setting.smd.filterIntent.Desc>
-  <SMD.SettingCat.Compatibility>Kompatibilität</SMD.SettingCat.Compatibility>
-  <SMD.Setting.smd.compatNiceBillTab>Nice Bill Tab: nach dem Anwenden neu zeichnen</SMD.Setting.smd.compatNiceBillTab>
-  <SMD.Setting.smd.compatNiceBillTab.Desc>Bittet Nice Bill Tab, seine Liste neu aufzubauen, damit angewendete Aufträge sofort erscheinen.</SMD.Setting.smd.compatNiceBillTab.Desc>
-  <SMD.Setting.smd.compatPrf>Project-RimFactory-Maschinen</SMD.Setting.smd.compatPrf>
-  <SMD.Setting.smd.compatPrf.Desc>S.A.L.-Montierer bekommen ihre Aufträge, sobald ihre Rezepte da sind; Lagermaschinen und Verteiler bekommen ihre Vorgaben.</SMD.Setting.smd.compatPrf.Desc>
-  <SMD.Setting.smd.compatBlueprints>Blaupausen merken sich Einstellungen</SMD.Setting.smd.compatBlueprints>
-  <SMD.Setting.smd.compatBlueprints.Desc>Mit Blueprints Forked merkt sich eine Blaupause die Aufträge und Lager-Einstellungen jedes Gebäudes und stellt sie beim Bau wieder her.</SMD.Setting.smd.compatBlueprints.Desc>
   <SMD.Preset.automatic>Automatisch (empfohlen)</SMD.Preset.automatic>
   <SMD.Preset.automatic.Desc>Alles an: neue Werkbänke, Regale, Zonen und Kolonisten bekommen ihre Vorgaben von selbst.</SMD.Preset.automatic.Desc>
   <SMD.Preset.manual>Nur wenn ich auf Anwenden klicke</SMD.Preset.manual>
   <SMD.Preset.manual.Desc>Nichts passiert von selbst; du wendest Vorlagen mit dem Knopf „Vorgaben“ an.</SMD.Preset.manual.Desc>
   <SMD.Preset.buildings>Nur Gebäude und Zonen</SMD.Preset.buildings>
   <SMD.Preset.buildings.Desc>Aufträge, Regale und Zonen; Kolonisten, Richtlinien und Kolonie-Einstellungen bleiben unberührt.</SMD.Preset.buildings.Desc>
-  <SMD.Page.policies>Gespeicherte Richtlinien</SMD.Page.policies>
+  <SMD.Page.policies>Richtliniensatz</SMD.Page.policies>
   <SMD.Page.colony>Gespeicherte Kolonie</SMD.Page.colony>
   <SMD.Page.library>Meine Vorgaben</SMD.Page.library>
   <SMD.Page.profiles>Profile</SMD.Page.profiles>
   <SMD.Page.share>Import und Export</SMD.Page.share>
   <SMD.Compat.NiceBillTab.What>Der Knopf „Vorgaben“ sitzt als Symbol in dessen Auftragsfenster; angewendete Aufträge erscheinen sofort.</SMD.Compat.NiceBillTab.What>
   <SMD.Compat.NiceInventoryTab.What>Arbeitet nebeneinander: Die 1.7-Fassung hat keinen eigenen Auftrags-Tab, es gibt also nichts anzupassen.</SMD.Compat.NiceInventoryTab.What>
-  <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens so viele Aufträge wieder her und patcht selbst nichts.</SMD.Compat.NoMaxBillsRedux.What>
+  <SMD.Compat.NoMaxBillsRedux.What>Bestimmt die Auftragsgrenze; Set my Defaults stellt höchstens „Aufträge je Werkbank“ wieder her und patcht selbst nichts. Greifen dessen Patches nicht (seine 1.6-Fassung auf RimWorld 1.7), hebt Set my Defaults die Grenze selbst an.</SMD.Compat.NoMaxBillsRedux.What>
   <SMD.Compat.ProjectRimFactoryRevived.What>Montierer, Lagermaschinen und Förderband-Verteiler bekommen ihre Vorgaben.</SMD.Compat.ProjectRimFactoryRevived.What>
   <SMD.Compat.BlueprintsForked.What>Blaupausen merken sich Aufträge und Lager-Einstellungen, auch über Spielstände hinweg.</SMD.Compat.BlueprintsForked.What>
   <SMD.Compat.FreeWill.What>Arbeitsprioritäten bleiben bei Free Will für die Kolonisten, die es steuert.</SMD.Compat.FreeWill.What>

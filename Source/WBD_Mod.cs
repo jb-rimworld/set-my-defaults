@@ -43,7 +43,7 @@ namespace BetterWorkbenchDefaults
             Url = "https://github.com/jb-rimworld/set-my-defaults",
             LicenseLine = "MIT",
             HarmonyId = PackageId,
-            // No FirstStartPitch: this mod draws its own welcome card (profiles), see Dialog_SmdStartCard. FW-REQUEST (7).
+            FirstStartPitch = "Set something up once, save it as a default, and new workbenches, shelves, zones and colonists get it by themselves, in every colony.",
             Theme = new KitTheme { Accent = new Color(0.47f, 0.72f, 0.45f), MarkTex = "UI/WBD_Defaults" },
         })
         {
@@ -51,7 +51,8 @@ namespace BetterWorkbenchDefaults
             try { Patch_SpawnSetup.Apply(harmony); }
             catch (Exception e) { WBD_Log.Warn("The building spawn hook could not be applied; new buildings will not get their defaults: " + e.Message); }
             // Native >15 bills: the transpiler reads BillCap.Current() live (no restart). Not registered when a "No Max Bills" mod
-            // already owns the limit (no double patch).
+            // already owns the limit (no double patch); one that is installed but failed to patch is checked again in OnDefsLoaded.
+            manualHarmony = harmony;
             if (!BillCapCompat.Active)
                 TryPatchBillCap(harmony);
         }
@@ -138,20 +139,12 @@ namespace BetterWorkbenchDefaults
 
             // ---------------------------------------------------------------- General
             r.Bool(KitMod.Core, "smd.nativeRaiseBillCap", false, "Allow more than 15 bills",
-                    "Lifts vanilla's limit of 15 bills per workbench without another mod. Not used while No Max Bills is installed.").InGroup("Bill limit").AsGlobal().Legacy("nativeRaiseBillCap");
+                    "Lifts vanilla's limit of 15 bills per workbench without another mod. Not used while No Max Bills is installed and working.").InGroup("Bill limit").AsGlobal().Legacy("nativeRaiseBillCap");
             r.Int(KitMod.Core, "smd.maxBillsCap", 50, 15, 250, "Bills per workbench",
                     "The limit while more than 15 bills are allowed (also used when restoring defaults under No Max Bills). Many bills cost performance.")
                 .InGroup("Bill limit").AsGlobal().HardLimits(15, 250).Legacy("maxBillsCap");
             r.Bool(KitMod.Core, "smd.filterIntent", true, "Remember categories in filters",
                     "Saved filters remember whole categories, so items a mod adds to a category later are included. Off = exact item lists as in 1.x.").InGroup("Filters").AsGlobal().AsNerd().Legacy("filterIntent");
-
-            // ---------------------------------------------------------------- Compatibility switches (G13c: on when the mod is present)
-            r.Bool(KitMod.Core, "smd.compatNiceBillTab", true, "Nice Bill Tab: refresh after applying",
-                    "Tells Nice Bill Tab to redraw its list, so applied bills show up at once.").InGroup("Compatibility").AsGlobal();
-            r.Bool(KitMod.Core, "smd.compatPrf", true, "Project RimFactory machines",
-                    "S.A.L. assemblers get their bills after their recipes appear, storage machines and splitters get their defaults.").InGroup("Compatibility").AsGlobal();
-            r.Bool(KitMod.Core, "smd.compatBlueprints", true, "Blueprints remember settings",
-                    "With Blueprints Forked, a blueprint remembers each building's bills and storage settings and recreates them when built.").InGroup("Compatibility").AsGlobal();
 
             // ---------------------------------------------------------------- presets (first-start card and Overview)
             foreach (var m in Modes)
@@ -161,11 +154,11 @@ namespace BetterWorkbenchDefaults
             }
 
             // ---------------------------------------------------------------- compatibility (G13c)
-            r.Compat("Nice Bill Tab", "Andromeda.NiceBillTab", "The Defaults button sits as an icon in its bill window; applied bills show up at once.").HealthyWhen(() => SmdCompat.NiceBillTabLoaded);
+            r.Compat("Nice Bill Tab", SmdCompat.NiceBillTabId, "The Defaults button sits as an icon in its bill window; applied bills show up at once.").Switchable();
             r.Compat("Nice Inventory Tab", "Andromeda.NiceInventoryTab", "Works side by side: its 1.7 version has no bill tab of its own, so there is nothing to adapt.");
-            r.Compat("No Max Bills Redux", "justharry.nomaxbillsredux", "Owns the bill limit; Set my Defaults restores at most that many bills and adds no patch of its own.");
-            r.Compat("Project RimFactory Revived", "spdskatr.projectrimfactory", "Assemblers, storage machines and conveyor splitters get their defaults.").HealthyWhen(() => PrfCompat.PatchApplied);
-            r.Compat("Blueprints Forked", "Defi.Blueprints.fork", "Blueprints remember bills and storage settings, even across saves.").HealthyWhen(() => BlueprintsCompat.Hooked);
+            r.Compat("No Max Bills Redux", "justharry.nomaxbillsredux", "Owns the bill limit; Set my Defaults restores at most \"Bills per workbench\" and adds no patch of its own. If its patches did not apply (its 1.6 version on RimWorld 1.7), Set my Defaults lifts the limit itself.").HealthyWhen(() => BillCapCompat.Working);
+            r.Compat("Project RimFactory Revived", SmdCompat.PrfId, "Assemblers, storage machines and conveyor splitters get their defaults.").HealthyWhen(() => PrfCompat.PatchApplied).Switchable();
+            r.Compat("Blueprints Forked", SmdCompat.BlueprintsId, "Blueprints remember bills and storage settings, even across saves.").HealthyWhen(() => BlueprintsCompat.Hooked).Switchable();
             r.Compat("Free Will", "freemapa.freewill", "Work priorities are left to Free Will for the colonists it manages.");
             r.Compat("Free-ish Will", "stoneman.freewill", "Work priorities are left to Free-ish Will for the colonists it manages.");
             r.Compat("Better Workbench Management", "falconne.BWM", "Works side by side. A default bill uses the store mode saved in the preset, not BWM's own default.");
@@ -182,8 +175,15 @@ namespace BetterWorkbenchDefaults
             r.Page(SmdLibraryUi.PageProfiles, "Profiles", SmdLibraryUi.DrawProfiles).WithOrder(65).InSection(SmdSections.Library);
             r.Page(SmdLibraryUi.PageShare, "Import and export", SmdLibraryUi.DrawShare).WithOrder(66).InSection(SmdSections.Library);
 
-            // ---------------------------------------------------------------- per save data (removal-safe: inside the framework's component)
+            // ---------------------------------------------------------------- welcome card (framework card + this mod's start choice)
+            r.WelcomeCard().WithDraw(SmdStartCard.Draw).WithoutSections().WhenClosed(SmdStartCard.Closed);
+
+            // ---------------------------------------------------------------- per save and per map data (removal-safe: inside the framework's components)
             r.SaveData(SmdGameData.Expose, SmdGameData.Reset);
+            r.MapData(SmdMapData.Expose, SmdMapData.Reset);
+            // the components of the previous versions: read once from old saves, never written again
+            r.LegacyComponent(typeof(PawnDefaultsGameComponent));
+            r.LegacyComponent(typeof(WBD_PendingConfigs));
         }
 
         /// <summary>Settings that make things happen by themselves (the presets switch them together).</summary>
@@ -193,11 +193,30 @@ namespace BetterWorkbenchDefaults
             "smd.zoneAutoApplyOnCreate", "smd.growingAutoApplyOnCreate", "smd.autoApplyToNewPawns",
         };
 
-        /// <summary>The mod was added to a running save: its welcome card offers the "what happens by itself" choice once.</summary>
+        /// <summary>A new colony: roster baseline, colony settings and policies of a new game, the welcome card's start choice.</summary>
+        protected override void OnGameStarted()
+        {
+            SmdRoster.GameStarted();
+            SmdStartCard.Begin();
+        }
+
+        /// <summary>A save was loaded. When the mod was added to a running save its welcome card offers the "what happens by itself" choice once.</summary>
         protected override void OnGameLoaded(bool joinedExistingSave)
         {
+            SmdRoster.GameLoaded();
             if (joinedExistingSave && SmdGameData.startCard == SmdGameData.StartNone)
                 SmdGameData.startCard = SmdGameData.StartJoined;
+            SmdStartCard.Begin();
+        }
+
+        /// <summary>Every 250 ticks: the colonist retry scan and the pending blueprint configs of every map.</summary>
+        protected override void OnTick(int ticksGame)
+        {
+            if (ticksGame % SmdPending.TickInterval != 0) return;
+            SmdRoster.RetryScan();
+            var maps = Find.Maps;
+            if (maps == null) return;
+            for (int i = 0; i < maps.Count; i++) SmdPending.Tick(maps[i]);
         }
 
         /// <summary>One "what happens by itself" choice: a framework preset (Overview) and a card on this mod's welcome card.</summary>
@@ -245,14 +264,30 @@ namespace BetterWorkbenchDefaults
             },
         };
 
+        static Harmony manualHarmony;
+
         protected override void OnDefsLoaded()
         {
+            // every mod's constructor ran by now: a No Max Bills that patched nothing leaves the limit to us
+            if (BillCapCompat.Installed)
+            {
+                if (!BillCapCompat.Active && !BillCapPatched && manualHarmony != null) TryPatchBillCap(manualHarmony);
+                if (BillCapCompat.Active && BillCapPatched && manualHarmony != null)
+                {
+                    // it patched after us after all: take ours out again (no double patch)
+                    foreach (var m in Patch_BillStack_RaiseCap.TargetMethods()) manualHarmony.Unpatch(m, HarmonyPatchType.Transpiler, manualHarmony.Id);
+                    BillCapPatched = false;
+                }
+                if (BillCapCompat.Broken) WBD_Log.Msg("No Max Bills is installed, but its patches did not apply (its version does not match this RimWorld). Set my Defaults lifts the bill limit instead (\"Bills per workbench\" in its settings).");
+                else WBD_Log.Msg("No Max Bills: " + BillCapCompat.State + ".");
+            }
             KitKnown.Declare(Kit, KitTags.ChangesBillsUi, KitTags.ChangesBills, KitTags.ChangesStorage, KitTags.ChangesWork, KitTags.ChangesPawnUi);
         }
 
         protected override IEnumerable<string> Diagnosis()
         {
-            yield return "Bill limit: " + (BillCapCompat.Active ? "owned by No Max Bills" : BillCapPatched ? "own transpiler in place, now " + BillCap.Current() : "vanilla (transpiler not applied)");
+            yield return "Bill limit: " + (BillCapCompat.Active ? "owned by No Max Bills" : BillCapPatched ? "own transpiler in place, now " + BillCap.Current() : "vanilla (transpiler not applied)")
+                + (BillCapCompat.Installed ? "; No Max Bills " + BillCapCompat.State : "");
             yield return "Building spawn hook: " + (Patch_SpawnSetup.Applied ? "applied" : "NOT applied");
         }
 
@@ -360,10 +395,10 @@ namespace BetterWorkbenchDefaults
         // Colony
         public bool colonyApplyOnNewGame { get => B("smd.colonyApplyOnNewGame", true); set => SetB("smd.colonyApplyOnNewGame", value); }
 
-        // Compatibility
-        public bool compatNiceBillTab => B("smd.compatNiceBillTab", true);
-        public bool compatPrf => B("smd.compatPrf", true);
-        public bool compatBlueprints => B("smd.compatBlueprints", true);
+        // Compatibility (switches on the Compatibility page; on while the other mod is present)
+        public bool compatNiceBillTab => WBD_Mod.K?.CompatOn(SmdCompat.NiceBillTabId) ?? false;
+        public bool compatPrf => WBD_Mod.K?.CompatOn(SmdCompat.PrfId) ?? false;
+        public bool compatBlueprints => WBD_Mod.K?.CompatOn(SmdCompat.BlueprintsId) ?? false;
 
         /// <summary>
         /// The effective per-workbench bill cap: the configured cap whenever the built-in raiser is on OR an external "No Max Bills"
@@ -395,42 +430,17 @@ namespace BetterWorkbenchDefaults
     /// <summary>Soft integrations that several places call.</summary>
     public static class SmdCompat
     {
-        /// <summary>Nice Bill Tab caches its bill list: ask it to rebuild after bills changed from code (framework adapter).</summary>
+        public const string NiceBillTabId = "Andromeda.NiceBillTab", PrfId = "spdskatr.projectrimfactory", BlueprintsId = "Defi.Blueprints.fork";
+
+        /// <summary>Nice Bill Tab caches its bill list: ask it to rebuild after bills changed from code (framework adapter, unless the
+        /// player switched the integration off on the Compatibility page).</summary>
         public static void RefreshBillsTab()
         {
-            var s = WBD_Mod.Settings;
-            if (s != null && !s.compatNiceBillTab) return;
-            if (KitNiceBillTab.Active) { KitNiceBillTab.RequestRefresh(); return; }
-            // FW-REQUEST: KitNiceBillTab gates on the packageId being active. Nice Bill Tab has no 1.7 build; its 1.6 build runs on 1.7
-            // ("incompatible version"), and then ModsConfig/ModLister report it as NOT active although its code is loaded, so the
-            // adapter never refreshes. Fallback: find its refresh flag by type, as 1.x did (once, cached).
-            if (!nbtResolved)
-            {
-                nbtResolved = true;
-                try
-                {
-                    var f = AccessTools.Field(AccessTools.TypeByName("NiceBillTab.TabBillsDrawer"), "shouldRefreshFilter");
-                    if (f != null && f.IsStatic && f.FieldType == typeof(bool)) nbtFlag = f;
-                }
-                catch { nbtFlag = null; }
-            }
-            if (nbtFlag == null) return;
-            try { nbtFlag.SetValue(null, true); }
-            catch (Exception e) { WBD_Log.Warn("Nice Bill Tab refresh failed (bills appear after reopening the tab): " + e.Message); nbtFlag = null; }
+            if (!KitNiceBillTab.Active) return;
+            var k = WBD_Mod.K;
+            if (k != null && !k.CompatOn(NiceBillTabId)) return;
+            KitNiceBillTab.RequestRefresh();
         }
-
-        /// <summary>Nice Bill Tab's code is loaded (by the framework adapter or the type fallback).</summary>
-        public static bool NiceBillTabLoaded
-        {
-            get
-            {
-                if (KitNiceBillTab.Active) return true;
-                try { return AccessTools.TypeByName("NiceBillTab.TabBillsDrawer") != null; } catch { return false; }
-            }
-        }
-
-        static bool nbtResolved;
-        static System.Reflection.FieldInfo nbtFlag;
     }
 
     /// <summary>Tiny logging helper so every message is greppable and prefixed.</summary>
