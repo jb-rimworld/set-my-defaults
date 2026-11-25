@@ -35,6 +35,7 @@ namespace BetterWorkbenchDefaults
         }
     }
 
+    [StaticConstructorOnStartup]   // the icon field: RimWorld warns at startup without it (the texture is still loaded lazily)
     internal static class ZoneGizmo
     {
         private static Texture2D _icon;

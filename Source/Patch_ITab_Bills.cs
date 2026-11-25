@@ -14,6 +14,7 @@ namespace BetterWorkbenchDefaults
     /// existing layout or other mods that decorate this tab.
     /// </summary>
     [HarmonyPatch(typeof(ITab_Bills), "FillTab")]
+    [StaticConstructorOnStartup]   // the icon field: RimWorld warns at startup without it (the texture is still loaded lazily)
     public static class Patch_ITab_Bills_FillTab
     {
         private static readonly FieldInfo WinSizeField =

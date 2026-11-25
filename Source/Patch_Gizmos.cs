@@ -12,6 +12,7 @@ namespace BetterWorkbenchDefaults
     /// always-available way to reach the save/apply/clear actions.
     /// </summary>
     [HarmonyPatch(typeof(Building), nameof(Building.GetGizmos))]
+    [StaticConstructorOnStartup]   // the icon field: RimWorld warns at startup without it (the texture is still loaded lazily)
     public static class Patch_Building_GetGizmos
     {
         private static Texture2D _icon;

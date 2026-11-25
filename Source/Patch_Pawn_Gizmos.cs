@@ -12,6 +12,7 @@ namespace BetterWorkbenchDefaults
     /// on all of them. Layout-independent passthrough (yields existing gizmos unchanged).
     /// </summary>
     [HarmonyPatch(typeof(Pawn), nameof(Pawn.GetGizmos))]
+    [StaticConstructorOnStartup]   // the icon field: RimWorld warns at startup without it (the texture is still loaded lazily)
     public static class Patch_Pawn_GetGizmos
     {
         private static Texture2D _icon;
