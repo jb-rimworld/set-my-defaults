@@ -1,29 +1,41 @@
 using System;
+using System.Linq;
+using System.Reflection;
+using HarmonyLib;
+using RimWorld;
 using Verse;
 
 namespace BetterWorkbenchDefaults
 {
     /// <summary>
-    /// Reflection-only interop detector for mods that already raise RimWorld's per-workbench bill
-    /// limit (vanilla <c>BillStack.MaxCount</c> == 15). Both KiameV's original "No Max Bills" and
-    /// "No Max Bills Redux" (justharry.nomaxbillsredux) define the marker type
-    /// <c>NoMaxBills.Patch_BillStack_DoListing</c> (Redux ships it via NoMaxBillsMimicry so Falconne's
-    /// Better Workbench Management raises its own cap). We probe for that type, and as a fallback scan
-    /// the running mod list for the Redux packageId.
+    /// Interop with mods that raise RimWorld's per-workbench bill limit (vanilla <c>BillStack.MaxCount</c> == 15): KiameV's original
+    /// "No Max Bills" and "No Max Bills Redux" (justharry.nomaxbillsredux). Both define the marker type
+    /// <c>NoMaxBills.Patch_BillStack_DoListing</c>; Redux is also found by its packageId.
     ///
-    /// Purpose: (1) so our own self-contained transpiler NEVER registers when an external mod already
-    /// raised the UI cap (avoids redundant double-patching of BillStack.DoListing / ITab_Bills.FillTab),
-    /// and (2) so <see cref="WBD_Settings.EffectiveBillCap"/> returns the player's chosen cap whenever
-    /// EITHER our own feature or an external cap-raiser is active, keeping the visible UI cap and the
-    /// number of bills we restore in agreement.
+    /// <para>Installed is not enough: the 1.6 build of No Max Bills Redux fails in its own constructor on RimWorld 1.7 (one of its
+    /// patch targets is gone, so Harmony's PatchAll throws) and then may raise nothing. So the limit belongs to that mod only while
+    /// another mod's transpiler really sits on <c>BillStack.DoListing</c> or <c>ITab_Bills.FillTab</c> (<see cref="Working"/>).
+    /// Installed but not working (<see cref="Broken"/>) = this mod's own transpiler takes over and lifts the limit to "Bills per
+    /// workbench", because the player installed it to get more than 15 bills; the Compatibility page says so.</para>
     /// </summary>
     public static class BillCapCompat
     {
         private const string MarkerType = "NoMaxBills.Patch_BillStack_DoListing";
         private const string ReduxPackageId = "justharry.nomaxbillsredux";
 
-        private static bool _resolved;
-        private static bool _active;
+        private static bool _resolved, _installed;
+
+        /// <summary>A No Max Bills mod is installed (marker type or Redux packageId), whether or not its patches applied.</summary>
+        public static bool Installed { get { Resolve(); return _installed; } }
+
+        /// <summary>Installed and its transpiler is in place: it owns the limit, this mod adds no patch.</summary>
+        public static bool Active => Installed && ForeignCapPatch();
+
+        /// <summary>Same as <see cref="Active"/> (the name the Compatibility page check uses).</summary>
+        public static bool Working => Active;
+
+        /// <summary>Installed but none of its patches applied (its 1.6 build on 1.7): this mod's own transpiler lifts the limit instead.</summary>
+        public static bool Broken => Installed && !ForeignCapPatch();
 
         private static void Resolve()
         {
@@ -32,30 +44,14 @@ namespace BetterWorkbenchDefaults
             _resolved = true;
             try
             {
-                // Either No Max Bills (original) or No Max Bills Redux defines this marker type.
                 if (GenTypes.GetTypeInAnyAssembly(MarkerType) != null)
-                {
-                    _active = true;
-                }
+                    _installed = true;
                 else
                 {
                     var mods = LoadedModManager.RunningModsListForReading;
                     if (mods != null)
-                    {
-                        for (int i = 0; i < mods.Count; i++)
-                        {
-                            var pid = mods[i]?.PackageIdPlayerFacing;
-                            if (pid != null && pid.EqualsIgnoreCase(ReduxPackageId))
-                            {
-                                _active = true;
-                                break;
-                            }
-                        }
-                    }
+                        _installed = mods.Any(m => m?.PackageIdPlayerFacing != null && m.PackageIdPlayerFacing.EqualsIgnoreCase(ReduxPackageId));
                 }
-
-                if (_active)
-                    WBD_Log.Msg("No Max Bills detected; the built-in bill-cap raiser will stay off (interop, no double-patch).");
             }
             catch (Exception e)
             {
@@ -63,14 +59,27 @@ namespace BetterWorkbenchDefaults
             }
         }
 
-        /// <summary>True when an external mod already raised the workbench bill cap.</summary>
-        public static bool Active
+        /// <summary>Another mod's transpiler on one of the two methods that gate the bill count (our own patch does not count).</summary>
+        private static bool ForeignCapPatch()
         {
-            get
+            try
             {
-                Resolve();
-                return _active;
+                foreach (var m in Patch_BillStack_RaiseCap.TargetMethods())
+                {
+                    var info = Harmony.GetPatchInfo(m);
+                    if (info?.Transpilers != null && info.Transpilers.Any(p => p.owner != null && !p.owner.StartsWith(WBD_Mod.PackageId, StringComparison.OrdinalIgnoreCase)))
+                        return true;
+                }
             }
+            catch (Exception e)
+            {
+                WBD_Log.Warn("Could not inspect the bill-limit patches of No Max Bills: " + e.Message);
+            }
+            return false;
         }
+
+        /// <summary>One line for the log, the Diagnosis page and the Compatibility page.</summary>
+        public static string State =>
+            !Installed ? "not installed" : Active ? "installed and working: it owns the bill limit" : "installed but not working (its patches did not apply): Set my Defaults lifts the limit instead";
     }
 }

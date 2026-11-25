@@ -121,7 +121,9 @@ namespace BetterWorkbenchDefaults
         public static int Current()
         {
             var s = WBD_Mod.Settings;
-            if (s == null || !s.nativeRaiseBillCap)
+            // "No Max Bills" installed but broken (its 1.6 build on 1.7): the player wants more than 15 bills, so the cap applies as if
+            // "Allow more than 15 bills" were on
+            if (s == null || !(s.nativeRaiseBillCap || BillCapCompat.Broken))
                 return BillStack.MaxCount;
             return s.maxBillsCap < BillStack.MaxCount ? BillStack.MaxCount : (s.maxBillsCap > 250 ? 250 : s.maxBillsCap);
         }
