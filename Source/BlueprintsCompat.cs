@@ -126,7 +126,7 @@ namespace BetterWorkbenchDefaults
                 var def = _buildableDefProp.GetValue(__instance, null) as ThingDef;
                 if (def == null)
                     return;
-                WBD_PendingConfigs.For(map)?.Register(origin + offset, def, cfg);
+                SmdPending.Register(map, origin + offset, def, cfg);
             }
             catch (Exception e) { WBD_Log.Warn("Blueprint designate hook failed: " + e.Message); }
         }

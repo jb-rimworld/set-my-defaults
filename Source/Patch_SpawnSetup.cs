@@ -58,8 +58,7 @@ namespace BetterWorkbenchDefaults
         {
             try
             {
-                var pending = WBD_PendingConfigs.For(map);
-                if (pending != null && pending.NotifySpawned(building))
+                if (SmdPending.NotifySpawned(map, building))
                     return;
 
                 var settings = WBD_Mod.Settings;

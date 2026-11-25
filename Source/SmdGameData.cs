@@ -1,17 +1,17 @@
 using System.Collections.Generic;
-using HarmonyLib;
 using Verse;
 
 namespace BetterWorkbenchDefaults
 {
     /// <summary>
     /// Everything Set my Defaults keeps per save (2.0): the known colonist roster (M1), the "colony defaults applied" flag (M8) and
-    /// the pending blueprint configs per map. Saved through JB Framework's game component (<c>KitRegistry.SaveData</c>), so a save made
-    /// with 2.0 holds no class of this mod and loads cleanly after the mod is removed.
+    /// the welcome-card state. Saved through JB Framework's game component (<c>KitRegistry.SaveData</c>); the pending blueprint configs
+    /// live per map in <see cref="SmdMapData"/> (<c>KitRegistry.MapData</c>). A save made with 2.0 holds no class of this mod and loads
+    /// cleanly after the mod is removed.
     ///
     /// Saves made before 2.0 hold the old <see cref="PawnDefaultsGameComponent"/> and <see cref="WBD_PendingConfigs"/> nodes; those
-    /// classes still exist, read their old nodes once and merge them in here (union), and are never written again
-    /// (<see cref="Patch_Game_ExposeSmallComponents"/>, <see cref="Patch_Map_ExposeComponents"/>).
+    /// classes still exist (registered with <c>KitRegistry.LegacyComponent</c>), read their old nodes once and merge them in here
+    /// (union); the framework never writes them again and drops them after the load.
     /// </summary>
     public static class SmdGameData
     {
@@ -39,18 +39,11 @@ namespace BetterWorkbenchDefaults
         internal static string startChoice;
         public const int StartNone = 0, StartNewColony = 1, StartJoined = 2, StartDone = 3;
 
-        // ---- pending blueprint configs, per map (uniqueID) ----
-        internal static Dictionary<int, List<PendingEntry>> pending = new Dictionary<int, List<PendingEntry>>();
+        // ---- pending blueprint configs of a save written by 2.0 before they moved to the per-map data (map uniqueID) ----
+        /// <summary>Read from the game node of such a save, moved to <see cref="SmdMapData"/> in <see cref="MoveLegacyPending"/>; never written.</summary>
+        internal static Dictionary<int, List<PendingEntry>> legacyPending = new Dictionary<int, List<PendingEntry>>();
 
         public static int KnownCount => known.Count;
-
-        public static List<PendingEntry> PendingFor(Map map)
-        {
-            if (map == null) return new List<PendingEntry>();
-            if (!pending.TryGetValue(map.uniqueID, out var list) || list == null)
-                pending[map.uniqueID] = list = new List<PendingEntry>();
-            return list;
-        }
 
         /// <summary>A new Game object (new game, or before a load): forget the previous one.</summary>
         public static void Reset()
@@ -66,7 +59,8 @@ namespace BetterWorkbenchDefaults
             policiesAppliedAtStart = false;
             startCard = StartNone;
             startChoice = null;
-            pending = new Dictionary<int, List<PendingEntry>>();
+            legacyPending = new Dictionary<int, List<PendingEntry>>();
+            SmdMapData.Clear();
         }
 
         /// <summary>Saved inside the framework's component under this mod's packageId.</summary>
@@ -88,51 +82,37 @@ namespace BetterWorkbenchDefaults
             Scribe_Values.Look(ref startCard, "startCard", StartNone);
             Scribe_Values.Look(ref startChoice, "startChoice");
 
-            List<PendingMap> maps = null;
-            if (Scribe.mode == LoadSaveMode.Saving)
+            // the per-map pending configs were kept here (keyed by map) until they moved to SmdMapData: read only, never written
+            if (Scribe.mode != LoadSaveMode.Saving)
             {
-                maps = new List<PendingMap>();
-                var live = new HashSet<int>();
-                if (Find.Maps != null) foreach (var m in Find.Maps) if (m != null) live.Add(m.uniqueID);
-                foreach (var kv in pending)
-                    if (kv.Value != null && kv.Value.Count > 0 && live.Contains(kv.Key))
-                        maps.Add(new PendingMap { map = kv.Key, entries = kv.Value });
+                List<PendingMap> maps = null;
+                Scribe_Collections.Look(ref maps, "pending", LookMode.Deep);
+                if (Scribe.mode == LoadSaveMode.LoadingVars && maps != null)
+                    foreach (var pm in maps)
+                        if (pm?.entries != null && pm.entries.Count > 0) legacyPending[pm.map] = pm.entries;
             }
-            Scribe_Collections.Look(ref maps, "pending", LookMode.Deep);
 
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 UnionInto(seen, seenL); UnionInto(appliedCore, coreL); UnionInto(appliedWork, workL); UnionInto(known, knownL);
-                if (maps != null)
-                    foreach (var pm in maps)
-                        if (pm?.entries != null) pending[pm.map] = pm.entries;
             }
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                foreach (var kv in pending)
-                    kv.Value?.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
         }
 
-        // ---- old roster read from a save from before 2.0, waiting for LoadedGame (FW-REQUEST 11) ----
-        sealed class ParkedRoster { public Game game; public List<int> seen, core, work, known; public int version, baseline; public bool colony, policy; }
-        static ParkedRoster parked;
-
-        /// <summary>Keeps an old save's roster until <see cref="MergePendingLegacy"/> (the framework resets SaveData in between).</summary>
-        internal static void ParkLegacyRoster(Game game, List<int> seenL, List<int> coreL, List<int> workL, List<int> knownL, int version, int baseline, bool colonyApplied, bool policyApplied)
+        /// <summary>After a load: pending configs from the game node of an early 2.0 save go to their map's data (once).</summary>
+        internal static void MoveLegacyPending()
         {
-            parked = new ParkedRoster { game = game, seen = seenL, core = coreL, work = workL, known = knownL, version = version, baseline = baseline, colony = colonyApplied, policy = policyApplied };
-        }
-
-        /// <summary>LoadedGame: merges a parked old roster of THIS game (once). Returns true when one was merged.</summary>
-        internal static bool MergePendingLegacy(Game game)
-        {
-            var p = parked;
-            parked = null;
-            if (p == null || p.game != game)
-                return false;
-            MergeLegacyRoster(p.seen, p.core, p.work, p.known, p.version, p.baseline, p.colony, p.policy);
-            WBD_Log.Msg("Carried over the colonist roster of a save from before 2.0 (" + (p.known?.Count ?? 0) + " known, " + (p.core?.Count ?? 0) + " defaulted, "
-                + (p.work?.Count ?? 0) + " with work priorities). It is saved the new way from now on.");
-            return true;
+            if (legacyPending.Count == 0) return;
+            int moved = 0;
+            if (Find.Maps != null)
+                foreach (var m in Find.Maps)
+                {
+                    if (m == null || !legacyPending.TryGetValue(m.uniqueID, out var list) || list == null) continue;
+                    list.RemoveAll(e => e == null || e.def == null || e.snapshot == null || e.snapshot.IsEmpty);
+                    SmdMapData.For(m).AddRange(list);
+                    moved += list.Count;
+                }
+            legacyPending.Clear();
+            if (moved > 0) WBD_Log.Msg("Moved " + moved + " pending blueprint config(s) into the per-map data.");
         }
 
         /// <summary>Old (1.x / 2.0 wave 2) component data read from a save: merged, never replacing what is already known.</summary>
@@ -161,54 +141,6 @@ namespace BetterWorkbenchDefaults
                 Scribe_Collections.Look(ref entries, "entries", LookMode.Deep);
                 if (Scribe.mode == LoadSaveMode.LoadingVars && entries == null) entries = new List<PendingEntry>();
             }
-        }
-    }
-
-    /// <summary>
-    /// Saves made with 2.0 must not contain our old GameComponent class (removing the mod would then log "Could not find class").
-    /// While the game writes its components, ours is taken out of the list and put back afterwards. Reading old saves is unchanged.
-    /// </summary>
-    [HarmonyPatch(typeof(Game), "ExposeSmallComponents")]
-    public static class Patch_Game_ExposeSmallComponents
-    {
-        static void Prefix(Game __instance, out List<GameComponent> __state)
-        {
-            __state = null;
-            if (Scribe.mode != LoadSaveMode.Saving || __instance?.components == null) return;
-            __state = __instance.components.FindAll(c => c is PawnDefaultsGameComponent);
-            if (__state.Count == 0) { __state = null; return; }
-            __instance.components.RemoveAll(c => c is PawnDefaultsGameComponent);
-        }
-
-        static void Finalizer(Game __instance, List<GameComponent> __state)
-        {
-            // Game.ExposeSmallComponents fills missing components only while loading; drop any fresh copy anyway.
-            if (__state == null || __instance?.components == null) return;
-            __instance.components.RemoveAll(c => c is PawnDefaultsGameComponent && !__state.Contains(c));
-            __instance.components.AddRange(__state);
-        }
-    }
-
-    /// <summary>The same for the old per-map component (pending blueprint configs now live in <see cref="SmdGameData"/>).</summary>
-    [HarmonyPatch(typeof(Map), "ExposeComponents")]
-    public static class Patch_Map_ExposeComponents
-    {
-        static void Prefix(Map __instance, out List<MapComponent> __state)
-        {
-            __state = null;
-            if (Scribe.mode != LoadSaveMode.Saving || __instance?.components == null) return;
-            __state = __instance.components.FindAll(c => c is WBD_PendingConfigs);
-            if (__state.Count == 0) { __state = null; return; }
-            __instance.components.RemoveAll(c => c is WBD_PendingConfigs);
-        }
-
-        static void Finalizer(Map __instance, List<MapComponent> __state)
-        {
-            // Map.ExposeComponents calls FillComponents in every mode, so while saving it made a fresh copy of the component we took
-            // out: drop that copy, put ours back (found by kit.saveload: two components after a save).
-            if (__state == null || __instance?.components == null) return;
-            __instance.components.RemoveAll(c => c is WBD_PendingConfigs && !__state.Contains(c));
-            __instance.components.AddRange(__state);
         }
     }
 }

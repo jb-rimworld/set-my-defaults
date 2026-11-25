@@ -267,7 +267,7 @@ namespace BetterWorkbenchDefaults
     /// </summary>
     public static class ColonyDefaults
     {
-        public static void ApplyAtNewGame(PawnDefaultsGameComponent comp)
+        public static void ApplyAtNewGame(SmdRoster comp)
         {
             var s = WBD_Mod.Settings;
             if (s == null || Current.Game == null)
@@ -292,7 +292,7 @@ namespace BetterWorkbenchDefaults
         }
 
         /// <summary>Starting colonists that got the colonist preset (its medical/policy axes win over colony defaults).</summary>
-        static HashSet<int> PresetPawns(PawnDefaultsGameComponent comp, PawnConfigSnapshot preset, WBD_Settings s)
+        static HashSet<int> PresetPawns(SmdRoster comp, PawnConfigSnapshot preset, WBD_Settings s)
         {
             var byPreset = new HashSet<int>();
             if (comp != null && preset != null && s.autoApplyToNewPawns && SmdSections.On(SmdSections.Pawns))
@@ -306,13 +306,13 @@ namespace BetterWorkbenchDefaults
         /// The library's colony settings into the running (new) colony, as at a new game's start. Used by the first-start card after
         /// a profile was chosen. False when nothing is saved or the area is off.
         /// </summary>
-        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp) => ApplyColonyToColony(comp, null, null);
+        public static bool ApplyColonyToColony(SmdRoster comp) => ApplyColonyToColony(comp, null, null);
 
         /// <summary>
-        /// Like <see cref="ApplyColonyToColony(PawnDefaultsGameComponent)"/> with a given block and colonist preset (a profile's, read
+        /// Like <see cref="ApplyColonyToColony(SmdRoster)"/> with a given block and colonist preset (a profile's, read
         /// straight from the profile, so the colony gets the profile even when the library could not be written). Null = the library's.
         /// </summary>
-        public static bool ApplyColonyToColony(PawnDefaultsGameComponent comp, StoredBlock block, PawnConfigSnapshot preset)
+        public static bool ApplyColonyToColony(SmdRoster comp, StoredBlock block, PawnConfigSnapshot preset)
         {
             var s = WBD_Mod.Settings;
             if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Colony))
@@ -328,11 +328,11 @@ namespace BetterWorkbenchDefaults
         /// The library's policy set into the running (new) colony: policies are created, the colony default is set, and pawns still on
         /// the old default policy move to the new one (kinds the colonist preset sets are skipped). False when nothing was applied.
         /// </summary>
-        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp) => ApplyPoliciesToColony(comp, null, null);
+        public static bool ApplyPoliciesToColony(SmdRoster comp) => ApplyPoliciesToColony(comp, null, null);
 
-        /// <summary>Like <see cref="ApplyPoliciesToColony(PawnDefaultsGameComponent)"/> with a given policy block and colonist preset
+        /// <summary>Like <see cref="ApplyPoliciesToColony(SmdRoster)"/> with a given policy block and colonist preset
         /// (a profile's); null = the library's.</summary>
-        public static bool ApplyPoliciesToColony(PawnDefaultsGameComponent comp, StoredBlock block, PawnConfigSnapshot preset)
+        public static bool ApplyPoliciesToColony(SmdRoster comp, StoredBlock block, PawnConfigSnapshot preset)
         {
             var s = WBD_Mod.Settings;
             if (s == null || Current.Game == null || !SmdSections.On(SmdSections.Policies))

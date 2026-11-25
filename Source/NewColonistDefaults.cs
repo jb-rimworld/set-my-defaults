@@ -29,7 +29,7 @@ namespace BetterWorkbenchDefaults
 
         /// <summary>
         /// Entry point. A pawn is "new" exactly once per save: the first time a hook sees it as a player pawn that the
-        /// known roster (<see cref="PawnDefaultsGameComponent"/>) does not contain. Pre-existing colonists are known
+        /// known roster (<see cref="SmdRoster"/>) does not contain. Pre-existing colonists are known
         /// from the roster baseline, so they are never auto-defaulted, however often they leave and re-enter a map.
         /// </summary>
         public static void TryApply(Pawn p, JoinSource source)
@@ -42,7 +42,7 @@ namespace BetterWorkbenchDefaults
             if (p.Faction != Faction.OfPlayerSilentFail)
                 return;
 
-            var comp = Current.Game?.GetComponent<PawnDefaultsGameComponent>();
+            var comp = SmdRoster.Current;
             if (comp == null)
                 return;
 
@@ -111,7 +111,7 @@ namespace BetterWorkbenchDefaults
             return true;
         }
 
-        private static void Apply(Pawn p, PawnDefaultsGameComponent comp, PawnConfigSnapshot config, WBD_Settings settings)
+        private static void Apply(Pawn p, SmdRoster comp, PawnConfigSnapshot config, WBD_Settings settings)
         {
             int id = p.thingIDNumber;
 
@@ -173,7 +173,7 @@ namespace BetterWorkbenchDefaults
         /// <summary>The same with a given colonist preset (a profile's default, read straight from the profile); null = the library's.</summary>
         public static int ApplyDefaultToStartingColonists(PawnConfigSnapshot preset)
         {
-            var comp = Current.Game?.GetComponent<PawnDefaultsGameComponent>();
+            var comp = SmdRoster.Current;
             var settings = WBD_Mod.Settings;
             if (comp == null || settings == null || !settings.autoApplyToNewPawns || !SmdSections.On(SmdSections.Pawns))
                 return 0;
