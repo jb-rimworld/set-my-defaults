@@ -6,7 +6,7 @@
   <BetterWorkbenchDefaults.Guard.Many>Diese Mods wurden aktualisiert und brauchen jetzt die kostenlose Mod {0}. Ohne sie sind sie abgeschaltet:</BetterWorkbenchDefaults.Guard.Many>
   <BetterWorkbenchDefaults.Guard.ManyLine>{0}: Eine jetzt gespeicherte Kolonie verliert {1}.</BetterWorkbenchDefaults.Guard.ManyLine>
   <BetterWorkbenchDefaults.Guard.LossDefault>alles, was diese Mod hinzugefügt hat</BetterWorkbenchDefaults.Guard.LossDefault>
-  <BetterWorkbenchDefaults.Guard.Free>{0} ist kostenlos und bringt selbst nichts ins Spiel. Die Installation dauert einen Moment; danach startet das Spiel einmal neu und alles ist wieder da.</BetterWorkbenchDefaults.Guard.Free>
+  <BetterWorkbenchDefaults.Guard.Free>{0} ist kostenlos und bringt selbst nichts ins Spiel. Das dauert einen Moment; danach startet das Spiel einmal neu und alles ist wieder da.</BetterWorkbenchDefaults.Guard.Free>
   <BetterWorkbenchDefaults.Guard.InstalledOff>{0} ist schon installiert, aber abgeschaltet.</BetterWorkbenchDefaults.Guard.InstalledOff>
   <BetterWorkbenchDefaults.Guard.Install>{0} installieren und neu starten</BetterWorkbenchDefaults.Guard.Install>
   <BetterWorkbenchDefaults.Guard.Enable>{0} einschalten und neu starten</BetterWorkbenchDefaults.Guard.Enable>

@@ -6,7 +6,7 @@
   <BetterWorkbenchDefaults.Guard.Many>These mods were updated and now need the free mod {0}. Without it they are switched off:</BetterWorkbenchDefaults.Guard.Many>
   <BetterWorkbenchDefaults.Guard.ManyLine>{0}: a colony saved now would lose {1}.</BetterWorkbenchDefaults.Guard.ManyLine>
   <BetterWorkbenchDefaults.Guard.LossDefault>everything this mod added</BetterWorkbenchDefaults.Guard.LossDefault>
-  <BetterWorkbenchDefaults.Guard.Free>{0} is free and adds nothing of its own. Installing it takes a moment; the game then restarts once and everything is back.</BetterWorkbenchDefaults.Guard.Free>
+  <BetterWorkbenchDefaults.Guard.Free>{0} is free and adds nothing of its own. This takes a moment; the game then restarts once and everything is back.</BetterWorkbenchDefaults.Guard.Free>
   <BetterWorkbenchDefaults.Guard.InstalledOff>{0} is already installed, but switched off.</BetterWorkbenchDefaults.Guard.InstalledOff>
   <BetterWorkbenchDefaults.Guard.Install>Install {0} and restart</BetterWorkbenchDefaults.Guard.Install>
   <BetterWorkbenchDefaults.Guard.Enable>Switch on {0} and restart</BetterWorkbenchDefaults.Guard.Enable>
