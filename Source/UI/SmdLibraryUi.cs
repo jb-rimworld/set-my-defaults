@@ -545,7 +545,7 @@ namespace BetterWorkbenchDefaults
         public static string CopyLibrary()
         {
             var s = SmdLibraryApi.ExportLibrary(ProfileParts.All, null);
-            if (SmdUi.Copy(s))
+            if (s != null && SmdUi.Copy(s))
             {
                 LastExportNote = "WBD_ShareCopied".Translate("WBD_ExportedLibraryName".Translate(), s.Length.ToString("N0"));
                 Messages.Message(LastExportNote, MessageTypeDefOf.TaskCompletion, false);

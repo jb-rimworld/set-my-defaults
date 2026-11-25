@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BetterWorkbenchDefaults.Lib;
+using RimWorld;
 using Verse;
 
 namespace BetterWorkbenchDefaults
@@ -360,7 +361,19 @@ namespace BetterWorkbenchDefaults
         public static string ExportProfile(string name)
         {
             var p = SmdLibraryStore.Library.Profile(name);
-            return p == null ? null : ShareCodec.Encode(p);
+            return p == null ? null : SafeEncode(p);
+        }
+
+        /// <summary>Encodes a share string; null (and one warning) when the runtime cannot compress (never seen on 1.7; a guard for 1.6's Mono).</summary>
+        static string SafeEncode(SmdProfile p)
+        {
+            try { return ShareCodec.Encode(p); }
+            catch (Exception e)
+            {
+                WBD_Log.Warn("Could not make a share string: " + e.GetType().Name + ": " + e.Message);
+                Messages.Message("WBD_ShareEncodeFailed".Translate(), MessageTypeDefOf.RejectInput, false);
+                return null;
+            }
         }
 
         /// <summary>Share string of the chosen parts of the live library (as a profile named <paramref name="name"/>).</summary>
@@ -368,7 +381,7 @@ namespace BetterWorkbenchDefaults
         {
             var content = SmdLibraryStore.Content.Subset(parts);
             content.RemoveEmpty();
-            return ShareCodec.Encode(new SmdProfile
+            return SafeEncode(new SmdProfile
             {
                 name = name.NullOrEmpty() ? "WBD_ExportedLibraryName".Translate().ToString() : name,
                 createdAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),

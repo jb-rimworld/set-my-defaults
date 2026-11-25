@@ -97,6 +97,7 @@
   <WBD_ShareCopyLibraryTip>Every saved default (not the profiles) as one share string.</WBD_ShareCopyLibraryTip>
   <WBD_ShareCopyProfile>Copy a profile...</WBD_ShareCopyProfile>
   <WBD_ShareCopied>Copied "{0}" to the clipboard ({1} characters).</WBD_ShareCopied>
+  <WBD_ShareEncodeFailed>Could not make a share string here. Your presets are unchanged; the log has the details.</WBD_ShareEncodeFailed>
   <WBD_ShareExportNote>Presets of mods the other player does not have are kept and marked there; nothing breaks.</WBD_ShareExportNote>
   <WBD_ShareImportSection>Import</WBD_ShareImportSection>
   <WBD_SharePaste>Paste from clipboard</WBD_SharePaste>

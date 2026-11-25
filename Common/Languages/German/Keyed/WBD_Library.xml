@@ -97,6 +97,7 @@
   <WBD_ShareCopyLibraryTip>Alle gespeicherten Vorgaben (ohne Profile) als ein Teilen-Text.</WBD_ShareCopyLibraryTip>
   <WBD_ShareCopyProfile>Ein Profil kopieren ...</WBD_ShareCopyProfile>
   <WBD_ShareCopied>„{0}“ in die Zwischenablage kopiert ({1} Zeichen).</WBD_ShareCopied>
+  <WBD_ShareEncodeFailed>Der Teilen-Text konnte hier nicht erstellt werden. Deine Vorlagen sind unverändert; Einzelheiten stehen im Log.</WBD_ShareEncodeFailed>
   <WBD_ShareExportNote>Vorlagen von Mods, die der andere nicht hat, bleiben erhalten und werden dort markiert; nichts geht kaputt.</WBD_ShareExportNote>
   <WBD_ShareImportSection>Importieren</WBD_ShareImportSection>
   <WBD_SharePaste>Aus Zwischenablage einfügen</WBD_SharePaste>

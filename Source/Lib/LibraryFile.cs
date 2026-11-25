@@ -281,8 +281,9 @@ namespace BetterWorkbenchDefaults.Lib
                     xml = output.ToArray();
                 }
             }
-            catch (InvalidDataException)
+            catch (Exception e) when (!(e is FormatException))
             {
+                // .NET throws InvalidDataException for a bad payload; Mono (RimWorld 1.6) throws IOException ("Corrupted data")
                 throw new FormatException("damaged (not a gzip payload)");
             }
             // .NET does not insist on the gzip trailer, so a string that lost its end can still inflate. The trailer's
