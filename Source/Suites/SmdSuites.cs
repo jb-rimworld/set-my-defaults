@@ -539,15 +539,22 @@ namespace BetterWorkbenchDefaults.Suites
                 t.Check(built != null && !allowsAll(built) && ((IStoreSettingsParent)built).GetStoreSettings().filter.Allows(ThingDefOf.Steel), "the finished shelf has the default");
 
                 // an edited blueprint wins over the default
-                if (TestCells.TryFindFreeRect(map, 4, 3, out var rect2))
+                // (a few tries: a pawn or an item walking into the cell blocks vanilla's blueprint → frame step; not this mod's logic)
+                Frame frame2 = null; IntVec3 pos2 = IntVec3.Invalid;
+                for (int attempt = 0; attempt < 4 && frame2 == null; attempt++)
                 {
+                    if (!TestCells.TryFindFreeRect(map, 4, 3, out var rect2, 3 + attempt * 4)) break;
                     var bp2 = GenConstruct.PlaceBlueprintForBuild(T.Def(key), rect2.CenterCell, map, Rot4.North, Faction.OfPlayer, ThingDefOf.WoodLog);
                     made.Add(bp2);
                     var f2 = ((IStoreSettingsParent)bp2).GetStoreSettings().filter;
                     f2.SetAllow(ThingDefOf.WoodLog, true);
-                    var pos2 = bp2.Position;
+                    pos2 = bp2.Position;
                     ((Blueprint)bp2).TryReplaceWithSolidThing(worker, out Thing frameThing2, out _);
-                    var frame2 = frameThing2 as Frame;
+                    frame2 = frameThing2 as Frame;
+                    if (frame2 == null) t.Note("blueprint → frame refused at " + pos2 + " (cell blocked), trying another place");
+                }
+                if (pos2.IsValid)
+                {
                     if (frame2 == null) { t.Check(false, "second blueprint became a frame"); yield break; }
                     made.Add(frame2);
                     frame2.CompleteConstruction(worker);

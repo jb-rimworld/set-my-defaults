@@ -4,15 +4,13 @@
   <modVersion>2.0.0</modVersion>
   <author>juliusberger00</author>
   <packageId>juliusberger.workbenchbilldefaults</packageId>
-  <description>Set something up once, save it as a default, and it is applied from then on: bills on new workbenches, filters on new shelves and stockpiles, plants on new growing zones and hydroponics, schedule, work and policies on new colonists, and your policies and colony settings (medical care, auto home area, auto rebuild, manual priorities) in new games. Optional: more than 15 bills per workbench.
+  <description>Set something up once, save it as a default, and it is applied from then on: bills on new workbenches, filters on new shelves and stockpiles, plants on new growing zones and hydroponics, schedule, work and policies on new colonists, your policies and colony settings in new games. Optional: more than 15 bills per workbench.
 
-Every preset lives in one library outside your saves, so it follows you into every colony. The Defaults button opens it in game: see, rename and delete presets, save named profiles ("Tribal start"), and copy a profile as a text string to share it or paste one from a friend. A new colony starts with a welcome card where you pick your defaults or a profile. Presets from older versions are imported once; the old files stay untouched. Presets that need a mod you no longer run are kept and say which mod. Two games open at once, a damaged library file or one from a newer version never cost you a preset.
+All presets live in one library outside your saves, so they follow you into every colony. The Defaults button opens it in game; named profiles and share strings come with it. A new colony starts with a welcome card. Presets of older versions are imported once. Colonists, zones and shelves you already have are never changed. Each area can be switched off in the settings.
 
-Colonists, zones and shelves you already have are never changed. A workbench gets your default bills only while it has no bills at all (a new or reinstalled one). Each area (workbenches and shelves, zones, colonists, policies, colony settings, library) can be switched off as a whole in the settings.
+Removing the mod: nothing to prepare, nothing of it is in your save. What it applied stays as normal RimWorld settings; with JB Framework still installed the save loads without an error.
 
-Removing the mod: nothing to prepare, there is no building or other thing of this mod in your save. The bills, filters, zones and colonist settings it applied are normal RimWorld settings and stay. With JB Framework still installed the save loads without an error. Your presets stay in the library for when you come back.
-
-Needs Harmony and JB Framework. Works with Nice Bill Tab and Better Workbench Management (tested on 1.7); the integrations for Project RimFactory, Blueprints Forked and Free Will are carried over from the previous version. With No Max Bills Redux the bill limit is left to that mod while it works; when its patches did not load (its 1.6 version on 1.7), Set my Defaults lifts the limit itself. Each integration can be switched off on the Compatibility page. Multiplayer: not supported, untested.
+Needs Harmony and JB Framework. Tested with Nice Bill Tab and Better Workbench Management; Project RimFactory, Blueprints Forked and Free Will integrations carried over untested. No Max Bills Redux owns the bill limit while it works, otherwise this mod lifts it. Multiplayer: not supported, untested.
 
 Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested. On 1.6 the previous version stays in place and needs no framework.
 
