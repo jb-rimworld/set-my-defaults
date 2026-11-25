@@ -12,7 +12,7 @@ Removing the mod: nothing to prepare, nothing of it is in your save. What it app
 
 Needs Harmony and JB Framework. Tested with Nice Bill Tab and Better Workbench Management; Project RimFactory, Blueprints Forked and Free Will integrations carried over untested. No Max Bills Redux owns the bill limit while it works, otherwise this mod lifts it. Multiplayer: not supported, untested.
 
-Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested. On 1.6 the previous version stays in place and needs no framework.
+Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested. 1.7 is the focus; 1.6 gets the same version, built for 1.6 but never run there.
 
 Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-defaults (MIT).</description>
   <supportedVersions>
@@ -26,6 +26,11 @@ Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-d
       <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
       <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
     </li>
+    <li>
+      <packageId>juliusberger.jbframework</packageId>
+      <displayName>JB Framework</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/JBFRAMEWORK_WORKSHOP_ID</steamWorkshopUrl>
+    </li>
   </modDependencies>
   <modDependenciesByVersion>
     <v1.6>
@@ -34,6 +39,11 @@ Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-d
         <displayName>Harmony</displayName>
         <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
         <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+      </li>
+      <li>
+        <packageId>juliusberger.jbframework</packageId>
+        <displayName>JB Framework</displayName>
+        <steamWorkshopUrl>steam://url/CommunityFilePage/JBFRAMEWORK_WORKSHOP_ID</steamWorkshopUrl>
       </li>
     </v1.6>
     <v1.7>

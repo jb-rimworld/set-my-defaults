@@ -27,7 +27,7 @@ data kept, the backup is used read-only and can be restored).
 
 ## Requirements and compatibility
 - RimWorld **1.7**, Harmony, **JB Framework**. Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested
-  (1.6 keeps the frozen previous version from `1.6/`, which needs Harmony only).
+  (1.7 is the focus; 1.6 gets the same 2.0 code, compiled against the 1.6 reference assemblies and API-scanned, never run).
 - Compatibility page in the settings (each integration on while the other mod is present, switchable): Nice Bill Tab (refresh
   after applying; its 1.6 build on 1.7 counts), Project RimFactory Revived, Blueprints Forked, Free Will / Free-ish Will,
   Better Workbench Management (tested side by side), No Max Bills Redux (owns the bill limit while its patches work; when they did
@@ -44,8 +44,8 @@ data kept, the backup is used read-only and can be restored).
   without an error; the mod's notes wait in the framework's part of the save for its return.
 
 ## Layout and build
-- `Common/` (languages, textures) + `1.7/Assemblies` for 1.7; `1.6/` and `1.6/Root` are the frozen 1.x build (`Source/Frozen16.sha256`,
-  `python3 -I ../JBFramework/tools/freeze16.py BetterWorkbenchDefaults --check`). `LoadFolders.xml` picks per game version.
+- `Common/` (languages, textures) + `1.7/Assemblies` for 1.7, `Common/` + `1.6/Assemblies` for 1.6 (same source, net472, one
+  `#if RW16` shim in `Lib/LibraryFile.cs`; the frozen 1.x build of 24.11.2026 is in git, commit `b94b4e0`). `LoadFolders.xml` picks per game version.
 - Build, tests, release check: `JBFramework/tools/jbmod BetterWorkbenchDefaults build|test all|saveload|removal|addition|release --dry`.
   Library proof without the game: `cd Source/Tests/SmdLibTests && dotnet run -c Release`.
 - Code map: `WBD_Mod.cs` (registrations, hooks), `SmdRoster.cs` (roster, per-map data), `SmdGameData.cs` (per-save data),

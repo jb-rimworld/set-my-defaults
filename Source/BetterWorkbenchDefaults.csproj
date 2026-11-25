@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Set my Defaults on JB Framework. 1.7: dotnet build -c Release (or JBFramework/tools/jbmod BetterWorkbenchDefaults build).
-       1.6 stays frozen (Source/Frozen16.sha256): the 1.6 DLL in 1.6/Assemblies is the Workshop state of 24.11.2026 and is never rebuilt. -->
+  <!-- Set my Defaults on JB Framework. JBFramework/tools/jbmod BetterWorkbenchDefaults build (1.7, then 1.6).
+       1.6: dotnet build -c Release -p:RimVersion=1.6, compile-only best effort (no 1.6 game here); one #if RW16 shim in Lib/LibraryFile.cs. -->
   <PropertyGroup>
     <AssemblyName>BetterWorkbenchDefaults</AssemblyName>
     <RootNamespace>BetterWorkbenchDefaults</RootNamespace>
