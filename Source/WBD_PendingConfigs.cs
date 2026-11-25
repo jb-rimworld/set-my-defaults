@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JBFramework;
 using RimWorld;
 using Verse;
 
@@ -234,6 +235,8 @@ namespace BetterWorkbenchDefaults
             }
         }
 
+        // the instance exists only between a load and the framework dropping it (next frame); never saved
+        [KitTransient("legacy reader: dropped by JB Framework right after a load, never written")]
         private List<PendingEntry> _legacy;
     }
 

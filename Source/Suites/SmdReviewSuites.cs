@@ -205,6 +205,7 @@ namespace BetterWorkbenchDefaults.Suites
                 t.Check(box != null && box.IsOpen && SmdGameData.startCard == SmdGameData.StartNewColony && boxText.Contains(name),
                     "Start asks first (confirmation open and lists the preset, nothing applied yet): " + boxText.Replace("\n", " "));
                 t.Shot("smd_card_confirm");
+                foreach (var y in t.Frames(2)) yield return y;
                 t.Check(SmdLibraryStore.Content.Buildings(key)?.Get(name)?.config.Element("smdTestMarker")?.Value == "my newer version", "until confirmed the library keeps my version");
                 box?.Profile();   // what the confirmation's "Apply the profile" does
                 box?.Close(false);
@@ -407,7 +408,7 @@ namespace BetterWorkbenchDefaults.Suites
             comps.Elements("li").Where(e => (string)e.Attribute("Class") == fw).Remove();
             // the node the previous version wrote (1.x layout: seen / appliedCore / appliedWork, no roster version)
             XElement L(string n, IEnumerable<int> ids) => new XElement(n, ids.Select(i => new XElement("li", i)));
-            comps.Add(new XElement("li", new XAttribute("Class", typeof(SmdRoster).FullName),
+            comps.Add(new XElement("li", new XAttribute("Class", typeof(PawnDefaultsGameComponent).FullName),
                 L("seen", new[] { x }), L("appliedCore", new[] { x }), new XElement("appliedWork")));
             // the map: our node in the framework's map component becomes the old WBD_PendingConfigs node
             string fwm = typeof(FrameworkMap).FullName, me = "juliusberger.workbenchbilldefaults";
@@ -425,7 +426,7 @@ namespace BetterWorkbenchDefaults.Suites
             File.WriteAllText(Path.Combine(Path.GetDirectoryName(path), SaveName + ".smdx.txt"), x + ";" + cell.x + "," + cell.z);
             t.Check(movedPending == 1, "the blueprint config now sits in the previous version's map component node (" + movedPending + ")");
             string text = File.ReadAllText(path);
-            t.Check(removed == 1 && !text.Contains("\"" + fw + "\"") && text.Contains(typeof(SmdRoster).FullName),
+            t.Check(removed == 1 && !text.Contains("\"" + fw + "\"") && text.Contains(typeof(PawnDefaultsGameComponent).FullName),
                 "the save now has the previous version's layout (framework component removed, old roster node of X = " + x + ")");
         }
     }

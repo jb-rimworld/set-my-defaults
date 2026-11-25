@@ -274,6 +274,17 @@ namespace BetterWorkbenchDefaults.Suites
             string preset = "SMD test cap";
             try
             {
+                if (BillCapCompat.Installed)
+                {
+                    // No Max Bills in the run: either it works (it owns the limit) or it failed to patch (its 1.6 build on 1.7)
+                    t.Note("No Max Bills: " + BillCapCompat.State);
+                    if (BillCapCompat.Active) { t.Check(!WBD_Mod.BillCapPatched, "No Max Bills works: no transpiler of ours"); yield break; }
+                    t.Check(BillCapCompat.Broken && WBD_Mod.BillCapPatched, "No Max Bills is installed but patched nothing: our transpiler took over");
+                    st.Set("smd.nativeRaiseBillCap", false).Set("smd.maxBillsCap", 40f);
+                    t.Check(BillCap.Current() == 40 && WBD_Mod.Settings.EffectiveBillCap() == 40, "the limit is lifted to \"Bills per workbench\" although our own switch is off (" + BillCap.Current() + ")");
+                    st.Restore();
+                    yield break;
+                }
                 t.Check(!BillCapCompat.Active, "No Max Bills is not loaded in this run");
                 t.Check(WBD_Mod.BillCapPatched, "the bill-limit transpiler is in place");
                 var info = Harmony.GetPatchInfo(AccessTools.Method(typeof(BillStack), nameof(BillStack.DoListing)));

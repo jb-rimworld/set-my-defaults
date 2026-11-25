@@ -124,6 +124,25 @@ namespace BetterWorkbenchDefaults
                 var r0 = WouldReplace();
                 if (r0.Count > 0) line += "\n<color=#E8C46A>" + "WBD_CardWillReplace".Translate(r0.Count, "WBD_BackupProfileName".Translate(id)) + "</color>";
             }
+            // small screens (1280x720): unselected rows show only their title (preview as tooltip), so the framework's "what happens
+            // by itself" choices below stay close to view
+            bool compact = UI.screenHeight < 900 && !sel;
+            if (compact)
+            {
+                var rc = new Rect(x, y, w, 34f);
+                Widgets.DrawBoxSolid(rc, SmdUi.CardBg);
+                GUI.color = SmdUi.Line; Widgets.DrawBox(rc, 1); GUI.color = Color.white;
+                if (Mouse.IsOver(rc)) Widgets.DrawHighlight(rc);
+                Widgets.RadioButton(rc.x + 12f, rc.y + 5f, false);
+                float cwc = chip != null ? SmdUi.TextW(chip, GameFont.Tiny) + 16f : 0f;
+                float twc = Mathf.Min(SmdUi.TextW(title, GameFont.Small) + 4f, iw - cwc - 8f);
+                SmdUi.Line1(new Rect(rc.x + 46f, rc.y + 5f, twc, 24f), title, Color.white);
+                if (chip != null) SmdUi.Marker(rc.x + 46f + twc + 8f, rc.y + 8f, cwc + 12f, chip, SmdUi.Accent, null);
+                if (marker != null) SmdUi.Line1(new Rect(rc.x + 46f + twc + cwc + 28f, rc.y + 7f, Mathf.Max(0f, iw - twc - cwc - 28f), 22f), marker, SmdUi.Warn, GameFont.Tiny);
+                TooltipHandler.TipRegion(rc, line + (marker != null ? "\n\n" + SmdPreview.MissingTip(missing) : ""));
+                if (Widgets.ButtonInvisible(rc)) Choice = id;
+                return rc.height;
+            }
             float h = 8f + 24f + SmdUi.TextH(line, iw, GameFont.Tiny) + 8f;
             var r = new Rect(x, y, w, h);
             Widgets.DrawBoxSolid(r, sel ? SmdUi.AccentSoft : SmdUi.CardBg);

@@ -108,7 +108,7 @@
   <WBD_ShareImportNote>Importing only stores a profile. Your defaults change when you apply it.</WBD_ShareImportNote>
   <WBD_ShareImported>Imported as profile "{0}". Apply it on Profiles.</WBD_ShareImported>
   <WBD_CardPitchJoined>Nothing in this colony was changed. Choose how much happens by itself from now on.</WBD_CardPitchJoined>
-  <WBD_CardStartWith>Start this colony with</WBD_CardStartWith>
+  <WBD_CardStartWith>Bring into this colony</WBD_CardStartWith>
   <WBD_CardMine>Use my defaults</WBD_CardMine>
   <WBD_CardRecommended>recommended</WBD_CardRecommended>
   <WBD_CardMineEmpty>Nothing saved yet. Save bills, shelves, zones or colonists with the Defaults button, and new colonies get them.</WBD_CardMineEmpty>
