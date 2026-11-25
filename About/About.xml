@@ -29,7 +29,7 @@ Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-d
     <li>
       <packageId>juliusberger.jbframework</packageId>
       <displayName>JB Framework</displayName>
-      <steamWorkshopUrl>steam://url/CommunityFilePage/JBFRAMEWORK_WORKSHOP_ID</steamWorkshopUrl>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/3845593938</steamWorkshopUrl>
     </li>
   </modDependencies>
   <modDependenciesByVersion>
@@ -43,7 +43,7 @@ Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-d
       <li>
         <packageId>juliusberger.jbframework</packageId>
         <displayName>JB Framework</displayName>
-        <steamWorkshopUrl>steam://url/CommunityFilePage/JBFRAMEWORK_WORKSHOP_ID</steamWorkshopUrl>
+        <steamWorkshopUrl>steam://url/CommunityFilePage/3845593938</steamWorkshopUrl>
       </li>
     </v1.6>
     <v1.7>
@@ -56,7 +56,7 @@ Made with the help of Claude Code. Code: https://github.com/jb-rimworld/set-my-d
       <li>
         <packageId>juliusberger.jbframework</packageId>
         <displayName>JB Framework</displayName>
-        <steamWorkshopUrl>steam://url/CommunityFilePage/JBFRAMEWORK_WORKSHOP_ID</steamWorkshopUrl>
+        <steamWorkshopUrl>steam://url/CommunityFilePage/3845593938</steamWorkshopUrl>
       </li>
     </v1.7>
   </modDependenciesByVersion>
