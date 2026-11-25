@@ -22,4 +22,4 @@
 - Colony settings and the policy set can be saved and applied to new games.
 - Saves no longer contain a class of this mod: removing it later leaves no errors, and there is nothing to prepare. Saves of the previous version load with everything intact.
 - When the library cannot be written, the reason is shown in your language.
-- Needs JB Framework. Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested: 1.7 is the focus; RimWorld 1.6 gets the same 2.0 version, built for 1.6 but never run there.
+- Needs JB Framework. When JB Framework is missing, the game offers to install it. Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested: 1.7 is the focus; RimWorld 1.6 gets the same 2.0 version, built for 1.6 but never run there.

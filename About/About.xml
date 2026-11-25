@@ -10,7 +10,7 @@ All presets live in one library outside your saves, so they follow you into ever
 
 Removing the mod: nothing to prepare, nothing of it is in your save. What it applied stays as normal RimWorld settings; with JB Framework still installed the save loads without an error.
 
-Needs Harmony and JB Framework. Tested with Nice Bill Tab and Better Workbench Management; Project RimFactory, Blueprints Forked and Free Will integrations carried over untested. No Max Bills Redux owns the bill limit while it works, otherwise this mod lifts it. Multiplayer: not supported, untested.
+Needs Harmony and JB Framework. When JB Framework is missing, the game offers to install it. Tested with Nice Bill Tab and Better Workbench Management; Project RimFactory, Blueprints Forked and Free Will integrations carried over untested. No Max Bills Redux owns the bill limit while it works, otherwise this mod lifts it. Multiplayer: not supported, untested.
 
 Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested. 1.7 is the focus; 1.6 gets the same version, built for 1.6 but never run there.
 

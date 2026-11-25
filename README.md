@@ -26,7 +26,7 @@ read. Two games open at once, a damaged library file or one of a newer version n
 data kept, the backup is used read-only and can be restored).
 
 ## Requirements and compatibility
-- RimWorld **1.7**, Harmony, **JB Framework**. Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested
+- RimWorld **1.7**, Harmony, **JB Framework**. When JB Framework is missing, the game offers to install it. Built and tested on RimWorld 1.7. The 1.6 build is best effort and untested
   (1.7 is the focus; 1.6 gets the same 2.0 code, compiled against the 1.6 reference assemblies and API-scanned, never run).
 - Compatibility page in the settings (each integration on while the other mod is present, switchable): Nice Bill Tab (refresh
   after applying; its 1.6 build on 1.7 counts), Project RimFactory Revived, Blueprints Forked, Free Will / Free-ish Will,
