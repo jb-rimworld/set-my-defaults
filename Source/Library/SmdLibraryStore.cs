@@ -79,6 +79,19 @@ namespace BetterWorkbenchDefaults
         /// <summary>Why the last change could not be saved (null after a successful one).</summary>
         public static string LastSaveError { get; private set; }
 
+        // kinds and technical details of the two errors, for the player's language (LoadError/LastSaveError stay English for logs)
+        static LibErrorKind loadKind, saveKind;
+        static string loadDetail, saveDetail;
+
+        /// <summary><see cref="LoadError"/> in the player's language (null when none).</summary>
+        public static string LoadErrorText => LoadError == null ? null : SmdFileText.Explain(loadKind, loadDetail, LoadError);
+
+        /// <summary><see cref="LastSaveError"/> in the player's language (null when none).</summary>
+        public static string LastSaveErrorText => LastSaveError == null ? null : SmdFileText.Explain(saveKind, saveDetail, LastSaveError);
+
+        static void SetLoadError(string english, LibErrorKind kind, string detail) { LoadError = english; loadKind = kind; loadDetail = detail; }
+        static void SetSaveError(string english, LibErrorKind kind, string detail) { LastSaveError = english; saveKind = kind; saveDetail = detail; }
+
         /// <summary>A file of a newer format version was read (its number), 0 otherwise.</summary>
         public static int NewerFormat { get; private set; }
 
@@ -113,7 +126,7 @@ namespace BetterWorkbenchDefaults
                 var r = _disk.Load();
                 if (r.error != null)
                 {
-                    GoReadOnly(r.error);
+                    GoReadOnly(r.error, LibErrorKind.Unreadable, r.detail);
                     return;
                 }
                 if (r.library != null)
@@ -143,7 +156,7 @@ namespace BetterWorkbenchDefaults
             }
             catch (Exception e)
             {
-                GoReadOnly(e.GetType().Name + ": " + e.Message);
+                GoReadOnly(e.GetType().Name + ": " + e.Message, LibErrorKind.Unreadable, e.GetType().Name + ": " + e.Message);
             }
             finally
             {
@@ -152,9 +165,9 @@ namespace BetterWorkbenchDefaults
         }
 
         /// <summary>The file cannot be read: never write it, explain it, and use the backup (read-only) when that one is readable.</summary>
-        private static void GoReadOnly(string error)
+        private static void GoReadOnly(string error, LibErrorKind kind, string detail)
         {
-            LoadError = error;
+            SetLoadError(error, kind, detail);
             var bak = LibraryFile.Load(SmdPaths.LibraryFile + LibraryFile.BackupSuffix);
             if (bak.library != null)
             {
@@ -202,7 +215,7 @@ namespace BetterWorkbenchDefaults
                 }
                 else if (r.error != null)
                 {
-                    LoadError = r.error;
+                    SetLoadError(r.error, LibErrorKind.ChangedUnreadable, r.detail);
                     Revision++;
                     WBD_Log.Warn("Library.xml was changed outside this game and cannot be read (" + r.error + "). It is left untouched; presets are read-only until it is fixed or the backup is restored.");
                 }
@@ -223,7 +236,7 @@ namespace BetterWorkbenchDefaults
             EnsureLoaded();
             if (ReadOnly)
             {
-                LastSaveError = LoadError;
+                SetSaveError(LoadError, loadKind, loadDetail);
                 WBD_Log.Warn("Library is read-only this session: " + LoadError);
                 return false;
             }
@@ -247,16 +260,16 @@ namespace BetterWorkbenchDefaults
                 }
                 if (r.error != null)
                 {
-                    LastSaveError = r.error;
+                    SetSaveError(r.error, r.kind, r.detail);
                     if (r.diskUnreadable)
-                        LoadError = r.error;
+                        SetLoadError(r.error, r.kind, r.detail);
                     WBD_Log.Warn("Could not save the library: " + r.error + ". Nothing was changed.");
                 }
                 return false;
             }
             catch (Exception e)
             {
-                LastSaveError = e.GetType().Name + ": " + e.Message;
+                SetSaveError(e.GetType().Name + ": " + e.Message, LibErrorKind.WriteFailed, e.GetType().Name + ": " + e.Message);
                 WBD_Log.Warn("Could not save the library: " + e);
                 return false;
             }
@@ -300,10 +313,32 @@ namespace BetterWorkbenchDefaults
             _loaded = false;
             _lib = null;
             _disk = null;
-            LoadError = null;
-            LastSaveError = null;
+            SetLoadError(null, LibErrorKind.None, null);
+            SetSaveError(null, LibErrorKind.None, null);
             UsingBackup = false;
             EnsureLoaded();
+        }
+    }
+
+    /// <summary>Words the file layer's error kinds in the player's language; the technical detail (exception text) stays as it is.</summary>
+    public static class SmdFileText
+    {
+        public static string Explain(LibErrorKind kind, string detail, string english)
+        {
+            string key;
+            switch (kind)
+            {
+                case LibErrorKind.Unreadable: key = "WBD_FileErrUnreadable"; break;
+                case LibErrorKind.ChangedUnreadable: key = "WBD_FileErrChangedUnreadable"; break;
+                case LibErrorKind.FolderNotCreatable: key = "WBD_FileErrFolderNotCreatable"; break;
+                case LibErrorKind.FolderNotWritable: key = "WBD_FileErrFolderNotWritable"; break;
+                case LibErrorKind.Locked: key = "WBD_FileErrLocked"; break;
+                case LibErrorKind.WriteFailed: key = "WBD_FileErrWriteFailed"; break;
+                default: return english;
+            }
+            if (!key.CanTranslate()) return english;
+            string text = key.Translate().ToString();
+            return string.IsNullOrEmpty(detail) ? text : text + " (" + detail + ")";
         }
     }
 }

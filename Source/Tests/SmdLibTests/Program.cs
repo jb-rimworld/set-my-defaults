@@ -295,7 +295,7 @@ internal static class Program
         File.WriteAllText(path, "<SetMyDefaultsLibrary version=\"4\"><buildings><set key=\"A\"");
         var hash = LegacyMigration.Sha256(path);
         var r = LibraryFile.Load(path);
-        Check(r.existed && r.library == null && r.error != null, "a damaged Library.xml is reported, not replaced: " + r.error);
+        Check(r.existed && r.library == null && r.error != null && r.detail != null, "a damaged Library.xml is reported, not replaced: " + r.error);
         Check(LegacyMigration.Sha256(path) == hash, "the damaged file is left byte-for-byte untouched");
         File.WriteAllText(path, "<SomethingElse/>");
         Check(LibraryFile.Load(path).error != null, "a file with the wrong root is refused");
@@ -336,7 +336,7 @@ internal static class Program
         var c = new LibraryDisk(path) { LockWaitMs = 200 };
         c.Load();
         var rl = c.Commit(disk, lib => { lib.content.GetOrAddBuildings("X").AddOrReplace(P("Y", "y"), true); return true; });
-        Check(!rl.saved && rl.error != null && rl.error.Contains("lock") && LegacyMigration.Sha256(path) == hash, "a held lock blocks the write with a reason; file unchanged: " + rl.error);
+        Check(!rl.saved && rl.error != null && rl.error.Contains("lock") && rl.kind == LibErrorKind.Locked && LegacyMigration.Sha256(path) == hash, "a held lock blocks the write with a reason; file unchanged: " + rl.error);
         File.SetLastWriteTimeUtc(a.LockPath, DateTime.UtcNow.AddMinutes(-5));
         rl = c.Commit(disk, lib => { lib.content.GetOrAddBuildings("X").AddOrReplace(P("Y", "y"), true); return true; });
         Check(rl.saved && !File.Exists(a.LockPath), "a stale lock of a crashed game is taken over and removed after the write");
@@ -443,7 +443,7 @@ internal static class Program
         {
             new DirectoryInfo(dir).Attributes |= FileAttributes.ReadOnly;
             var r = d.Commit(lib, l => { l.content.GetOrAddBuildings("A").AddOrReplace(P("two", "2"), false); return true; });
-            Check(!r.saved && r.error != null && LegacyMigration.Sha256(path) == hash, "a failed write reports why and leaves Library.xml as it was: " + r.error);
+            Check(!r.saved && r.error != null && r.kind != LibErrorKind.None && LegacyMigration.Sha256(path) == hash, "a failed write reports why (" + r.kind + ") and leaves Library.xml as it was: " + r.error);
         }
         finally
         {

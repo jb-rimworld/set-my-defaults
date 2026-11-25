@@ -7,6 +7,9 @@ using System.Threading;
 
 namespace BetterWorkbenchDefaults.Lib
 {
+    /// <summary>Why the library file layer could not read or write (the game layer words it in the player's language).</summary>
+    public enum LibErrorKind { None, Unreadable, ChangedUnreadable, FolderNotCreatable, FolderNotWritable, Locked, WriteFailed }
+
     /// <summary>
     /// One game's view of Library.xml on disk. Several games can run at once (two RimWorld windows, a test instance) and all of
     /// them write the same file, so a change is never written blindly over the file:
@@ -109,8 +112,11 @@ namespace BetterWorkbenchDefaults.Lib
             public bool diskUnreadable;
             /// <summary>A file of a newer format was copied here before this version wrote it (null = no copy made).</summary>
             public string newerCopy;
-            /// <summary>Why nothing was saved (null when <see cref="saved"/>, or when the edit itself had nothing to do).</summary>
+            /// <summary>Why nothing was saved (null when <see cref="saved"/>, or when the edit itself had nothing to do). English, for logs.</summary>
             public string error;
+            /// <summary>The kind of <see cref="error"/> (the game layer shows it in the player's language) and its technical detail.</summary>
+            public LibErrorKind kind;
+            public string detail;
         }
 
         /// <summary>
@@ -121,10 +127,10 @@ namespace BetterWorkbenchDefaults.Lib
         {
             var res = new CommitResult();
             FileStream lck;
-            string lockErr = TryLock(out lck);
+            string lockErr = TryLock(out lck, out var lockKind, out var lockDetail);
             if (lockErr != null)
             {
-                res.error = lockErr;
+                res.error = lockErr; res.kind = lockKind; res.detail = lockDetail;
                 return res;
             }
             try
@@ -141,7 +147,8 @@ namespace BetterWorkbenchDefaults.Lib
                     catch (Exception e)
                     {
                         res.diskUnreadable = true;
-                        res.error = "Library.xml was changed outside this game and cannot be read (" + e.GetType().Name + ": " + e.Message + ")";
+                        res.kind = LibErrorKind.ChangedUnreadable; res.detail = e.GetType().Name + ": " + e.Message;
+                        res.error = "Library.xml was changed outside this game and cannot be read (" + res.detail + ")";
                         return res;
                     }
                     res.mergedWithDisk = true;
@@ -163,7 +170,9 @@ namespace BetterWorkbenchDefaults.Lib
             }
             catch (Exception e)
             {
-                res.error = e.GetType().Name + ": " + e.Message;
+                res.kind = e is UnauthorizedAccessException ? LibErrorKind.FolderNotWritable : LibErrorKind.WriteFailed;
+                res.detail = e.GetType().Name + ": " + e.Message;
+                res.error = res.detail;
                 return res;
             }
             finally
@@ -183,9 +192,9 @@ namespace BetterWorkbenchDefaults.Lib
         }
 
         /// <summary>Takes the lock (waits up to <see cref="LockWaitMs"/>). Returns null on success, else the reason.</summary>
-        string TryLock(out FileStream lck)
+        string TryLock(out FileStream lck, out LibErrorKind kind, out string detail)
         {
-            lck = null;
+            lck = null; kind = LibErrorKind.None; detail = null;
             var sw = Stopwatch.StartNew();
             try
             {
@@ -195,6 +204,7 @@ namespace BetterWorkbenchDefaults.Lib
             }
             catch (Exception e)
             {
+                kind = LibErrorKind.FolderNotCreatable; detail = e.Message;
                 return "the library folder cannot be created (" + e.Message + ")";
             }
             while (true)
@@ -220,11 +230,15 @@ namespace BetterWorkbenchDefaults.Lib
                     }
                     catch { }
                     if (sw.ElapsedMilliseconds > LockWaitMs)
+                    {
+                        kind = LibErrorKind.Locked;
                         return "another game is writing the library right now (Library.xml.lock); try again in a moment";
+                    }
                     Thread.Sleep(20);
                 }
                 catch (UnauthorizedAccessException e)
                 {
+                    kind = LibErrorKind.FolderNotWritable; detail = e.Message;
                     return "the library folder is not writable (" + e.Message + ")";
                 }
             }

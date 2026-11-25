@@ -550,7 +550,7 @@ namespace BetterWorkbenchDefaults
         {
             if (!SmdLibraryStore.ReadOnly) return 0f;
             string text = "WBD_LibraryReadOnly".Translate().ToString() + (SmdLibraryStore.UsingBackup ? " " + "WBD_LibraryUsingBackup".Translate().ToString() : "")
-                + "\n" + "WBD_LibraryReadOnlyWhy".Translate(SmdLibraryStore.LoadError ?? "?").ToString();
+                + "\n" + "WBD_LibraryReadOnlyWhy".Translate(SmdLibraryStore.LoadErrorText ?? "?").ToString();
             var btns = new List<SmdUi.Btn>
             {
                 new SmdUi.Btn("WBD_LibRestoreBackup".Translate(), () => RestoreBackupNow(), System.IO.File.Exists(SmdPaths.LibraryFile + LibraryFile.BackupSuffix), "WBD_LibRestoreBackupTip".Translate(), true),

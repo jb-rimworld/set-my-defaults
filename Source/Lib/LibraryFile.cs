@@ -55,7 +55,8 @@ namespace BetterWorkbenchDefaults.Lib
         {
             public SmdLibrary library;   // null when the file did not exist or could not be read
             public bool existed;
-            public string error;         // set when the file exists but could not be read
+            public string error;         // set when the file exists but could not be read (English, for logs)
+            public string detail;        // the technical part of error (exception type and message)
             public byte[] bytes;         // what was read (null when the file did not exist)
         }
 
@@ -73,7 +74,8 @@ namespace BetterWorkbenchDefaults.Lib
             catch (Exception e)
             {
                 r.library = null;
-                r.error = e.GetType().Name + ": " + e.Message;
+                r.detail = e.GetType().Name + ": " + e.Message;
+                r.error = r.detail;
             }
             return r;
         }

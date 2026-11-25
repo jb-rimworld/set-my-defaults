@@ -191,7 +191,7 @@ namespace BetterWorkbenchDefaults
 
         internal static string SaveFailedText() =>
             SmdLibraryStore.ReadOnly ? "WBD_LibraryReadOnly".Translate().ToString()
-            : SmdLibraryStore.LastSaveError != null ? "WBD_SaveFailedReason".Translate(SmdLibraryStore.LastSaveError).ToString()
+            : SmdLibraryStore.LastSaveError != null ? "WBD_SaveFailedReason".Translate(SmdLibraryStore.LastSaveErrorText).ToString()
             : "WBD_SaveBusy".Translate().ToString();
 
         // ================= zones =================
