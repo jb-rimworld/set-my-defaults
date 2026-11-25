@@ -120,7 +120,7 @@ namespace BetterWorkbenchDefaults.Lib
                     try { CopyOver(path, path + BackupSuffix); }
                     catch { }
                 }
-                File.Move(tmp, path, true);
+                MoveOver(tmp, path);
             }
             catch
             {
@@ -128,6 +128,18 @@ namespace BetterWorkbenchDefaults.Lib
                 throw;
             }
             return bytes;
+        }
+
+        /// <summary>Moves a finished temp file over the target in one rename, so a reader never sees a half-written file.</summary>
+        static void MoveOver(string tmp, string path)
+        {
+#if RW16
+            // net472 has no File.Move overwrite; File.Replace is the same single rename on Mono (needs an existing target)
+            if (File.Exists(path)) File.Replace(tmp, path, null);
+            else File.Move(tmp, path);
+#else
+            File.Move(tmp, path, true);
+#endif
         }
 
         static void CopyOver(string from, string to)
@@ -191,7 +203,7 @@ namespace BetterWorkbenchDefaults.Lib
                 }
                 var tmp = path + "." + Guid.NewGuid().ToString("N").Substring(0, 12) + ".tmp";
                 File.WriteAllBytes(tmp, b.bytes);
-                File.Move(tmp, path, true);
+                MoveOver(tmp, path);
                 return null;
             }
             catch (Exception e)
